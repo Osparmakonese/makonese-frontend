@@ -1,5 +1,9 @@
 /* eslint-disable no-restricted-globals */
 /* eslint-disable no-undef */
+
+// This is required by CRA's workbox integration
+const ignored = self.__WB_MANIFEST;
+
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
