@@ -62,7 +62,9 @@ export default function Login() {
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
           <Logo size={56} />
         </div>
-        <div style={{ display:'inline-block', background:'#E8593C', color:'#fff', fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:20, letterSpacing:'0.08em', marginTop:8, marginBottom: 24 }}>DEVELOPMENT</div>
+        {(process.env.REACT_APP_API_URL || '').includes('localhost') || (process.env.REACT_APP_API_URL || '').includes('127.0.0.1') || !process.env.REACT_APP_API_URL ? (
+          <div style={{ display:'inline-block', background:'#E8593C', color:'#fff', fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:20, letterSpacing:'0.08em', marginTop:8, marginBottom: 24 }}>DEVELOPMENT</div>
+        ) : null}
 
         <form onSubmit={handleSubmit} style={S.form}>
           <div style={S.field}>
