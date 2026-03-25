@@ -83,7 +83,7 @@ export default function Import() {
   };
 
   const downloadTemplate = () => {
-    window.open('http://127.0.0.1:8000/api/import/template/', '_blank');
+    window.open(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api'}/import/template/`, '_blank');
   };
 
   async function handleImport() {
@@ -94,7 +94,7 @@ export default function Import() {
     setError('');
     setResults(null);
     try {
-      const res = await axios.post('http://127.0.0.1:8000/api/import/', formData, {
+      const res = await axios.post(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api'}/import/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
