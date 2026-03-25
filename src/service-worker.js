@@ -1,4 +1,5 @@
 /* eslint-disable no-restricted-globals */
+/* eslint-disable no-undef */
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
