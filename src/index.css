@@ -1,13 +1,258 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
+
+/* ── CSS Variables ── */
+:root {
+  --green: #1a6b3a;
+  --green-2: #2d9e58;
+  --green-3: #e8f5ee;
+  --green-4: #c3e8d0;
+  --amber: #c97d1a;
+  --amber-bg: #fef3e2;
+  --red: #c0392b;
+  --red-bg: #fdecea;
+  --ink: #111827;
+  --ink-2: #374151;
+  --ink-3: #6b7280;
+  --ink-4: #9ca3af;
+  --surface: #f9fafb;
+  --surface-2: #f3f4f6;
+  --border: #e5e7eb;
+  --white: #ffffff;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ── Pills ── */
+.pill-green {
+  background: #e8f5ee;
+  color: #1a6b3a;
+}
+.pill-red {
+  background: #fdecea;
+  color: #c0392b;
+}
+.pill-amber {
+  background: #fef3e2;
+  color: #c97d1a;
+}
+.pill-gray {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.pill-blue {
+  background: #EFF6FF;
+  color: #1d4ed8;
+}
+
+.pill-green,
+.pill-red,
+.pill-amber,
+.pill-gray,
+.pill-blue {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  display: inline-block;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Field card hover ── */
+.fcard {
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.fcard:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+}
+.fcard-img img {
+  transition: transform 0.4s ease;
+}
+.fcard:hover .fcard-img img {
+  transform: scale(1.06);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* ── Skeleton animation ── */
+@keyframes skeleton-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+.skeleton {
+  background: #e5e7eb;
+  border-radius: 6px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* ── MOBILE BOTTOM NAV ── */
+.mobile-header { display: none; }
+.bottom-nav { display: none; }
+
+@media (max-width: 768px) {
+  /* Hide desktop elements */
+  .sidebar-desktop { display: none !important; }
+  .topbar-desktop { display: none !important; }
+
+  /* Mobile main area takes full width */
+  .main-content { margin-left: 0 !important; }
+
+  /* Mobile header */
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+  .mobile-header .mh-brand { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: #111827; }
+  .mobile-header .mh-sub { font-size: 10px; color: #6b7280; margin-top: 1px; }
+  .mobile-header .mh-right { display: flex; align-items: center; gap: 8px; }
+  .mobile-wa-btn { background: #25D366; color: #fff; border: none; border-radius: 20px; padding: 7px 12px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .mobile-avatar { width: 32px; height: 32px; border-radius: 50%; background: #1a6b3a; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    z-index: 500;
+    align-items: center;
+    justify-content: space-around;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .bn-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    padding: 6px 0;
+    border: none;
+    background: none;
+    position: relative;
+  }
+  .bn-tab .bn-icon { font-size: 20px; line-height: 1; }
+  .bn-tab .bn-label { font-size: 9px; font-weight: 600; letter-spacing: 0.03em; color: #6b7280; text-transform: uppercase; font-family: 'Inter', sans-serif; }
+  .bn-tab.active .bn-label { color: #1a6b3a; }
+  .bn-tab.active::before { content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 2px; background: #1a6b3a; border-radius: 0 0 2px 2px; }
+  .bn-badge { position: absolute; top: 2px; right: calc(50% - 18px); background: #c0392b; color: #fff; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 8px; line-height: 1.4; }
+
+  /* Content padding for bottom nav */
+  .page-content-mobile { padding-bottom: 72px !important; }
+
+  /* Mobile metric cards — 2x2 grid */
+  .metric-grid-desktop { display: none !important; }
+  .metric-grid-mobile { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 14px; margin-bottom: 14px; }
+  .metric-card-mobile { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; }
+  .metric-card-mobile .mc-lbl { font-size: 10px; font-weight: 500; color: #6b7280; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+  .metric-card-mobile .mc-ico { width: 22px; height: 22px; border-radius: 5px; display: flex; align-items: center; justify-content:center; font-size: 11px; }
+  .metric-card-mobile .mc-val { font-size: 19px; font-weight: 700; font-family: 'Playfair Display', serif; margin-bottom: 3px; }
+  .metric-card-mobile .mc-sub { font-size: 10px; color: #6b7280; }
+  .metric-card-mobile .mc-bar { margin-top: 8px; height: 3px; background: #f3f4f6; border-radius: 2px; overflow: hidden; }
+  .metric-card-mobile .mc-bar div { height: 3px; border-radius: 2px; }
+
+  /* Mobile field cards — horizontal scroll */
+  .field-cards-desktop { display: none !important; }
+  .field-cards-mobile { display: flex !important; gap: 10px; padding: 0 14px 14px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .field-cards-mobile::-webkit-scrollbar { display: none; }
+  .field-card-mobile { flex-shrink: 0; width: 175px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; cursor: pointer; }
+  .field-card-mobile .fcm-img { height: 88px; position: relative; overflow: hidden; }
+  .field-card-mobile .fcm-img img { width: 100%; height: 100%; object-fit: cover; }
+  .field-card-mobile .fcm-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.55)); }
+  .field-card-mobile .fcm-label { position: absolute; bottom: 6px; left: 8px; color: #fff; font-size: 11px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+  .field-card-mobile .fcm-badge { position: absolute; top: 6px; right: 6px; background: rgba(255,255,255,0.93); font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 10px; }
+  .field-card-mobile .fcm-body { padding: 8px 10px; }
+  .field-card-mobile .fcm-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 5px; }
+  .field-card-mobile .fcm-stat { background: #f3f4f6; border-radius: 4px; padding: 4px 3px; text-align: center; }
+  .field-card-mobile .fcm-stat .fv { font-size: 11px; font-weight: 700; }
+  .field-card-mobile .fcm-stat .fl { font-size: 8px; color: #6b7280; margin-top: 1px; }
+
+  /* Mobile two-column → single column */
+  .two-col-layout { grid-template-columns: 1fr !important; }
+  .two-col-reverse { grid-template-columns: 1fr !important; }
+
+  /* Mobile hero — shorter */
+  .hero-banner { height: 150px !important; }
+
+  /* Mobile form full width */
+  .form-grid-2 { grid-template-columns: 1fr !important; }
+  .form-grid-3 { grid-template-columns: 1fr 1fr !important; }
+
+  /* Mobile section padding */
+  .section-title { padding: 14px 14px 0 !important; }
+  .content-area { padding: 0 0 72px !important; }
+
+  /* Mobile trips as list */
+  .trips-table { display: none !important; }
+  .trips-list-mobile { display: block !important; }
+  .trip-item-mobile { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #e5e7eb; background: #fff; }
+  .trip-item-mobile:first-child { border-top: 1px solid #e5e7eb; }
+  .trip-icon-mobile { width: 36px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  .trip-icon-mobile img { width: 100%; height: 100%; object-fit: cover; }
+  .trip-info-mobile { flex: 1; }
+  .trip-market-mobile { font-size: 13px; font-weight: 600; color: #111827; }
+  .trip-meta-mobile { font-size: 10px; color: #6b7280; margin-top: 2px; }
+  .trip-rev-mobile { text-align: right; font-size: 14px; font-weight: 700; color: #1a6b3a; font-family: 'Playfair Display', serif; }
+  .trip-date-mobile { font-size: 10px; color: #6b7280; }
+}
+
+@media (min-width: 769px) {
+  .mobile-header { display: none !important; }
+  .bottom-nav { display: none !important; }
+  .metric-grid-mobile { display: none !important; }
+  .field-cards-mobile { display: none !important; }
+  .trips-list-mobile { display: none !important; }
 }

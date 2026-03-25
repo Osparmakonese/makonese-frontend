@@ -1,0 +1,305 @@
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getFieldReport, getFieldHistory } from '../api/farmApi';
+import { fmt, cropEmoji, cropGradient, cropImage } from '../utils/format';
+
+const S = {
+  overlay: {
+    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    zIndex: 1000, padding: 20,
+  },
+  card: {
+    background: '#fff', borderRadius: 14, width: 560, maxHeight: '90vh',
+    overflow: 'auto', position: 'relative',
+  },
+  hero: (crop) => ({
+    height: 160, background: cropGradient(crop), position: 'relative',
+    borderRadius: '14px 14px 0 0', display: 'flex', alignItems: 'flex-end',
+    padding: '0 24px 16px',
+  }),
+  heroOverlay: {
+    position: 'absolute', inset: 0, borderRadius: '14px 14px 0 0',
+    background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)',
+  },
+  closeBtn: {
+    position: 'absolute', top: 12, left: 12, width: 32, height: 32,
+    borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: 'none',
+    color: '#fff', fontSize: 16, cursor: 'pointer', display: 'flex',
+    alignItems: 'center', justifyContent: 'center', zIndex: 2,
+  },
+  statusBadge: {
+    position: 'absolute', top: 12, right: 12, zIndex: 2,
+  },
+  heroTitle: {
+    fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700,
+    color: '#fff', position: 'relative', zIndex: 2,
+  },
+  body: { padding: '20px 24px' },
+  statsRow: {
+    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10,
+    marginBottom: 20,
+  },
+  statBox: (color) => ({
+    background: color === 'green' ? '#e8f5ee' : color === 'red' ? '#fdecea' : '#fef3e2',
+    borderRadius: 8, padding: '12px 14px', textAlign: 'center',
+  }),
+  statVal: (color) => ({
+    fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700,
+    color: color === 'green' ? '#1a6b3a' : color === 'red' ? '#c0392b' : '#c97d1a',
+  }),
+  statLabel: { fontSize: 10, color: '#6b7280', fontWeight: 600, marginTop: 2, textTransform: 'uppercase' },
+  infoRow: {
+    display: 'flex', justifyContent: 'space-between', padding: '8px 0',
+    borderBottom: '1px solid #e5e7eb', fontSize: 12,
+  },
+  infoLabel: { color: '#6b7280', fontWeight: 500 },
+  infoVal: { color: '#111827', fontWeight: 600 },
+  sectionTitle: {
+    fontSize: 13, fontWeight: 700, color: '#111827', margin: '20px 0 10px',
+    display: 'flex', alignItems: 'center', gap: 6,
+  },
+  expenseRow: {
+    display: 'flex', justifyContent: 'space-between', padding: '6px 0',
+    borderBottom: '1px solid #f3f4f6', fontSize: 11,
+  },
+  closedMsg: {
+    background: '#f3f4f6', borderRadius: 8, padding: '12px 16px',
+    fontSize: 11, color: '#6b7280', marginTop: 16,
+  },
+  aiBtn: {
+    width: '100%', padding: '14px 20px', borderRadius: 8, border: 'none',
+    background: 'linear-gradient(135deg, #111827, #374151)', color: '#fff',
+    fontSize: 12, fontWeight: 700, cursor: 'pointer', marginTop: 16,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+  },
+  aiResult: {
+    background: '#f9fafb', borderRadius: 8, padding: 16, marginTop: 12,
+    fontSize: 12, lineHeight: 1.6, color: '#374151', whiteSpace: 'pre-wrap',
+  },
+};
+
+export default function FieldModal({ field, isOpen, onClose }) {
+  const [analysis, setAnalysis] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [historyResult, setHistoryResult] = useState('');
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const { data: report } = useQuery({
+    queryKey: ['fieldReport', field?.id],
+    queryFn: () => getFieldReport(field.id, field.opening_id),
+    enabled: !!field?.id && isOpen,
+  });
+
+  useEffect(() => {
+    setAnalysis('');
+    setHistoryResult('');
+  }, [field?.id]);
+
+  if (!isOpen || !field) return null;
+
+  const rev = field.revenue || report?.revenue || 0;
+  const costs = (field.costs || 0) + (field.labour || 0);
+  const totalCosts = report?.total_costs || costs;
+  const net = rev - totalCosts;
+  const expenses = report?.expenses || [];
+  const grouped = expenses.reduce((acc, e) => {
+    const cat = e.category || 'Other';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(e);
+    return acc;
+  }, {});
+
+  const runAnalysis = async () => {
+    setAiLoading(true);
+    try {
+      const apiKey = localStorage.getItem('anthropic_api_key');
+      if (!apiKey) {
+        setAnalysis('Please add your Anthropic API key in Settings to use Smart Analysis.');
+        setAiLoading(false);
+        return;
+      }
+      const prompt = `Analyze this farm field data and provide actionable insights:\n\nField: ${field.name}\nCrop: ${field.crop}\nSize: ${field.size_hectares || field.hectares} hectares\nStatus: ${field.status}\nRevenue: $${rev}\nTotal Costs: $${totalCosts}\nNet: $${net}\nExpenses: ${JSON.stringify(expenses.slice(0, 20))}\n\nProvide: 1) Performance summary 2) Cost efficiency analysis 3) Recommendations 4) Risk flags`;
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1024,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+      const data = await res.json();
+      setAnalysis(data.content?.[0]?.text || 'No response received.');
+    } catch (err) {
+      setAnalysis('Analysis failed: ' + (err.message || 'Unknown error'));
+    }
+    setAiLoading(false);
+  };
+
+  const runHistoryAnalysis = async () => {
+    setHistoryLoading(true);
+    try {
+      const apiKey = localStorage.getItem('anthropic_api_key');
+      if (!apiKey) {
+        setHistoryResult('Please add your Anthropic API key in Settings to use History Analysis.');
+        setHistoryLoading(false);
+        return;
+      }
+      const history = await getFieldHistory(field.id);
+      const prompt = `You are an agricultural advisor for Makonese Farm Zimbabwe. Analyse the COMPLETE history of this field across all seasons.
+
+Field: ${field.name}
+Crop: ${field.crop}
+Size: ${field.size_hectares || field.hectares} hectares
+Status: ${field.status}
+
+EXPENSE HISTORY (grouped by opening/season):
+${JSON.stringify(history.expenses || [], null, 2)}
+
+STOCK USAGE HISTORY:
+${JSON.stringify(history.stock_usage || [], null, 2)}
+
+TRIP / REVENUE HISTORY:
+${JSON.stringify(history.trips || [], null, 2)}
+
+LABOUR HISTORY:
+${JSON.stringify(history.labour || [], null, 2)}
+
+Identify:
+1. BEST PERFORMING SEASON — which season had best net profit and why.
+2. KEY PATTERNS — what inputs, timing, or practices correlated with better performance.
+3. COST EFFICIENCY — which spending categories gave best return.
+4. MARKET PATTERNS — best trip timing, prices achieved.
+5. SPECIFIC RECOMMENDATIONS — based on history, what should the owner do differently or repeat next season for this field?`;
+
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 2048,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+      const data = await res.json();
+      setHistoryResult(data.content?.[0]?.text || 'No response received.');
+    } catch (err) {
+      setHistoryResult('History analysis failed: ' + (err.message || 'Unknown error'));
+    }
+    setHistoryLoading(false);
+  };
+
+  const statusPill = field.status === 'active' ? 'pill-green' : field.status === 'closed' ? 'pill-red' : 'pill-amber';
+  const age = field.plant_date ? Math.floor((Date.now() - new Date(field.plant_date).getTime()) / 86400000) : null;
+
+  return (
+    <div style={S.overlay} onClick={onClose}>
+      <div style={S.card} onClick={e => e.stopPropagation()}>
+        {/* Hero */}
+        <div style={{ ...S.hero(field.crop), position: 'relative', overflow: 'hidden' }}>
+          <img src={cropImage(field?.crop)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={S.heroOverlay} />
+          <button style={S.closeBtn} onClick={onClose}>✕</button>
+          <div className={statusPill} style={{ ...S.statusBadge }}>{field.status}</div>
+          <span style={{ ...S.heroTitle, position: 'relative', zIndex: 1 }}>{cropEmoji(field.crop)} {field.name}</span>
+        </div>
+
+        {/* Body */}
+        <div style={S.body}>
+          {/* Stats */}
+          <div style={S.statsRow}>
+            <div style={S.statBox('green')}>
+              <div style={S.statVal('green')}>{fmt(rev)}</div>
+              <div style={S.statLabel}>Revenue</div>
+            </div>
+            <div style={S.statBox('red')}>
+              <div style={S.statVal('red')}>{fmt(totalCosts)}</div>
+              <div style={S.statLabel}>Total Costs</div>
+            </div>
+            <div style={S.statBox(net >= 0 ? 'green' : 'red')}>
+              <div style={S.statVal(net >= 0 ? 'green' : 'red')}>{fmt(net)}</div>
+              <div style={S.statLabel}>Net Position</div>
+            </div>
+          </div>
+
+          {/* Info rows */}
+          <div style={S.infoRow}><span style={S.infoLabel}>Crop</span><span style={S.infoVal}>{cropEmoji(field.crop)} {field.crop}</span></div>
+          <div style={S.infoRow}><span style={S.infoLabel}>Size</span><span style={S.infoVal}>{field.size_hectares || field.hectares} ha</span></div>
+          <div style={S.infoRow}><span style={S.infoLabel}>Planted</span><span style={S.infoVal}>{field.plant_date || '—'}</span></div>
+          <div style={S.infoRow}><span style={S.infoLabel}>Status</span><span style={S.infoVal}>{field.status}</span></div>
+          {age !== null && field.status === 'active' && (
+            <div style={S.infoRow}><span style={S.infoLabel}>Age</span><span style={S.infoVal}>{age} days</span></div>
+          )}
+          <div style={S.infoRow}><span style={S.infoLabel}>Input costs</span><span style={S.infoVal}>{fmt(field.costs || report?.input_costs || 0)}</span></div>
+          <div style={S.infoRow}><span style={S.infoLabel}>Labour costs</span><span style={S.infoVal}>{fmt(field.labour || report?.labour_costs || 0)}</span></div>
+          <div style={S.infoRow}><span style={S.infoLabel}>Revenue earned</span><span style={S.infoVal}>{fmt(rev)}</span></div>
+
+          {/* Expense history */}
+          {Object.keys(grouped).length > 0 && (
+            <>
+              <div style={S.sectionTitle}>📋 Field Expense History</div>
+              {Object.entries(grouped).map(([cat, items]) => (
+                <div key={cat} style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 4 }}>{cat}</div>
+                  {items.map((ex, i) => (
+                    <div key={i} style={S.expenseRow}>
+                      <span style={{ color: '#6b7280' }}>{ex.date} — {ex.description || cat}</span>
+                      <span style={{ color: '#c0392b', fontWeight: 600 }}>{fmt(ex.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <div style={{ ...S.infoRow, borderBottom: 'none', fontWeight: 700 }}>
+                <span>Total Expenses</span>
+                <span style={{ color: '#c0392b' }}>{fmt(expenses.reduce((s, e) => s + (e.amount || 0), 0))}</span>
+              </div>
+            </>
+          )}
+
+          {/* Closed message */}
+          {field.status === 'closed' && field.closed_date && (
+            <div style={S.closedMsg}>
+              Field closed on {field.closed_date}. Costs from this season are locked.
+            </div>
+          )}
+
+          {/* Smart Analysis */}
+          <button style={S.aiBtn} onClick={runAnalysis} disabled={aiLoading}>
+            {aiLoading ? '⏳ Analyzing…' : '🤖 Smart Analysis — What should I know about this field?'}
+          </button>
+          {analysis && <div style={S.aiResult}>{analysis}</div>}
+
+          {/* History Analysis */}
+          <button
+            style={{width:'100%', padding:'12px', background:'linear-gradient(135deg, #0D4A22, #1a6b3a)', color:'#fff', border:'none', borderRadius:'10px', fontSize:'13px', fontWeight:'700', cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', marginTop:'8px'}}
+            onClick={runHistoryAnalysis}
+            disabled={historyLoading}
+          >
+            📊 {historyLoading ? 'Analysing history...' : 'Field History Analysis — What patterns should I know?'}
+          </button>
+          {historyResult && (
+            <div style={{
+              background: 'linear-gradient(135deg, #f0fdf4, #e8f5ee)',
+              border: '2px solid #0D4A22',
+              borderRadius: 8, padding: 16, marginTop: 12,
+              fontSize: 12, lineHeight: 1.6, color: '#1a3a2a', whiteSpace: 'pre-wrap',
+            }}>
+              {historyResult}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
