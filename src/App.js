@@ -1,3 +1,4 @@
+// v2 — production API routing fix
 import { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';

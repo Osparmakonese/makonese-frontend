@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 
 const AuthContext = createContext(null);
 
@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api'}/token/`, {
+      const res = await api.post('/token/', {
         username,
         password,
       });
