@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFields, createField, closeField } from '../api/farmApi';
 import { fmt, today, cropEmoji, cropGradient, cropImage, IMAGES } from '../utils/format';
 import FieldModal from '../components/FieldModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const CROPS = ['Tomatoes', 'Maize', 'Tobacco', 'Vegetables', 'Other'];
 
@@ -85,6 +86,9 @@ export default function Fields() {
   const [form, setForm] = useState(empty);
   const [formErrors, setFormErrors] = useState({});
   const [selectedField, setSelectedField] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pending, setPending] = useState(null);
+  const [closeConfirm, setCloseConfirm] = useState(null);
 
   const { data: fields = [], isLoading } = useQuery({ queryKey: ['fields'], queryFn: getFields });
 
@@ -107,6 +111,9 @@ export default function Fields() {
     if (!form.name.trim()) errs.name = 'Required';
     if (!form.size_ha || parseFloat(form.size_ha) <= 0) errs.size_ha = 'Must be > 0';
     if (Object.keys(errs).length) { setFormErrors(errs); return; }
+    setPending({...form});
+    setConfirmOpen(true);
+    return;
     addMut.mutate({ ...form, size_ha: parseFloat(form.size_ha) });
   };
 
@@ -176,7 +183,7 @@ export default function Fields() {
                   {f.status === 'active' && (
                     <div style={{ padding: '0 14px 12px' }}>
                       <button style={S.closeBtn}
-                        onClick={() => { if (window.confirm(`Close "${f.name}"?`)) closeMut.mutate(f.id); }}
+                        onClick={() => setCloseConfirm(f.id)}
                         disabled={closeMut.isPending}
                         onMouseEnter={e => { e.currentTarget.style.background = '#fdecea'; }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
@@ -194,6 +201,26 @@ export default function Fields() {
         </div>
       </div>
       <FieldModal field={selectedField} isOpen={!!selectedField} onClose={() => setSelectedField(null)} />
+      <ConfirmModal
+        isOpen={confirmOpen}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          addMut.mutate({ ...pending, size_ha: parseFloat(pending.size_ha) });
+        }}
+        fields={pending ? [
+          { label: 'Field Name', value: pending.name },
+          { label: 'Crop', value: pending.crop },
+          { label: 'Size (ha)', value: pending.size_ha },
+          { label: 'Planting Date', value: pending.plant_date },
+        ] : []}
+      />
+      <ConfirmModal
+        isOpen={!!closeConfirm}
+        onCancel={() => setCloseConfirm(null)}
+        onConfirm={() => { closeMut.mutate(closeConfirm); setCloseConfirm(null); }}
+        fields={[{ label: 'Action', value: 'Close this field permanently' }]}
+      />
     </>
   );
 }

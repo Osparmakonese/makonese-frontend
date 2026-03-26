@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFields, getExpenses, createExpense } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
+import ConfirmModal from '../components/ConfirmModal';
 
 const CATEGORIES = [['seeds_seedlings','Seed'],['fertilizer_chemicals','Fertiliser'],['fertilizer_chemicals','Chemical'],['transport_fuel','Fuel'],['transport_fuel','Transport'],['equipment_tools','Equipment'],['food_meals','Labour'],['other','Other']];
 const empty = { field: '', category: 'seeds_seedlings', description: '', amount: '', expense_date: today(), logged_by: '' };
@@ -35,6 +36,8 @@ const S = {
 export default function Costs() {
   const qc = useQueryClient();
   const [form, setForm] = useState(empty);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pending, setPending] = useState(null);
 
   const { data: fields = [] } = useQuery({ queryKey: ['fields'], queryFn: getFields });
   const { data: expenses = [], isLoading } = useQuery({ queryKey: ['expenses'], queryFn: () => getExpenses() });
@@ -48,12 +51,17 @@ export default function Costs() {
 
   const submit = (e) => {
     e.preventDefault();
-    mut.mutate({ ...form, field: parseInt(form.field), amount: parseFloat(form.amount) });
+    setPending({...form});
+    setConfirmOpen(true);
+  };
+  const handleConfirm = () => {
+    setConfirmOpen(false);
+    mut.mutate({ ...pending, field: parseInt(pending.field), amount: parseFloat(pending.amount) });
   };
 
   return (
     <>
-      <div style={S.info}>â„¹ï¸ Chemical &amp; fertilizer costs are automatically created when you log usage in the Stock tab.</div>
+      <div style={S.info}>Info: Chemical &amp; fertilizer costs are automatically created when you log usage in the Stock tab.</div>
 
       <div className="two-col-layout" style={S.twoCol}>
         {/* Left */}
@@ -76,7 +84,7 @@ export default function Costs() {
             <input style={S.input} value={form.description} onChange={e => set('description', e.target.value)} placeholder="e.g. 50kg Compound D" />
             <div className="form-grid-2" style={S.row2}>
               <div><label style={S.label}>Amount ($)</label><input style={S.input} type="number" min="0" step="0.01" value={form.amount} onChange={e => set('amount', e.target.value)} required placeholder="0.00" /></div>
-              <div><label style={S.label}>Date</label><input style={S.input} type="expense_date" value={form.date} onChange={e => set('expense_date', e.target.value)} /></div>
+              <div><label style={S.label}>Date</label><input style={S.input} type="date" value={form.expense_date} onChange={e => set('expense_date', e.target.value)} /></div>
             </div>
             <label style={S.label}>Logged By</label>
             <input style={S.input} value={form.logged_by} onChange={e => set('logged_by', e.target.value)} placeholder="Your name" />
@@ -117,6 +125,18 @@ export default function Costs() {
           )}
         </div>
       </div>
+    <ConfirmModal
+        isOpen={confirmOpen}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={handleConfirm}
+        fields={pending ? [
+          { label: 'Field', value: (fields.find(f => String(f.id) === String(pending.field)) || {}).name || pending.field },
+          { label: 'Category', value: pending.category },
+          { label: 'Description', value: pending.description },
+          { label: 'Amount', value: pending.amount ? '$' + pending.amount : '' },
+          { label: 'Date', value: pending.expense_date },
+        ] : []}
+      />
     </>
   );
 }
