@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getFields, getExpenses, createExpense } from '../api/farmApi';
+import { getFields, getExpenses, createExpense, deleteExpense } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -36,6 +36,7 @@ const S = {
 export default function Costs() {
   const qc = useQueryClient();
   const [form, setForm] = useState(empty);
+  const [delConfirm, setDelConfirm] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, setPending] = useState(null);
 
@@ -47,6 +48,10 @@ export default function Costs() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['expenses'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setForm(empty); },
   });
 
+  const delMut = useMutation({
+    mutationFn: (id) => deleteExpense(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['expenses'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setDelConfirm(null); },
+  });
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const submit = (e) => {
@@ -101,7 +106,7 @@ export default function Costs() {
               <table style={S.table}>
                 <thead><tr>
                   <th style={S.th}>Description</th><th style={S.th}>Category</th>
-                  <th style={S.th}>Field</th><th style={S.th}>Date</th><th style={S.th}>Amount</th>
+                  <th style={S.th}>Field</th><th style={S.th}>Date</th><th style={S.th}>Amount</th><th style={S.th}></th>
                 </tr></thead>
                 <tbody>
                   {(Array.isArray(expenses) ? expenses : []).map((ex, i) => (
@@ -114,6 +119,16 @@ export default function Costs() {
                       <td style={S.td}>{ex.field_name || '"”'}</td>
                       <td style={S.td}>{ex.date}</td>
                       <td style={{ ...S.td, fontWeight: 700, color: '#c0392b' }}>{fmt(ex.amount)}</td>
+                      <td style={S.td}>
+                        {delConfirm === (ex.id || i) ? (
+                          <div style={{ display:'flex', gap:4 }}>
+                            <button onClick={() => delMut.mutate(ex.id)} style={{ fontSize:10, padding:'2px 6px', background:'#c0392b', color:'#fff', border:'none', borderRadius:3, cursor:'pointer' }}>Yes</button>
+                            <button onClick={() => setDelConfirm(null)} style={{ fontSize:10, padding:'2px 6px', background:'#f3f4f6', border:'1px solid #d1d5db', borderRadius:3, cursor:'pointer' }}>No</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setDelConfirm(ex.id || i)} style={{ fontSize:10, padding:'2px 6px', background:'#fff', color:'#c0392b', border:'1px solid #fca5a5', borderRadius:3, cursor:'pointer' }}>Delete</button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                   {(Array.isArray(expenses) ? expenses : []).length === 0 && (

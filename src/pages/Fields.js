@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getFields, createField, closeField } from '../api/farmApi';
+import { getFields, createField, closeField, deleteField } from '../api/farmApi';
 import { fmt, today, cropEmoji, cropGradient, cropImage, IMAGES } from '../utils/format';
 import FieldModal from '../components/FieldModal';
 import ConfirmModal from '../components/ConfirmModal';
@@ -89,6 +89,7 @@ export default function Fields() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, setPending] = useState(null);
   const [closeConfirm, setCloseConfirm] = useState(null);
+  const [delConfirm, setDelConfirm] = useState(null);
 
   const { data: fields = [], isLoading } = useQuery({ queryKey: ['fields'], queryFn: getFields });
 
@@ -103,6 +104,10 @@ export default function Fields() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['fields'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); },
   });
 
+  const delMut = useMutation({
+    mutationFn: (id) => deleteField(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['fields'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setDelConfirm(null); },
+  });
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const submit = (e) => {
@@ -193,6 +198,17 @@ export default function Fields() {
                   {f.status === 'closed' && (
                     <div style={{ padding: '0 14px 12px' }}><div style={S.closedBox}>Closed {f.closed_date || ''}</div></div>
                   )}
+                  <div style={{ padding: '0 14px 12px' }}>
+                    {delConfirm === f.id ? (
+                      <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                        <span style={{ fontSize:11, color:'#c0392b' }}>Delete this field?</span>
+                        <button onClick={() => delMut.mutate(f.id)} style={{ fontSize:11, padding:'3px 10px', background:'#c0392b', color:'#fff', border:'none', borderRadius:4, cursor:'pointer' }}>Yes</button>
+                        <button onClick={() => setDelConfirm(null)} style={{ fontSize:11, padding:'3px 10px', background:'#f3f4f6', border:'1px solid #d1d5db', borderRadius:4, cursor:'pointer' }}>No</button>
+                      </div>
+                    ) : (
+                      <button onClick={e => { e.stopPropagation(); setDelConfirm(f.id); }} style={{ fontSize:11, padding:'3px 10px', background:'#fff', color:'#c0392b', border:'1px solid #fca5a5', borderRadius:4, cursor:'pointer' }}>Delete</button>
+                    )}
+                  </div>
                 </div>
               );
             })}
