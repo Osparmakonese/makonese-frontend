@@ -1,4 +1,4 @@
-﻿import OfflineBanner from './OfflineBanner';
+import OfflineBanner from './OfflineBanner';
 // v2 "” production API routing fix
 import { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
