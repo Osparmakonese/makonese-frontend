@@ -1,4 +1,5 @@
-﻿// v2 â€” production API routing fix
+﻿import OfflineBanner from './OfflineBanner';
+// v2 â€” production API routing fix
 import { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -107,6 +108,7 @@ function FarmApp() {
     >
       <Page />
       <PWAInstallPrompt />
+        <OfflineBanner />
     </Layout>
   );
 }
