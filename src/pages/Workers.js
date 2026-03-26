@@ -50,7 +50,7 @@ export default function Workers() {
         <div style={{ position:'relative', height:110, borderRadius:10, overflow:'hidden', marginBottom:14 }}>
           <img src={IMAGES.workers} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} />
           <div style={{ position:'absolute', inset:0, background:'linear-gradient(to right, rgba(15,40,15,0.82), rgba(0,0,0,0.2))' }} />
-          <div style={{ position:'absolute', bottom:0, left:0, padding:'12px 16px', color:'vfff', zIndex:1 }}>
+          <div style={{ position:'absolute', bottom:0, left:0, padding:'12px 16px', color:'#fff', zIndex:1 }}>
             <div style={S.bannerTitle}>Worker Roster</div>
             <div style={S.bannerSub}>Manage farm workers and wages</div>
           </div>
