@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import Logo from './Logo';
 import { initials, avatarColor } from '../utils/format';
 
 const MORE_TABS = [
-  { key: 'Costs', emoji: '🧾', label: 'Costs', sub: 'Farm expenses' },
-  { key: 'Workers', emoji: '👷', label: 'Workers', sub: 'Roster & wages' },
-  { key: 'Hours & Pay', emoji: '⏱️', label: 'Hours & Pay', sub: 'Attendance' },
-  { key: 'Report', emoji: '📈', label: 'Report', sub: 'P&L overview', ownerOnly: true },
-  { key: 'Farm Assets', emoji: '🏗️', label: 'Farm Assets', sub: 'Equipment & assets', ownerOnly: true },
-  { key: 'Settings', emoji: '⚙️', label: 'Settings', sub: 'Configuration' },
-  { key: 'Import', emoji: '📥', label: 'Import', sub: 'Excel upload' },
-  { key: 'Admin Panel', emoji: '🔒', label: 'Admin', sub: 'Super admin', ownerOnly: true },
+  { key: 'Costs', emoji: 'ðŸ§¾', label: 'Costs', sub: 'Farm expenses' },
+  { key: 'Workers', emoji: 'ðŸ‘·', label: 'Workers', sub: 'Roster & wages' },
+  { key: 'Hours & Pay', emoji: 'â±ï¸', label: 'Hours & Pay', sub: 'Attendance' },
+  { key: 'Report', emoji: 'ðŸ“ˆ', label: 'Report', sub: 'P&L overview', ownerOnly: true },
+  { key: 'Farm Assets', emoji: '🏗', label: 'Farm Assets', sub: 'Equipment & assets' },
+  { key: 'Settings', emoji: 'âš™ï¸', label: 'Settings', sub: 'Configuration' },
+  { key: 'Import', emoji: 'ðŸ“¥', label: 'Import', sub: 'Excel upload' },
+  { key: 'Admin Panel', emoji: 'ðŸ”’', label: 'Admin', sub: 'Super admin', ownerOnly: true },
 ];
 
 const BOTTOM_PRIMARY = ['Dashboard', 'Fields', 'Sales & Market', 'Stock'];
@@ -52,7 +52,7 @@ export default function Layout({
           </div>
           <div className="mh-right">
             <button className="mobile-wa-btn" onClick={() => window.open('https://wa.me/', '_blank')}>
-              📱 WhatsApp
+              ðŸ“± WhatsApp
             </button>
             <div className="mobile-avatar" style={{ background: ac.bg }}>
               {initials(user?.username || '')}
@@ -78,24 +78,24 @@ export default function Layout({
       {/* Bottom nav */}
       <div className="bottom-nav">
         <button className={`bn-tab${activeTab === 'Dashboard' ? ' active' : ''}`} onClick={() => goTab('Dashboard')}>
-          <span className="bn-icon">📊</span>
+          <span className="bn-icon">ðŸ“Š</span>
           <span className="bn-label">Home</span>
         </button>
         <button className={`bn-tab${activeTab === 'Fields' ? ' active' : ''}`} onClick={() => goTab('Fields')}>
-          <span className="bn-icon">🌾</span>
+          <span className="bn-icon">ðŸŒ¾</span>
           <span className="bn-label">Fields</span>
         </button>
         <button className={`bn-tab${activeTab === 'Sales & Market' ? ' active' : ''}`} onClick={() => goTab('Sales & Market')}>
-          <span className="bn-icon">🚚</span>
+          <span className="bn-icon">ðŸšš</span>
           <span className="bn-label">Sales</span>
         </button>
         <button className={`bn-tab${activeTab === 'Stock' ? ' active' : ''}`} onClick={() => goTab('Stock')}>
-          <span className="bn-icon">📦</span>
+          <span className="bn-icon">ðŸ“¦</span>
           <span className="bn-label">Stock</span>
           {lowStockCount > 0 && <span className="bn-badge">{lowStockCount}</span>}
         </button>
         <button className={`bn-tab${isMore ? ' active' : ''}`} onClick={() => setShowMobileMore(true)}>
-          <span className="bn-icon">⋯</span>
+          <span className="bn-icon">â‹¯</span>
           <span className="bn-label">More</span>
         </button>
       </div>
