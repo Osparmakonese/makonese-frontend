@@ -135,13 +135,13 @@ export default function Fields() {
               <input style={S.input} type="date" value={form.plant_date} onChange={e => set('plant_date', e.target.value)} />
 
               <label style={S.label}>Notes</label>
-              <textarea style={S.textarea} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional notesâ€¦" />
+              <textarea style={S.textarea} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional notes..." />
 
               <button style={S.btn} type="submit" disabled={addMut.isPending}
                 onMouseEnter={e => { e.currentTarget.style.background = '#2d9e58'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = '#1a6b3a'; }}
               >
-                {addMut.isPending ? 'Savingâ€¦' : 'ï¼‹ Open Field'}
+                {addMut.isPending ? 'Saving...' : '+ Open Field'}
               </button>
             </form>
           </div>
@@ -150,7 +150,7 @@ export default function Fields() {
         {/* Right: Field list */}
         <div>
           <div style={S.sectionTitle}>All Fields ({fields.length})</div>
-          {isLoading && <p style={{ fontSize: 12, color: '#9ca3af' }}>Loadingâ€¦</p>}
+          {isLoading && <p style={{ fontSize: 12, color: '#9ca3af' }}>Loading...</p>}
           <div style={S.fieldGrid}>
             {fields.map(f => {
               const fRev = f.revenue || 0;
@@ -166,7 +166,7 @@ export default function Fields() {
                   </div>
                   <div style={S.fcardBody} onClick={() => setSelectedField(f)}>
                     <div style={S.fcardName}>{f.name}</div>
-                    <div style={S.fcardMeta}>{f.size_ha || f.hectares} ha Â· Planted {f.plant_date || 'â€”'}</div>
+                    <div style={S.fcardMeta}>{f.size_ha || f.hectares} ha - Planted {f.plant_date || '"”'}</div>
                     <div style={S.fcardStats}>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#1a6b3a')}>{fmt(fRev)}</div><div style={S.fcardStatLabel}>Revenue</div></div>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#c0392b')}>{fmt(fCost)}</div><div style={S.fcardStatLabel}>Costs</div></div>

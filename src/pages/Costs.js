@@ -69,7 +69,7 @@ export default function Costs() {
 
           <form style={S.card} onSubmit={submit}>
             <div className="form-grid-2" style={S.row2}>
-              <div><label style={S.label}>Field</label><select style={S.input} value={form.field} onChange={e => set('field', e.target.value)} required><option value="">Selectâ€¦</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
+              <div><label style={S.label}>Field</label><select style={S.input} value={form.field} onChange={e => set('field', e.target.value)} required><option value="">Select...</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
               <div><label style={S.label}>Category</label><select style={S.input} value={form.category} onChange={e => set('category', e.target.value)}>{CATEGORIES.map(([v,l]) => <option key={v+l} value={v}>{l}</option>)}</select></div>
             </div>
             <label style={S.label}>Description</label>
@@ -80,7 +80,7 @@ export default function Costs() {
             </div>
             <label style={S.label}>Logged By</label>
             <input style={S.input} value={form.logged_by} onChange={e => set('logged_by', e.target.value)} placeholder="Your name" />
-            <button style={S.btn} type="submit" disabled={mut.isPending}>{mut.isPending ? 'Savingâ€¦' : 'ï¼‹ Save Expense'}</button>
+            <button style={S.btn} type="submit" disabled={mut.isPending}>{mut.isPending ? 'Saving...' : '+ Save Expense'}</button>
             {mut.isError && <p style={S.error}>{mut.error?.response?.data?.detail || 'Failed'}</p>}
           </form>
         </div>
@@ -88,7 +88,7 @@ export default function Costs() {
         {/* Right */}
         <div>
           <div style={S.sectionTitle}>Expense Log</div>
-          {isLoading ? <p style={{ fontSize: 11, color: '#9ca3af' }}>Loadingâ€¦</p> : (
+          {isLoading ? <p style={{ fontSize: 11, color: '#9ca3af' }}>Loading...</p> : (
             <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
               <table style={S.table}>
                 <thead><tr>
@@ -103,7 +103,7 @@ export default function Costs() {
                         {ex.is_auto && <span className="pill-blue" style={{ marginLeft: 6 }}>AUTO</span>}
                       </td>
                       <td style={S.td}>{ex.category}</td>
-                      <td style={S.td}>{ex.field_name || 'â€”'}</td>
+                      <td style={S.td}>{ex.field_name || '"”'}</td>
                       <td style={S.td}>{ex.date}</td>
                       <td style={{ ...S.td, fontWeight: 700, color: '#c0392b' }}>{fmt(ex.amount)}</td>
                     </tr>
