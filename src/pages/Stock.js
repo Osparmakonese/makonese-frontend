@@ -97,7 +97,7 @@ export default function Stock() {
                 <div><label style={S.label}>Field</label><select style={S.input} value={usageForm.field} onChange={e => setU('field', e.target.value)} required><option value="">Select...</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
               </div>
               <div className="form-grid-2" style={S.row2}>
-                <div><label style={S.label}>opening_qty</label><input style={S.input} type="number" min="0" step="0.01" value={usageForm.opening_qty} onChange={e => setU('opening_qty', e.target.value)} required placeholder="0" /></div>
+                <div><label style={S.label}>Qty Used</label><input style={S.input} type="number" min="0" step="0.01" value={usageForm.opening_qty} onChange={e => setU('opening_qty', e.target.value)} required placeholder="0" /></div>
                 <div><label style={S.label}>Date</label><input style={S.input} type="date" value={usageForm.date} onChange={e => setU('date', e.target.value)} /></div>
               </div>
               {selectedItem && qtyUsed > 0 && (
@@ -105,7 +105,7 @@ export default function Stock() {
               )}
               <label style={S.label}>Notes</label>
               <input style={S.input} value={usageForm.notes} onChange={e => setU('notes', e.target.value)} placeholder="Optional" />
-              <button style={S.btn} type="submit" disabled={usageMut.isPending}>{usageMut.isPending ? 'Logging...' : 'ðŸ“‹ Log Usage'}</button>
+              <button style={S.btn} type="submit" disabled={usageMut.isPending}>{usageMut.isPending ? '+ Log Usage'}</button>
             </form>
           </div>
         </div>
