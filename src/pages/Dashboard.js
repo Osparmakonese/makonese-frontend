@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboard, getLowStock } from '../api/farmApi';
 import { fmt, cropEmoji, cropGradient, initials, avatarColor, IMAGES, cropImage } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 import FieldModal from '../components/FieldModal';
 
-/* â”€â”€ Skeleton loader â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Skeleton loader Ã¢â€â‚¬Ã¢â€â‚¬ */
 function Skeleton({ w, h, r, mb }) {
   return <div className="skeleton" style={{ width: w || '100%', height: h || 16, borderRadius: r || 6, marginBottom: mb || 0 }} />;
 }
@@ -25,7 +25,7 @@ function SkeletonDash() {
   );
 }
 
-/* â”€â”€ Styles â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Styles Ã¢â€â‚¬Ã¢â€â‚¬ */
 const S = {
   hero: {
     height: 170, borderRadius: 14,
@@ -193,7 +193,7 @@ export default function Dashboard() {
   const costs = d.total_costs || 0;
   const wages = d.wages_owed || 0;
   const net = revenue - costs - wages;
-  const fields = d.fields || [];
+  const fields = d.active_fields || d.fields || [];
   const activeFields = fields.filter(f => f.status === 'active');
   const breakdown = d.cost_breakdown || {};
   const trips = d.recent_trips || [];
@@ -206,7 +206,7 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* â”€â”€ Hero Banner â”€â”€ */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Hero Banner Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="hero-banner" style={S.hero}>
         <img src={IMAGES.dam} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={S.heroOverlay} />
@@ -222,13 +222,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* â”€â”€ Metric Cards (desktop) â”€â”€ */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Metric Cards (desktop) Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="metric-grid-desktop" style={S.metricsGrid}>
         {[
-          { label: 'Total Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: '💰', pct: 100, trend: 'Season total' },
-          { label: 'Total Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: '📉', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of revenue` },
-          { label: 'Wages Owed', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: '👷', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
-          { label: 'Net Position', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? 'âœ“' : '^', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profitable' : 'Loss' },
+          { label: 'Total Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: 'ðŸ’°', pct: 100, trend: 'Season total' },
+          { label: 'Total Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: 'ðŸ“‰', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of revenue` },
+          { label: 'Wages Owed', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: 'ðŸ‘·', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
+          { label: 'Net Position', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? 'Ã¢Å“â€œ' : '^', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profitable' : 'Loss' },
         ].map((m, i) => (
           <div key={i} style={S.metricCard}>
             <div style={S.metricIcon(m.bg)}>{m.icon}</div>
@@ -242,13 +242,13 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* â”€â”€ Metric Cards (mobile) â”€â”€ */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Metric Cards (mobile) Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="metric-grid-mobile">
         {[
-          { label: 'Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: '💰', pct: 100, trend: 'Season total' },
-          { label: 'Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: '📉', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of rev` },
-          { label: 'Wages', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: '👷', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
-          { label: 'Net', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? 'âœ“' : '^', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profit' : 'Loss' },
+          { label: 'Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: 'ðŸ’°', pct: 100, trend: 'Season total' },
+          { label: 'Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: 'ðŸ“‰', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of rev` },
+          { label: 'Wages', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: 'ðŸ‘·', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
+          { label: 'Net', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? 'Ã¢Å“â€œ' : '^', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profit' : 'Loss' },
         ].map((m, i) => (
           <div key={i} className="metric-card-mobile">
             <div className="mc-lbl"><div className="mc-ico" style={{ background: m.bg }}>{m.icon}</div> {m.label}</div>
@@ -259,11 +259,11 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* â”€â”€ Two Column Layout â”€â”€ */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Two Column Layout Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="two-col-layout content-area" style={S.twoCol}>
         {/* Left */}
         <div>
-          <div style={S.sectionTitle}>🌾 Active Fields</div>
+          <div style={S.sectionTitle}>ðŸŒ¾ Active Fields</div>
           <div className="field-cards-desktop" style={S.fieldGrid}>
             {activeFields.slice(0, 4).map(f => {
               const fRev = f.revenue || 0;
@@ -284,7 +284,7 @@ export default function Dashboard() {
                   </div>
                   <div style={S.fcardBody}>
                     <div style={S.fcardName}>{f.name}</div>
-                    <div style={S.fcardMeta}>{f.size_hectares || f.hectares} ha - {f.plant_date || 'â€”'}</div>
+                    <div style={S.fcardMeta}>{f.size_hectares || f.hectares} ha - {f.plant_date || 'Ã¢â‚¬â€'}</div>
                     <div className={`pill-${f.status === 'active' ? 'green' : 'amber'}`} style={{ marginBottom: 8 }}>{f.status}</div>
                     <div style={S.fcardStats}>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#1a6b3a')}>{fmt(fRev)}</div><div style={S.fcardStatLabel}>Revenue</div></div>
@@ -326,7 +326,7 @@ export default function Dashboard() {
           </div>
 
           {/* Recent trips */}
-          <div style={S.sectionTitle}>🚛 Recent Market Trips</div>
+          <div style={S.sectionTitle}>ðŸš› Recent Market Trips</div>
           <div style={{ position: 'relative', height: 80, borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
             <img src={IMAGES.truck} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(180,40,0,0.78), rgba(0,0,0,0.2))' }} />
@@ -348,8 +348,8 @@ export default function Dashboard() {
                       <tr key={t.id || i}>
                         <td style={S.td}>{t.location || t.market}</td>
                         <td style={S.td}>{t.date}</td>
-                        <td style={S.td}>{t.field_count || t.fields || 'â€”'}</td>
-                        <td style={S.td}>{t.total_crates || t.crates || 'â€”'}</td>
+                        <td style={S.td}>{t.field_count || t.fields || 'Ã¢â‚¬â€'}</td>
+                        <td style={S.td}>{t.total_crates || t.crates || 'Ã¢â‚¬â€'}</td>
                         <td style={{ ...S.td, fontWeight: 700, color: '#1a6b3a' }}>{fmt(t.revenue || t.total_revenue)}</td>
                         <td style={S.td}><span className="pill-green">Done</span></td>
                       </tr>
@@ -363,7 +363,7 @@ export default function Dashboard() {
                     <div className="trip-icon-mobile"><img src={IMAGES.truck} alt="" /></div>
                     <div className="trip-info-mobile">
                       <div className="trip-market-mobile">{t.location || t.market}</div>
-                      <div className="trip-meta-mobile">{t.total_crates || t.crates || 'â€”'} crates - {t.field_count || t.fields || 'â€”'} fields</div>
+                      <div className="trip-meta-mobile">{t.total_crates || t.crates || 'Ã¢â‚¬â€'} crates - {t.field_count || t.fields || 'Ã¢â‚¬â€'} fields</div>
                     </div>
                     <div>
                       <div className="trip-rev-mobile">{fmt(t.revenue || t.total_revenue)}</div>
@@ -390,7 +390,7 @@ export default function Dashboard() {
 
           {/* Cost breakdown */}
           <div style={S.rightCard}>
-            <div style={{ ...S.sectionTitle, marginBottom: 14 }}>📊 Cost Breakdown</div>
+            <div style={{ ...S.sectionTitle, marginBottom: 14 }}>ðŸ“Š Cost Breakdown</div>
             {Object.entries(breakdown).map(([cat, val], i) => (
               <div key={cat} style={S.barRow}>
                 <span style={S.barLabel}>{cat}</span>
@@ -405,7 +405,7 @@ export default function Dashboard() {
 
           {/* Stock alerts */}
           <div style={S.rightCard}>
-            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>⚠️ Stock Alerts</div>
+            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>âš ï¸ Stock Alerts</div>
             {(lowStock.length > 0 ? lowStock : (d.low_stock || [])).slice(0, 3).map((s, i) => {
               const pct = s.opening_qty > 0 ? ((s.remaining ?? 0) / s.opening_qty) * 100 : 0;
               return (
@@ -430,7 +430,7 @@ export default function Dashboard() {
 
           {/* Wages owed */}
           <div style={S.rightCard}>
-            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>💰 Wages Owed</div>
+            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>ðŸ’° Wages Owed</div>
             {workers.filter(w => (w.wages_owed || w.owed || 0) > 0).slice(0, 5).map((w, i) => {
               const ac = avatarColor(w.name || '');
               return (
