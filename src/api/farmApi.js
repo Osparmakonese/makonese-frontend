@@ -1,4 +1,4 @@
-import api from './axios';
+﻿import api from './axios';
 
 // Dashboard
 export const getDashboard = () => api.get('/dashboard/').then(r => r.data);
@@ -85,4 +85,4 @@ export const deactivateUser = (userId) => api.post('/admin-panel/deactivate_user
 export const reactivateUser = (userId) => api.post('/admin-panel/reactivate_user/', { user_id: userId }).then(r => r.data);
 export const getAuditTrail = () => api.get('/admin-panel/audit_trail/').then(r => r.data);
 
-export const deleteWorker = (id) => api.delete(/workers//);
+export const deleteWorker = (id) => api.delete(`/workers/${id}/`);
