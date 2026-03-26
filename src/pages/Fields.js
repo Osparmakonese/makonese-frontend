@@ -6,7 +6,7 @@ import FieldModal from '../components/FieldModal';
 
 const CROPS = ['Tomatoes', 'Maize', 'Tobacco', 'Vegetables', 'Other'];
 
-const empty = { name: '', crop: 'Tomatoes', size_hectares: '', plant_date: today(), notes: '' };
+const empty = { name: '', crop: 'Tomatoes', size_ha: '', plant_date: today(), notes: '' };
 
 const S = {
   twoCol: { display: 'grid', gridTemplateColumns: '310px 1fr', gap: 20 },
@@ -105,9 +105,9 @@ export default function Fields() {
     e.preventDefault();
     const errs = {};
     if (!form.name.trim()) errs.name = 'Required';
-    if (!form.size_hectares || parseFloat(form.size_hectares) <= 0) errs.size_hectares = 'Must be > 0';
+    if (!form.size_ha || parseFloat(form.size_ha) <= 0) errs.size_ha = 'Must be > 0';
     if (Object.keys(errs).length) { setFormErrors(errs); return; }
-    addMut.mutate({ ...form, size_hectares: parseFloat(form.size_hectares) });
+    addMut.mutate({ ...form, size_ha: parseFloat(form.size_ha) });
   };
 
   return (
@@ -128,8 +128,8 @@ export default function Fields() {
               </select>
 
               <label style={S.label}>Size (hectares)</label>
-              <input style={S.input} type="number" step="0.01" min="0" value={form.size_hectares} onChange={e => set('size_hectares', e.target.value)} placeholder="2.5" />
-              {formErrors.size_hectares && <div style={S.error}>{formErrors.size_hectares}</div>}
+              <input style={S.input} type="number" step="0.01" min="0" value={form.size_ha} onChange={e => set('size_ha', e.target.value)} placeholder="2.5" />
+              {formErrors.size_ha && <div style={S.error}>{formErrors.size_ha}</div>}
 
               <label style={S.label}>Planting Date</label>
               <input style={S.input} type="date" value={form.plant_date} onChange={e => set('plant_date', e.target.value)} />
@@ -166,7 +166,7 @@ export default function Fields() {
                   </div>
                   <div style={S.fcardBody} onClick={() => setSelectedField(f)}>
                     <div style={S.fcardName}>{f.name}</div>
-                    <div style={S.fcardMeta}>{f.size_hectares || f.hectares} ha Â· Planted {f.plant_date || 'â€”'}</div>
+                    <div style={S.fcardMeta}>{f.size_ha || f.hectares} ha Â· Planted {f.plant_date || 'â€”'}</div>
                     <div style={S.fcardStats}>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#1a6b3a')}>{fmt(fRev)}</div><div style={S.fcardStatLabel}>Revenue</div></div>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#c0392b')}>{fmt(fCost)}</div><div style={S.fcardStatLabel}>Costs</div></div>

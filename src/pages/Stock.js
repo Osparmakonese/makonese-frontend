@@ -6,7 +6,7 @@ import { fmt, today, IMAGES } from '../utils/format';
 const CATEGORIES = ['Chemical', 'Fertiliser', 'Seed', 'Fuel', 'Equipment', 'Other'];
 const UNITS = ['L', 'kg', 'bags', 'units', 'bottles', 'packs'];
 const emptyItem = { name: '', category: 'Chemical', opening_qty: '', unit: 'L', unit_cost: '', alert_threshold: '' };
-const emptyUsage = { item: '', field: '', quantity: '', date: today(), notes: '' };
+const emptyUsage = { item: '', field: '', opening_qty: '', date: today(), notes: '' };
 
 const S = {
   banner: {
@@ -53,7 +53,7 @@ export default function Stock() {
   const setU = (k, v) => setUsageForm(p => ({ ...p, [k]: v }));
 
   const selectedItem = stock.find(s => String(s.id) === String(usageForm.item));
-  const qtyUsed = parseFloat(usageForm.quantity) || 0;
+  const qtyUsed = parseFloat(usageForm.opening_qty) || 0;
   const remainAfter = selectedItem ? (selectedItem.remaining ?? selectedItem.opening_qty) - qtyUsed : null;
   const costPreview = selectedItem ? qtyUsed * (selectedItem.unit_cost || 0) : 0;
 
@@ -91,13 +91,13 @@ export default function Stock() {
 
           <div style={S.card}>
             <div style={S.cardTitle}>Log Usage</div>
-            <form onSubmit={e => { e.preventDefault(); usageMut.mutate({ item: parseInt(usageForm.item), field: parseInt(usageForm.field), quantity: parseFloat(usageForm.quantity), date: usageForm.date, notes: usageForm.notes }); }}>
+            <form onSubmit={e => { e.preventDefault(); usageMut.mutate({ item: parseInt(usageForm.item), field: parseInt(usageForm.field), opening_qty: parseFloat(usageForm.opening_qty), date: usageForm.date, notes: usageForm.notes }); }}>
               <div className="form-grid-2" style={S.row2}>
                 <div><label style={S.label}>Item</label><select style={S.input} value={usageForm.item} onChange={e => setU('item', e.target.value)} required><option value="">Selectâ€¦</option>{stock.map(s => <option key={s.id} value={s.id}>{s.name} ({s.remaining ?? s.opening_qty} {s.unit})</option>)}</select></div>
                 <div><label style={S.label}>Field</label><select style={S.input} value={usageForm.field} onChange={e => setU('field', e.target.value)} required><option value="">Selectâ€¦</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
               </div>
               <div className="form-grid-2" style={S.row2}>
-                <div><label style={S.label}>Quantity</label><input style={S.input} type="number" min="0" step="0.01" value={usageForm.quantity} onChange={e => setU('quantity', e.target.value)} required placeholder="0" /></div>
+                <div><label style={S.label}>opening_qty</label><input style={S.input} type="number" min="0" step="0.01" value={usageForm.opening_qty} onChange={e => setU('opening_qty', e.target.value)} required placeholder="0" /></div>
                 <div><label style={S.label}>Date</label><input style={S.input} type="date" value={usageForm.date} onChange={e => setU('date', e.target.value)} /></div>
               </div>
               {selectedItem && qtyUsed > 0 && (
@@ -138,7 +138,7 @@ export default function Stock() {
                     <div style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>RECENT:</div>
                     {itemUsage.map((u, i) => (
                       <div key={i} style={{ fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
-                        {u.date}: {u.quantity} {s.unit} â†’ {u.field_name || `Field #${u.field}`}
+                        {u.date}: {u.opening_qty} {s.unit} â†’ {u.field_name || `Field #${u.field}`}
                       </div>
                     ))}
                   </div>

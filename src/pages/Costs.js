@@ -4,7 +4,7 @@ import { getFields, getExpenses, createExpense } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
 
 const CATEGORIES = ['Seed', 'Fertiliser', 'Chemical', 'Fuel', 'Transport', 'Equipment', 'Labour', 'Other'];
-const empty = { field: '', category: 'Seed', description: '', amount: '', date: today(), logged_by: '' };
+const empty = { field: '', category: 'Seed', description: '', amount: '', expense_date: today(), logged_by: '' };
 
 const S = {
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 },
@@ -76,7 +76,7 @@ export default function Costs() {
             <input style={S.input} value={form.description} onChange={e => set('description', e.target.value)} placeholder="e.g. 50kg Compound D" />
             <div className="form-grid-2" style={S.row2}>
               <div><label style={S.label}>Amount ($)</label><input style={S.input} type="number" min="0" step="0.01" value={form.amount} onChange={e => set('amount', e.target.value)} required placeholder="0.00" /></div>
-              <div><label style={S.label}>Date</label><input style={S.input} type="date" value={form.date} onChange={e => set('date', e.target.value)} /></div>
+              <div><label style={S.label}>Date</label><input style={S.input} type="expense_date" value={form.date} onChange={e => set('expense_date', e.target.value)} /></div>
             </div>
             <label style={S.label}>Logged By</label>
             <input style={S.input} value={form.logged_by} onChange={e => set('logged_by', e.target.value)} placeholder="Your name" />
