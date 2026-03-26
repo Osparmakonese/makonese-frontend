@@ -225,10 +225,10 @@ export default function Dashboard() {
       {/* â”€â”€ Metric Cards (desktop) â”€â”€ */}
       <div className="metric-grid-desktop" style={S.metricsGrid}>
         {[
-          { label: 'Total Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: 'ðŸ’°', pct: 100, trend: 'Season total' },
-          { label: 'Total Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: 'ðŸ“‰', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of revenue` },
-          { label: 'Wages Owed', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: 'ðŸ‘·', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
-          { label: 'Net Position', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? 'âœ“' : 'â†“', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profitable' : 'Loss' },
+          { label: 'Total Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: '$', pct: 100, trend: 'Season total' },
+          { label: 'Total Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: '%', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of revenue` },
+          { label: 'Wages Owed', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: 'W', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
+          { label: 'Net Position', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? 'âœ“' : '^', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profitable' : 'Loss' },
         ].map((m, i) => (
           <div key={i} style={S.metricCard}>
             <div style={S.metricIcon(m.bg)}>{m.icon}</div>
@@ -245,10 +245,10 @@ export default function Dashboard() {
       {/* â”€â”€ Metric Cards (mobile) â”€â”€ */}
       <div className="metric-grid-mobile">
         {[
-          { label: 'Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: 'ðŸ’°', pct: 100, trend: 'Season total' },
-          { label: 'Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: 'ðŸ“‰', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of rev` },
-          { label: 'Wages', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: 'ðŸ‘·', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
-          { label: 'Net', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? 'âœ“' : 'â†“', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profit' : 'Loss' },
+          { label: 'Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: '$', pct: 100, trend: 'Season total' },
+          { label: 'Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: '%', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of rev` },
+          { label: 'Wages', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: 'W', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
+          { label: 'Net', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? 'âœ“' : '^', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profit' : 'Loss' },
         ].map((m, i) => (
           <div key={i} className="metric-card-mobile">
             <div className="mc-lbl"><div className="mc-ico" style={{ background: m.bg }}>{m.icon}</div> {m.label}</div>
@@ -263,7 +263,7 @@ export default function Dashboard() {
       <div className="two-col-layout content-area" style={S.twoCol}>
         {/* Left */}
         <div>
-          <div style={S.sectionTitle}>ðŸŒ¾ Active Fields</div>
+          <div style={S.sectionTitle}>~ Active Fields</div>
           <div className="field-cards-desktop" style={S.fieldGrid}>
             {activeFields.slice(0, 4).map(f => {
               const fRev = f.revenue || 0;
@@ -430,7 +430,7 @@ export default function Dashboard() {
 
           {/* Wages owed */}
           <div style={S.rightCard}>
-            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>ðŸ’° Wages Owed</div>
+            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>$ Wages Owed</div>
             {workers.filter(w => (w.wages_owed || w.owed || 0) > 0).slice(0, 5).map((w, i) => {
               const ac = avatarColor(w.name || '');
               return (
