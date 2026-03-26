@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+ï»¿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getWorkers, createWorker, deleteWorker } from '../api/farmApi';
 import { fmt, initials, avatarColor, IMAGES } from '../utils/format';
@@ -12,8 +12,7 @@ const empty = { name: '', role: 'field_worker', pay_type: 'daily', rate: '' };
 const S = {
   twoCol: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 },
   card: { background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, padding:18, marginBottom:16 },
-  label: { display:'block', fontSize:10, fontWeight:600, color:'#6b7280', marginBottom
-3, marginTop:8 },
+  label: { display:'block', fontSize:10, fontWeight:600, color:'#6b7280', marginBottom:3, marginTop:8 },
   input: { width:'100%', padding:'8px 10px', border:'1px solid #e5e7eb', borderRadius:7, fontSize:12, outline:'none', color:'#111827' },
   row2: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 },
   btn: { width:'100%', padding:'10px', background:'#1a6b3a', color:'#fff', border:'none', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer', marginTop:12 },
@@ -87,7 +86,7 @@ export default function Workers() {
               <div style={S.avatar(ac.bg)}>{initials(w.name)}</div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontWeight:600, fontSize:13, color:'#111827' }}>{w.name}</div>
-                <div style={{ fontSize:10, color:'uÆff' }}>{roleLabel(w.role)} - {payLabel(w.pay_type)} - {fmt(w.rate)}{RATE_LABELS[w.pay_type] || ''}</div>
+                <div style={{ fontSize:10, color:'uÃ†ff' }}>{roleLabel(w.role)} - {payLabel(w.pay_type)} - {fmt(w.rate)}{RATE_LABELS[w.pay_type] || ''}</div>
               </div>
               <div style={{ textAlign:'right', flexShrink:0, display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4 }}>
                 <div style={{ fontWeight:700, fontSize:13, color: owed > 0 ? '#c0392b' : '#1a6b3a' }}>{fmt(owed)}</div>
@@ -104,7 +103,7 @@ export default function Workers() {
             </div>
           );
         })}
-        {!isLoading && workers.length === 0 && <p style={{ fontSize:11, color:'uÆff' }}>No workers added yet.</p>}
+        {!isLoading && workers.length === 0 && <p style={{ fontSize:11, color:'uÃ†ff' }}>No workers added yet.</p>}
       </div>
       <ConfirmModal
         isOpen={confirmOpen}
