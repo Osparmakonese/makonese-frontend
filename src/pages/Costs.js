@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFields, getExpenses, createExpense } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
 
-const CATEGORIES = ['Seed', 'Fertiliser', 'Chemical', 'Fuel', 'Transport', 'Equipment', 'Labour', 'Other'];
-const empty = { field: '', category: 'Seed', description: '', amount: '', expense_date: today(), logged_by: '' };
+const CATEGORIES = [['seeds_seedlings','Seed'],['fertilizer_chemicals','Fertiliser'],['fertilizer_chemicals','Chemical'],['transport_fuel','Fuel'],['transport_fuel','Transport'],['equipment_tools','Equipment'],['food_meals','Labour'],['other','Other']];
+const empty = { field: '', category: 'seeds_seedlings', description: '', amount: '', expense_date: today(), logged_by: '' };
 
 const S = {
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 },
@@ -70,7 +70,7 @@ export default function Costs() {
           <form style={S.card} onSubmit={submit}>
             <div className="form-grid-2" style={S.row2}>
               <div><label style={S.label}>Field</label><select style={S.input} value={form.field} onChange={e => set('field', e.target.value)} required><option value="">Selectâ€¦</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
-              <div><label style={S.label}>Category</label><select style={S.input} value={form.category} onChange={e => set('category', e.target.value)}>{CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></div>
+              <div><label style={S.label}>Category</label><select style={S.input} value={form.category} onChange={e => set('category', e.target.value)}>{CATEGORIES.map(([v,l]) => <option key={v+l} value={v}>{l}</option>)}</select></div>
             </div>
             <label style={S.label}>Description</label>
             <input style={S.input} value={form.description} onChange={e => set('description', e.target.value)} placeholder="e.g. 50kg Compound D" />

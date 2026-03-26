@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getStock, createStockItem, logStockUsage, getStockUsage, getFields } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
 
-const CATEGORIES = ['Chemical', 'Fertiliser', 'Seed', 'Fuel', 'Equipment', 'Other'];
-const UNITS = ['L', 'kg', 'bags', 'units', 'bottles', 'packs'];
-const emptyItem = { name: '', category: 'Chemical', opening_qty: '', unit: 'L', unit_cost: '', alert_threshold: '' };
+const CATEGORIES = [['chemical','Chemical'],['fertilizer','Fertiliser'],['seed','Seed'],['fuel','Fuel'],['equipment','Equipment'],['other','Other']];
+const UNITS = [['litres','L'],['kg','kg'],['bags','bags'],['units','units'],['litres','bottles'],['units','packs']];
+const emptyItem = { name: '', category: 'chemical', opening_qty: '', unit: 'litres', unit_cost: '', alert_threshold: '' };
 const emptyUsage = { item: '', field: '', opening_qty: '', date: today(), notes: '' };
 
 const S = {
@@ -76,11 +76,11 @@ export default function Stock() {
             <form onSubmit={e => { e.preventDefault(); addMut.mutate({ ...itemForm, opening_qty: parseFloat(itemForm.opening_qty) || 0, unit_cost: parseFloat(itemForm.unit_cost) || 0, alert_threshold: parseFloat(itemForm.alert_threshold) || 0 }); }}>
               <div className="form-grid-2" style={S.row2}>
                 <div><label style={S.label}>Name</label><input style={S.input} value={itemForm.name} onChange={e => setI('name', e.target.value)} placeholder="e.g. Lambda Cyhalothrin" required /></div>
-                <div><label style={S.label}>Category</label><select style={S.input} value={itemForm.category} onChange={e => setI('category', e.target.value)}>{CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></div>
+                <div><label style={S.label}>Category</label><select style={S.input} value={itemForm.category} onChange={e => setI('category', e.target.value)}>{CATEGORIES.map(([v,l]) => <option key={v+l} value={v}>{l}</option>)}</select></div>
               </div>
               <div className="form-grid-3" style={S.row3}>
                 <div><label style={S.label}>Opening Qty</label><input style={S.input} type="number" min="0" step="0.01" value={itemForm.opening_qty} onChange={e => setI('opening_qty', e.target.value)} required placeholder="0" /></div>
-                <div><label style={S.label}>Unit</label><select style={S.input} value={itemForm.unit} onChange={e => setI('unit', e.target.value)}>{UNITS.map(u => <option key={u}>{u}</option>)}</select></div>
+                <div><label style={S.label}>Unit</label><select style={S.input} value={itemForm.unit} onChange={e => setI('unit', e.target.value)}>{UNITS.map(([v,l]) => <option key={v+l} value={v}>{l}</option>)}</select></div>
                 <div><label style={S.label}>Unit Cost ($)</label><input style={S.input} type="number" min="0" step="0.01" value={itemForm.unit_cost} onChange={e => setI('unit_cost', e.target.value)} placeholder="0.00" /></div>
               </div>
               <label style={S.label}>Alert Threshold</label>
