@@ -225,9 +225,9 @@ export default function Dashboard() {
       {/* Ã¢â€â‚¬Ã¢â€â‚¬ Metric Cards (desktop) Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="metric-grid-desktop" style={S.metricsGrid}>
         {[
-          { label: 'Total Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: 'ðŸ’°', pct: 100, trend: 'Season total' },
-          { label: 'Total Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: 'ðŸ“‰', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of revenue` },
-          { label: 'Wages Owed', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: 'ðŸ‘·', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
+          { label: 'Total Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: '-', pct: 100, trend: 'Season total' },
+          { label: 'Total Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: '-', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of revenue` },
+          { label: 'Wages Owed', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: '-', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
           { label: 'Net Position', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? 'Ã¢Å“â€œ' : '^', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profitable' : 'Loss' },
         ].map((m, i) => (
           <div key={i} style={S.metricCard}>
@@ -245,9 +245,9 @@ export default function Dashboard() {
       {/* Ã¢â€â‚¬Ã¢â€â‚¬ Metric Cards (mobile) Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="metric-grid-mobile">
         {[
-          { label: 'Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: 'ðŸ’°', pct: 100, trend: 'Season total' },
-          { label: 'Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: 'ðŸ“‰', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of rev` },
-          { label: 'Wages', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: 'ðŸ‘·', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
+          { label: 'Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: '-', pct: 100, trend: 'Season total' },
+          { label: 'Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: '-', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of rev` },
+          { label: 'Wages', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: '-', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
           { label: 'Net', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? 'Ã¢Å“â€œ' : '^', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profit' : 'Loss' },
         ].map((m, i) => (
           <div key={i} className="metric-card-mobile">
@@ -263,7 +263,7 @@ export default function Dashboard() {
       <div className="two-col-layout content-area" style={S.twoCol}>
         {/* Left */}
         <div>
-          <div style={S.sectionTitle}>ðŸŒ¾ Active Fields</div>
+          <div style={S.sectionTitle}>🌾 Active Fields</div>
           <div className="field-cards-desktop" style={S.fieldGrid}>
             {activeFields.slice(0, 4).map(f => {
               const fRev = f.revenue || 0;
@@ -284,7 +284,7 @@ export default function Dashboard() {
                   </div>
                   <div style={S.fcardBody}>
                     <div style={S.fcardName}>{f.name}</div>
-                    <div style={S.fcardMeta}>{f.size_hectares || f.hectares} ha - {f.plant_date || 'Ã¢â‚¬â€'}</div>
+                    <div style={S.fcardMeta}>{f.size_ha || f.hectares || f.size_hectares} ha - {f.plant_date || 'Ã¢â‚¬â€'}</div>
                     <div className={`pill-${f.status === 'active' ? 'green' : 'amber'}`} style={{ marginBottom: 8 }}>{f.status}</div>
                     <div style={S.fcardStats}>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#1a6b3a')}>{fmt(fRev)}</div><div style={S.fcardStatLabel}>Revenue</div></div>
@@ -313,7 +313,7 @@ export default function Dashboard() {
                     <span className="fcm-badge" style={{ color: f.status === 'active' ? '#1a6b3a' : '#c97d1a' }}>{f.status}</span>
                   </div>
                   <div className="fcm-body">
-                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{f.size_hectares || f.hectares} ha - {f.crop}</div>
+                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{f.size_ha || f.hectares || f.size_hectares} ha - {f.crop}</div>
                     <div className="fcm-stats">
                       <div className="fcm-stat"><div className="fv" style={{ color: '#1a6b3a' }}>{fmt(mfRev)}</div><div className="fl">Rev</div></div>
                       <div className="fcm-stat"><div className="fv" style={{ color: '#c0392b' }}>{fmt(mfCost)}</div><div className="fl">Cost</div></div>
@@ -326,7 +326,7 @@ export default function Dashboard() {
           </div>
 
           {/* Recent trips */}
-          <div style={S.sectionTitle}>ðŸš› Recent Market Trips</div>
+          <div style={S.sectionTitle}>🚛 Recent Market Trips</div>
           <div style={{ position: 'relative', height: 80, borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
             <img src={IMAGES.truck} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(180,40,0,0.78), rgba(0,0,0,0.2))' }} />
@@ -390,7 +390,7 @@ export default function Dashboard() {
 
           {/* Cost breakdown */}
           <div style={S.rightCard}>
-            <div style={{ ...S.sectionTitle, marginBottom: 14 }}>ðŸ“Š Cost Breakdown</div>
+            <div style={{ ...S.sectionTitle, marginBottom: 14 }}>📊 Cost Breakdown</div>
             {Object.entries(breakdown).map(([cat, val], i) => (
               <div key={cat} style={S.barRow}>
                 <span style={S.barLabel}>{cat}</span>
@@ -405,7 +405,7 @@ export default function Dashboard() {
 
           {/* Stock alerts */}
           <div style={S.rightCard}>
-            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>âš ï¸ Stock Alerts</div>
+            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>⚠️ Stock Alerts</div>
             {(lowStock.length > 0 ? lowStock : (d.low_stock || [])).slice(0, 3).map((s, i) => {
               const pct = s.opening_qty > 0 ? ((s.remaining ?? 0) / s.opening_qty) * 100 : 0;
               return (
