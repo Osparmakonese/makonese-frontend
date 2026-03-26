@@ -6,7 +6,7 @@ import FieldModal from '../components/FieldModal';
 
 const CROPS = ['Tomatoes', 'Maize', 'Tobacco', 'Vegetables', 'Other'];
 
-const empty = { name: '', crop: 'Tomatoes', size_ha: '', plant_date: today(), notes: '' };
+const empty = { name: '', crop: 'tomatoes', size_ha: '', plant_date: today(), notes: '' };
 
 const S = {
   twoCol: { display: 'grid', gridTemplateColumns: '310px 1fr', gap: 20 },
@@ -124,7 +124,7 @@ export default function Fields() {
 
               <label style={S.label}>Crop</label>
               <select style={S.input} value={form.crop} onChange={e => set('crop', e.target.value)}>
-                {CROPS.map(c => <option key={c}>{c}</option>)}
+                <option value='tomatoes'>Tomatoes</option><option value='maize'>Maize</option><option value='tobacco'>Tobacco</option><option value='vegetables'>Vegetables</option><option value='other'>Other</option>
               </select>
 
               <label style={S.label}>Size (hectares)</label>

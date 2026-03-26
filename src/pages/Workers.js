@@ -8,7 +8,7 @@ const PAY_TYPES = ['Hourly', 'Daily', 'Monthly'];
 const PAY_LABELS = { Hourly: '$/hr', Daily: '$/day', Monthly: 'Monthly salary' };
 const RATE_LABELS = { Hourly: '/hr', Daily: '/day', Monthly: '/mo' };
 
-const empty = { name: '', role: 'General Worker', pay_type: 'Daily', rate: '' };
+const empty = { name: '', role: 'field_worker', pay_type: 'daily', rate: '' };
 
 const S = {
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 },
@@ -65,8 +65,8 @@ export default function Workers() {
           <label style={S.label}>Full Name</label>
           <input style={S.input} value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Tendai Moyo" required />
           <div className="form-grid-2" style={S.row2}>
-            <div><label style={S.label}>Role</label><select style={S.input} value={form.role} onChange={e => set('role', e.target.value)}>{ROLES.map(r => <option key={r}>{r}</option>)}</select></div>
-            <div><label style={S.label}>Pay Type</label><select style={S.input} value={form.pay_type} onChange={e => set('pay_type', e.target.value)}>{PAY_TYPES.map(p => <option key={p}>{p}</option>)}</select></div>
+            <div><label style={S.label}>Role</label><select style={S.input} value={form.role} onChange={e => set('role', e.target.value)}><option value='field_worker'>General Worker</option><option value='supervisor'>Supervisor</option><option value='driver'>Driver</option><option value='irrigation_worker'>Irrigator</option><option value='market_seller'>Sprayer</option><option value='other'>Other</option></select></div>
+            <div><label style={S.label}>Pay Type</label><select style={S.input} value={form.pay_type} onChange={e => set('pay_type', e.target.value)}><option value='hourly'>Hourly</option><option value='daily'>Daily</option><option value='monthly'>Monthly</option></select></div>
           </div>
           <label style={S.label}>{PAY_LABELS[form.pay_type] || 'Rate'}</label>
           <input style={S.input} type="number" min="0" step="0.01" value={form.rate} onChange={e => set('rate', e.target.value)} required placeholder="0.00" />
