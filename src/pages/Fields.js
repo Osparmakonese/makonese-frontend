@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFields, createField, closeField } from '../api/farmApi';
 import { fmt, today, cropEmoji, cropGradient, cropImage, IMAGES } from '../utils/format';
@@ -135,13 +135,13 @@ export default function Fields() {
               <input style={S.input} type="date" value={form.plant_date} onChange={e => set('plant_date', e.target.value)} />
 
               <label style={S.label}>Notes</label>
-              <textarea style={S.textarea} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional notes…" />
+              <textarea style={S.textarea} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional notesâ€¦" />
 
               <button style={S.btn} type="submit" disabled={addMut.isPending}
                 onMouseEnter={e => { e.currentTarget.style.background = '#2d9e58'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = '#1a6b3a'; }}
               >
-                {addMut.isPending ? 'Saving…' : '＋ Open Field'}
+                {addMut.isPending ? 'Savingâ€¦' : 'ï¼‹ Open Field'}
               </button>
             </form>
           </div>
@@ -150,7 +150,7 @@ export default function Fields() {
         {/* Right: Field list */}
         <div>
           <div style={S.sectionTitle}>All Fields ({fields.length})</div>
-          {isLoading && <p style={{ fontSize: 12, color: '#9ca3af' }}>Loading…</p>}
+          {isLoading && <p style={{ fontSize: 12, color: '#9ca3af' }}>Loadingâ€¦</p>}
           <div style={S.fieldGrid}>
             {fields.map(f => {
               const fRev = f.revenue || 0;
@@ -166,7 +166,7 @@ export default function Fields() {
                   </div>
                   <div style={S.fcardBody} onClick={() => setSelectedField(f)}>
                     <div style={S.fcardName}>{f.name}</div>
-                    <div style={S.fcardMeta}>{f.size_hectares || f.hectares} ha · Planted {f.plant_date || '—'}</div>
+                    <div style={S.fcardMeta}>{f.size_hectares || f.hectares} ha Â· Planted {f.plant_date || 'â€”'}</div>
                     <div style={S.fcardStats}>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#1a6b3a')}>{fmt(fRev)}</div><div style={S.fcardStatLabel}>Revenue</div></div>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#c0392b')}>{fmt(fCost)}</div><div style={S.fcardStatLabel}>Costs</div></div>

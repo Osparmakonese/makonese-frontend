@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getWorkers, createWorker } from '../api/farmApi';
 import { fmt, initials, avatarColor, IMAGES } from '../utils/format';
@@ -70,15 +70,15 @@ export default function Workers() {
           </div>
           <label style={S.label}>{PAY_LABELS[form.pay_type] || 'Rate'}</label>
           <input style={S.input} type="number" min="0" step="0.01" value={form.rate} onChange={e => set('rate', e.target.value)} required placeholder="0.00" />
-          <button style={S.btn} type="submit" disabled={mut.isPending}>{mut.isPending ? 'Saving…' : '＋ Add Worker'}</button>
+          <button style={S.btn} type="submit" disabled={mut.isPending}>{mut.isPending ? 'Savingâ€¦' : 'ï¼‹ Add Worker'}</button>
           {mut.isError && <p style={{ color: '#c0392b', fontSize: 10, marginTop: 4 }}>{mut.error?.response?.data?.detail || 'Failed'}</p>}
         </form>
       </div>
 
       {/* Right */}
       <div>
-        <div style={S.sectionTitle}>Roster — {workers.length} workers</div>
-        {isLoading && <p style={{ fontSize: 11, color: '#9ca3af' }}>Loading…</p>}
+        <div style={S.sectionTitle}>Roster â€” {workers.length} workers</div>
+        {isLoading && <p style={{ fontSize: 11, color: '#9ca3af' }}>Loadingâ€¦</p>}
         {(Array.isArray(workers) ? workers : []).map(w => {
           const ac = avatarColor(w.name || '');
           const owed = w.wages_owed || 0;
@@ -87,7 +87,7 @@ export default function Workers() {
               <div style={S.avatar(ac.bg)}>{initials(w.name)}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600, fontSize: 13, color: '#111827' }}>{w.name}</div>
-                <div style={{ fontSize: 10, color: '#9ca3af' }}>{w.role} · {w.pay_type} · {fmt(w.rate)}{RATE_LABELS[w.pay_type] || ''}</div>
+                <div style={{ fontSize: 10, color: '#9ca3af' }}>{w.role} Â· {w.pay_type} Â· {fmt(w.rate)}{RATE_LABELS[w.pay_type] || ''}</div>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: 13, color: owed > 0 ? '#c0392b' : '#1a6b3a' }}>{fmt(owed)}</div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getStock, createStockItem, logStockUsage, getStockUsage, getFields } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
@@ -84,8 +84,8 @@ export default function Stock() {
                 <div><label style={S.label}>Unit Cost ($)</label><input style={S.input} type="number" min="0" step="0.01" value={itemForm.unit_cost} onChange={e => setI('unit_cost', e.target.value)} placeholder="0.00" /></div>
               </div>
               <label style={S.label}>Alert Threshold</label>
-              <input style={S.input} type="number" min="0" step="0.01" value={itemForm.alert_threshold} onChange={e => setI('alert_threshold', e.target.value)} placeholder="Warn when below…" />
-              <button style={S.btn} type="submit" disabled={addMut.isPending}>{addMut.isPending ? 'Saving…' : '＋ Add Item'}</button>
+              <input style={S.input} type="number" min="0" step="0.01" value={itemForm.alert_threshold} onChange={e => setI('alert_threshold', e.target.value)} placeholder="Warn when belowâ€¦" />
+              <button style={S.btn} type="submit" disabled={addMut.isPending}>{addMut.isPending ? 'Savingâ€¦' : 'ï¼‹ Add Item'}</button>
             </form>
           </div>
 
@@ -93,19 +93,19 @@ export default function Stock() {
             <div style={S.cardTitle}>Log Usage</div>
             <form onSubmit={e => { e.preventDefault(); usageMut.mutate({ item: parseInt(usageForm.item), field: parseInt(usageForm.field), quantity: parseFloat(usageForm.quantity), date: usageForm.date, notes: usageForm.notes }); }}>
               <div className="form-grid-2" style={S.row2}>
-                <div><label style={S.label}>Item</label><select style={S.input} value={usageForm.item} onChange={e => setU('item', e.target.value)} required><option value="">Select…</option>{stock.map(s => <option key={s.id} value={s.id}>{s.name} ({s.remaining ?? s.opening_qty} {s.unit})</option>)}</select></div>
-                <div><label style={S.label}>Field</label><select style={S.input} value={usageForm.field} onChange={e => setU('field', e.target.value)} required><option value="">Select…</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
+                <div><label style={S.label}>Item</label><select style={S.input} value={usageForm.item} onChange={e => setU('item', e.target.value)} required><option value="">Selectâ€¦</option>{stock.map(s => <option key={s.id} value={s.id}>{s.name} ({s.remaining ?? s.opening_qty} {s.unit})</option>)}</select></div>
+                <div><label style={S.label}>Field</label><select style={S.input} value={usageForm.field} onChange={e => setU('field', e.target.value)} required><option value="">Selectâ€¦</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
               </div>
               <div className="form-grid-2" style={S.row2}>
                 <div><label style={S.label}>Quantity</label><input style={S.input} type="number" min="0" step="0.01" value={usageForm.quantity} onChange={e => setU('quantity', e.target.value)} required placeholder="0" /></div>
                 <div><label style={S.label}>Date</label><input style={S.input} type="date" value={usageForm.date} onChange={e => setU('date', e.target.value)} /></div>
               </div>
               {selectedItem && qtyUsed > 0 && (
-                <div style={S.preview}>After this: <strong>{remainAfter?.toFixed(1)} {selectedItem.unit}</strong> remaining · Cost to field: <strong>{fmt(costPreview)}</strong></div>
+                <div style={S.preview}>After this: <strong>{remainAfter?.toFixed(1)} {selectedItem.unit}</strong> remaining Â· Cost to field: <strong>{fmt(costPreview)}</strong></div>
               )}
               <label style={S.label}>Notes</label>
               <input style={S.input} value={usageForm.notes} onChange={e => setU('notes', e.target.value)} placeholder="Optional" />
-              <button style={S.btn} type="submit" disabled={usageMut.isPending}>{usageMut.isPending ? 'Logging…' : '📋 Log Usage'}</button>
+              <button style={S.btn} type="submit" disabled={usageMut.isPending}>{usageMut.isPending ? 'Loggingâ€¦' : 'ðŸ“‹ Log Usage'}</button>
             </form>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function Stock() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{s.name}</div>
-                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{s.category} · {fmt(s.unit_cost)}/{s.unit}</div>
+                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{s.category} Â· {fmt(s.unit_cost)}/{s.unit}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 18, fontWeight: 700, color: isLow ? '#c0392b' : '#1a6b3a', fontFamily: "'Playfair Display', serif" }}>{rem}</div>
@@ -132,13 +132,13 @@ export default function Stock() {
                   </div>
                 </div>
                 <div style={S.barTrack}><div style={S.barFill(isLow ? '#c0392b' : '#1a6b3a', pct)} /></div>
-                {isLow && <div style={{ fontSize: 10, color: '#c0392b', fontWeight: 600, marginTop: 4 }}>⚠ Below alert threshold ({s.alert_threshold} {s.unit})</div>}
+                {isLow && <div style={{ fontSize: 10, color: '#c0392b', fontWeight: 600, marginTop: 4 }}>âš  Below alert threshold ({s.alert_threshold} {s.unit})</div>}
                 {itemUsage.length > 0 && (
                   <div style={{ marginTop: 8 }}>
                     <div style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>RECENT:</div>
                     {itemUsage.map((u, i) => (
                       <div key={i} style={{ fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
-                        {u.date}: {u.quantity} {s.unit} → {u.field_name || `Field #${u.field}`}
+                        {u.date}: {u.quantity} {s.unit} â†’ {u.field_name || `Field #${u.field}`}
                       </div>
                     ))}
                   </div>
