@@ -1,6 +1,7 @@
 ﻿import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getFields, getExpenses, createExpense, deleteExpense } from '../api/farmApi';
+import { getFields, getExpenses, createExpense, deleteExpense, getStock } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -40,7 +41,9 @@ export default function Costs() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, setPending] = useState(null);
 
+  const navigate = useNavigate();
   const { data: fields = [] } = useQuery({ queryKey: ['fields'], queryFn: getFields });
+  const { data: stock = [] } = useQuery({ queryKey: ['stock'], queryFn: getStock });
   const { data: expenses = [], isLoading } = useQuery({ queryKey: ['expenses'], queryFn: () => getExpenses() });
 
   const mut = useMutation({
@@ -52,10 +55,20 @@ export default function Costs() {
     mutationFn: (id) => deleteExpense(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['expenses'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setDelConfirm(null); },
   });
-  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const [stockWarning, setStockWarning] = useState(null);
+  const STOCK_CATEGORIES = ['seeds_seedlings', 'fertilizer_chemicals', 'transport_fuel'];
+  const set = (k, v) => { setForm(p => ({ ...p, [k]: v })); setStockWarning(null); };
 
   const submit = (e) => {
     e.preventDefault();
+    if (STOCK_CATEGORIES.includes(form.category)) {
+      const desc = form.description.toLowerCase().trim();
+      const inStock = stock.some(s => s.name.toLowerCase().includes(desc) || desc.includes(s.name.toLowerCase()));
+      if (!inStock) {
+        setStockWarning(form.category);
+        return;
+      }
+    }
     setPending({...form});
     setConfirmOpen(true);
   };
@@ -93,6 +106,19 @@ export default function Costs() {
             </div>
             <label style={S.label}>Logged By</label>
             <input style={S.input} value={form.logged_by} onChange={e => set('logged_by', e.target.value)} placeholder="Your name" />
+            {stockWarning && (
+              <div style={{ background:'#fef3e2', border:'1px solid #f59e0b', borderRadius:8, padding:'12px 14px', marginTop:10, marginBottom:4 }}>
+                <div style={{ fontSize:12, fontWeight:600, color:'#92400e', marginBottom:6 }}>
+                  This item is not in stock
+                </div>
+                <div style={{ fontSize:11, color:'#92400e', marginBottom:10 }}>
+                  Chemicals, fertilizers, seeds and fuel must be added to Stock first, then logged as usage. This keeps your field costs accurate.
+                </div>
+                <button type="button" onClick={() => navigate('/stock')} style={{ fontSize:11, padding:'6px 14px', background:'#1a6b3a', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontWeight:600 }}>
+                  Go to Stock to add it
+                </button>
+              </div>
+            )}
             <button style={S.btn} type="submit" disabled={mut.isPending}>{mut.isPending ? 'Saving...' : '+ Save Expense'}</button>
             {mut.isError && <p style={S.error}>{mut.error?.response?.data?.detail || 'Failed'}</p>}
           </form>
