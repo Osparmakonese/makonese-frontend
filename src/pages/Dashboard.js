@@ -405,7 +405,7 @@ export default function Dashboard() {
 
           {/* Stock alerts */}
           <div style={S.rightCard}>
-            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>âš ï¸ Stock Alerts</div>
+            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>â⚠️ Stock Alerts</div>
             {(lowStock.length > 0 ? lowStock : (d.low_stock || [])).slice(0, 3).map((s, i) => {
               const pct = s.opening_qty > 0 ? ((s.remaining ?? 0) / s.opening_qty) * 100 : 0;
               return (
