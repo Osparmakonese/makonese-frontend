@@ -86,6 +86,6 @@ export const reactivateUser = (userId) => api.post('/admin-panel/reactivate_user
 export const getAuditTrail = () => api.get('/admin-panel/audit_trail/').then(r => r.data);
 
 export const deleteWorker = (id) => api.delete(`/workers/${id}/`);
-export const deleteField = (id) => api.delete(/fields//);
+export const deleteField = (id) => api.delete(`/fields/${id}/`);
 
-export const deleteExpense = (id) => api.delete(/expenses//);
+export const deleteExpense = (id) => api.delete(`/expenses/${id}/`);
