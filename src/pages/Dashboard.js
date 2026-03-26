@@ -212,7 +212,7 @@ export default function Dashboard() {
         <div style={S.heroOverlay} />
         <div style={{ ...S.heroLeft, position: 'relative', zIndex: 1 }}>
           <div style={S.heroGreet}>{greeting}, {user?.username}</div>
-          <div style={S.heroSub}>{activeFields.length} active field{activeFields.length !== 1 ? 's' : ''} Â· {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+          <div style={S.heroSub}>{activeFields.length} active field{activeFields.length !== 1 ? 's' : ''} - {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
         </div>
         <div style={S.heroStats}>
           <div style={S.heroStat}><div style={S.heroStatVal}>{fmt(revenue)}</div><div style={S.heroStatLabel}>Total Revenue</div></div>
@@ -284,7 +284,7 @@ export default function Dashboard() {
                   </div>
                   <div style={S.fcardBody}>
                     <div style={S.fcardName}>{f.name}</div>
-                    <div style={S.fcardMeta}>{f.size_hectares || f.hectares} ha Â· {f.plant_date || 'â€”'}</div>
+                    <div style={S.fcardMeta}>{f.size_hectares || f.hectares} ha - {f.plant_date || 'â€”'}</div>
                     <div className={`pill-${f.status === 'active' ? 'green' : 'amber'}`} style={{ marginBottom: 8 }}>{f.status}</div>
                     <div style={S.fcardStats}>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#1a6b3a')}>{fmt(fRev)}</div><div style={S.fcardStatLabel}>Revenue</div></div>
@@ -313,7 +313,7 @@ export default function Dashboard() {
                     <span className="fcm-badge" style={{ color: f.status === 'active' ? '#1a6b3a' : '#c97d1a' }}>{f.status}</span>
                   </div>
                   <div className="fcm-body">
-                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{f.size_hectares || f.hectares} ha Â· {f.crop}</div>
+                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{f.size_hectares || f.hectares} ha - {f.crop}</div>
                     <div className="fcm-stats">
                       <div className="fcm-stat"><div className="fv" style={{ color: '#1a6b3a' }}>{fmt(mfRev)}</div><div className="fl">Rev</div></div>
                       <div className="fcm-stat"><div className="fv" style={{ color: '#c0392b' }}>{fmt(mfCost)}</div><div className="fl">Cost</div></div>
@@ -363,7 +363,7 @@ export default function Dashboard() {
                     <div className="trip-icon-mobile"><img src={IMAGES.truck} alt="" /></div>
                     <div className="trip-info-mobile">
                       <div className="trip-market-mobile">{t.location || t.market}</div>
-                      <div className="trip-meta-mobile">{t.total_crates || t.crates || 'â€”'} crates Â· {t.field_count || t.fields || 'â€”'} fields</div>
+                      <div className="trip-meta-mobile">{t.total_crates || t.crates || 'â€”'} crates - {t.field_count || t.fields || 'â€”'} fields</div>
                     </div>
                     <div>
                       <div className="trip-rev-mobile">{fmt(t.revenue || t.total_revenue)}</div>
