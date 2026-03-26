@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { initials, avatarColor } from '../utils/format';
 import Logo from './Logo';
 
@@ -69,22 +69,24 @@ const S = {
 
 const NAV_ITEMS = [
   { section: 'MAIN', items: [
-    { key: 'Dashboard', emoji: 'ðŸ“Š', label: 'Dashboard' },
-    { key: 'Fields', emoji: 'ðŸŒ¾', label: 'Fields' },
-    { key: 'Sales & Market', emoji: 'ðŸšš', label: 'Sales & Market' },
-    { key: 'Costs', emoji: 'ðŸ§¾', label: 'Costs' },
-    { key: 'Stock', emoji: 'ðŸ“¦', label: 'Stock', showBadge: true },
+    { key: 'Dashboard', emoji: '📊', label: 'Dashboard' },
+    { key: 'Fields', emoji: '🌾', label: 'Fields' },
+    { key: 'Sales & Market', emoji: '🚚', label: 'Sales & Market' },
+    { key: 'Costs', emoji: '🧾', label: 'Costs' },
+    { key: 'Farm Assets', emoji: '🏗', label: 'Farm Assets' },
+    { key: 'Stock', emoji: '📦', label: 'Stock', showBadge: true },
   ]},
   { section: 'PEOPLE', items: [
-    { key: 'Workers', emoji: 'ðŸ‘·', label: 'Workers' },
-    { key: 'Hours & Pay', emoji: 'â±', label: 'Hours & Pay' },
+    { key: 'Workers', emoji: '👷', label: 'Workers' },
+    { key: 'Hours & Pay', emoji: '⏱', label: 'Hours & Pay' },
   ]},
   { section: 'OWNER ONLY', ownerOnly: true, items: [
-    { key: 'Report', emoji: 'ðŸ“ˆ', label: 'Report' },
-    { key: 'Farm Assets', emoji: 'ðŸ—', label: 'Farm Assets' },
-    { key: 'Settings', emoji: 'âš™ï¸', label: 'Settings' },
-    { key: 'Import', emoji: 'ðŸ“¥', label: 'Import' },
-    { key: 'Admin Panel', emoji: 'ðŸ”', label: 'Admin Panel' },
+    { key: 'Report', emoji: '📈', label: 'Report' },
+    { key: 'Farm Assets', emoji: '🏗', label: 'Farm Assets' },
+    { key: 'Farm Assets', emoji: '🏗', label: 'Farm Assets' },
+    { key: 'Settings', emoji: '⚙️', label: 'Settings' },
+    { key: 'Import', emoji: '📥', label: 'Import' },
+    { key: 'Admin Panel', emoji: '🔐', label: 'Admin Panel' },
   ]},
 ];
 
@@ -140,7 +142,7 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
           onMouseEnter={(e) => { e.currentTarget.style.color = '#c0392b'; }}
           onMouseLeave={(e) => { e.currentTarget.style.color = '#9ca3af'; }}
         >
-          â‡¥
+          ⇥
         </button>
       </div>
     </div>
