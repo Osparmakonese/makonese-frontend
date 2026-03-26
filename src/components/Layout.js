@@ -7,11 +7,12 @@ import { initials, avatarColor } from '../utils/format';
 const MORE_TABS = [
   { key: 'Costs', emoji: '🧾', label: 'Costs', sub: 'Farm expenses' },
   { key: 'Workers', emoji: '👷', label: 'Workers', sub: 'Roster & wages' },
-  { key: 'Hours & Pay', emoji: '⏱', label: 'Hours & Pay', sub: 'Attendance' },
+  { key: 'Hours & Pay', emoji: '⏱️', label: 'Hours & Pay', sub: 'Attendance' },
   { key: 'Report', emoji: '📈', label: 'Report', sub: 'P&L overview', ownerOnly: true },
+  { key: 'Farm Assets', emoji: '🏗️', label: 'Farm Assets', sub: 'Equipment & assets', ownerOnly: true },
   { key: 'Settings', emoji: '⚙️', label: 'Settings', sub: 'Configuration' },
   { key: 'Import', emoji: '📥', label: 'Import', sub: 'Excel upload' },
-  { key: 'Admin Panel', emoji: '🔐', label: 'Admin', sub: 'Super admin', ownerOnly: true },
+  { key: 'Admin Panel', emoji: '🔒', label: 'Admin', sub: 'Super admin', ownerOnly: true },
 ];
 
 const BOTTOM_PRIMARY = ['Dashboard', 'Fields', 'Sales & Market', 'Stock'];
