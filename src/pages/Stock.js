@@ -105,7 +105,7 @@ export default function Stock() {
               )}
               <label style={S.label}>Notes</label>
               <input style={S.input} value={usageForm.notes} onChange={e => setU('notes', e.target.value)} placeholder="Optional" />
-              <button style={S.btn} type="submit" disabled={usageMut.isPending}>{usageMut.isPending ? '+ Log Usage'}</button>
+              <button style={S.btn} type="submit" disabled={usageMut.isPending}>{usageMut.isPending ? 'Logging...' : '+ Log Usage'}</button>
             </form>
           </div>
         </div>
