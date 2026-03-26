@@ -18,9 +18,10 @@ import Report from './pages/Report';
 import Settings from './pages/Settings';
 import Import from './pages/Import';
 import AdminPanel from './pages/AdminPanel';
+import FarmAssets from './pages/FarmAssets';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
-/* â”€â”€ Tab â†’ page component map â”€â”€ */
+/* --- */
 const PAGES = {
   'Dashboard': Dashboard,
   'Fields': Fields,
@@ -32,10 +33,11 @@ const PAGES = {
   'Report': Report,
   'Settings': Settings,
   'Import': Import,
+  'Farm Assets': FarmAssets,
   'Admin Panel': AdminPanel,
 };
 
-/* â”€â”€ Page titles & subtitles â”€â”€ */
+/* --- */
 const PAGE_META = {
   'Dashboard': { title: 'Dashboard', sub: 'Season overview "” Makonese Farm' },
   'Fields': { title: 'Fields', sub: 'Manage your farm fields' },
@@ -45,12 +47,13 @@ const PAGE_META = {
   'Workers': { title: 'Workers', sub: 'Roster and wage management' },
   'Hours & Pay': { title: 'Hours & Pay', sub: 'Attendance and payroll' },
   'Report': { title: 'Financial Report', sub: 'Season P&L "” Owner only' },
+  'Farm Assets': { title: 'Farm Assets', sub: 'Equipment and long-term investments' },
   'Settings': { title: 'Settings', sub: 'System configuration' },
   'Import': { title: 'Import Data', sub: 'Upload Excel to populate your farm data' },
   'Admin Panel': { title: 'ðŸ” Super Admin Panel', sub: 'System administration "” visible to you only' },
 };
 
-/* â”€â”€ Primary actions per tab â”€â”€ */
+/* --- */
 const PRIMARY_ACTIONS = {
   'Dashboard': '+ Log expense',
   'Fields': '+ Open field',
@@ -60,16 +63,17 @@ const PRIMARY_ACTIONS = {
   'Workers': '+ Add worker',
   'Hours & Pay': '+ Log hours',
   'Report': 'Export PDF',
+  'Farm Assets': '+ Add asset',
   'Settings': 'Save changes',
 };
 
-/* â”€â”€ Auth gate â”€â”€ */
+/* --- */
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" replace />;
 }
 
-/* â”€â”€ Main app shell â”€â”€ */
+/* --- */
 function FarmApp() {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const { user, logout } = useAuth();
@@ -100,13 +104,13 @@ function FarmApp() {
       pageSub={meta.sub}
       primaryAction={primaryAction}
       onPrimaryAction={() => {
-        /* Scroll to form section "” pages handle their own forms */
+        /* --- */
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }}
       dashboardData={dashboardData}
       lowStockCount={lowStockData.length}
     >
-      <Page />
+      <Page onTabChange={setActiveTab} />
       <PWAInstallPrompt />
         <OfflineBanner />
     </Layout>

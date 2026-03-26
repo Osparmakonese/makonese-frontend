@@ -1,5 +1,4 @@
 ﻿import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFields, getExpenses, createExpense, deleteExpense, getStock } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
@@ -34,14 +33,13 @@ const S = {
   td: { padding: '8px 10px', borderBottom: '1px solid #f3f4f6', color: '#374151' },
 };
 
-export default function Costs() {
+export default function Costs({ onTabChange }) {
   const qc = useQueryClient();
   const [form, setForm] = useState(empty);
   const [delConfirm, setDelConfirm] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, setPending] = useState(null);
 
-  const navigate = useNavigate();
   const { data: fields = [] } = useQuery({ queryKey: ['fields'], queryFn: getFields });
   const { data: stock = [] } = useQuery({ queryKey: ['stock'], queryFn: getStock });
   const { data: expenses = [], isLoading } = useQuery({ queryKey: ['expenses'], queryFn: () => getExpenses() });
@@ -114,7 +112,7 @@ export default function Costs() {
                 <div style={{ fontSize:11, color:'#92400e', marginBottom:10 }}>
                   Chemicals, fertilizers, seeds and fuel must be added to Stock first, then logged as usage. This keeps your field costs accurate.
                 </div>
-                <button type="button" onClick={() => navigate('/stock')} style={{ fontSize:11, padding:'6px 14px', background:'#1a6b3a', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontWeight:600 }}>
+                <button type="button" onClick={() => onTabChange && onTabChange('Stock')} style={{ fontSize:11, padding:'6px 14px', background:'#1a6b3a', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontWeight:600 }}>
                   Go to Stock to add it
                 </button>
               </div>

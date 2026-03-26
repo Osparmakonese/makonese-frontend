@@ -89,3 +89,7 @@ export const deleteWorker = (id) => api.delete(`/workers/${id}/`);
 export const deleteField = (id) => api.delete(`/fields/${id}/`);
 
 export const deleteExpense = (id) => api.delete(`/expenses/${id}/`);
+
+export const getFarmAssets = () => api.get('/farm-assets/').then(r => r.data);
+export const createFarmAsset = (data) => api.post('/farm-assets/', data).then(r => r.data);
+export const deleteFarmAsset = (id) => api.delete('/farm-assets/' + id + '/');
