@@ -326,7 +326,7 @@ export default function Dashboard() {
           </div>
 
           {/* Recent trips */}
-          <div style={S.sectionTitle}>ðŸš› Recent Market Trips</div>
+          <div style={S.sectionTitle}>🚛 Recent Market Trips</div>
           <div style={{ position: 'relative', height: 80, borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
             <img src={IMAGES.truck} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(180,40,0,0.78), rgba(0,0,0,0.2))' }} />
@@ -390,7 +390,7 @@ export default function Dashboard() {
 
           {/* Cost breakdown */}
           <div style={S.rightCard}>
-            <div style={{ ...S.sectionTitle, marginBottom: 14 }}>ðŸ“Š Cost Breakdown</div>
+            <div style={{ ...S.sectionTitle, marginBottom: 14 }}>📊 Cost Breakdown</div>
             {Object.entries(breakdown).map(([cat, val], i) => (
               <div key={cat} style={S.barRow}>
                 <span style={S.barLabel}>{cat}</span>
