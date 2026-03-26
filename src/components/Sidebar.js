@@ -82,7 +82,6 @@ const NAV_ITEMS = [
   { section: 'OWNER ONLY', ownerOnly: true, items: [
     { key: 'Report', emoji: '📈', label: 'Report' },
     { key: 'Farm Assets', emoji: '🏗', label: 'Farm Assets' },
-    { key: 'Farm Assets', emoji: '🏗', label: 'Farm Assets' },
     { key: 'Settings', emoji: '⚙️', label: 'Settings' },
     { key: 'Import', emoji: '📥', label: 'Import' },
     { key: 'Admin Panel', emoji: '🔐', label: 'Admin Panel' },
