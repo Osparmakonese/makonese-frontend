@@ -13,7 +13,7 @@ export const getFieldReport = (id, opening) => api.get(`/fields/${id}/field_repo
 // Stock
 export const getStock = () => api.get('/stock/').then(r => r.data);
 export const getLowStock = () => api.get('/stock/low_stock/').then(r => r.data);
-export const createStockItem = (data) => api.post('/stock/', data).then(r => r.data);
+export const createStockItem = (data) => api.post('/stock/', { ...data, remaining_qty: data.remaining_qty ?? data.opening_qty }).then(r => r.data);
 export const getStockUsage = () => api.get('/stock-usage/').then(r => r.data);
 export const logStockUsage = (data) => api.post('/stock-usage/', data).then(r => r.data);
 
