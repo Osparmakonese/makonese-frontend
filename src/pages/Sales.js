@@ -167,11 +167,11 @@ export default function Sales() {
     if (!settlingTrip) return;
     setSettling(true);
     try {
-      // 1. PATCH each entry with sold quantities and prices
-      for (const ent of (settlingTrip.entries || [])) {
-        const sd = settlementData[ent.id];
-        if (!sd) continue;
-        await updateTripEntry(ent.id, {
+      // Build entries payload for settle_trip
+      const entriesPayload = (settlingTrip.entries || []).map(ent => {
+        const sd = settlementData[ent.id] || {};
+        return {
+          id: ent.id,
           large_sold: parseInt(sd.large_sold) || 0,
           medium_sold: parseInt(sd.medium_sold) || 0,
           small_sold: parseInt(sd.small_sold) || 0,
@@ -180,7 +180,12 @@ export default function Sales() {
           price_small: parseFloat(sd.price_small) || 0,
           crates_returned: parseInt(sd.returned) || 0,
           crates_damaged: parseInt(sd.damaged) || 0,
-        });
+        };
+      });
+      // Loop for giveaways and specials only
+      for (const ent of (settlingTrip.entries || [])) {
+        const sd = settlementData[ent.id];
+        if (!sd) continue;
 
         // 2. POST giveaways
         for (const g of (sd.giveaways || [])) {
