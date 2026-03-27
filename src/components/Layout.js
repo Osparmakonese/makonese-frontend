@@ -1,22 +1,19 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import Logo from './Logo';
 import { initials, avatarColor } from '../utils/format';
-
 const MORE_TABS = [
-  { key: 'Costs', emoji: 'ðŸ§¾', label: 'Costs', sub: 'Farm expenses' },
-  { key: 'Workers', emoji: 'ðŸ‘·', label: 'Workers', sub: 'Roster & wages' },
-  { key: 'Hours & Pay', emoji: 'â±ï¸', label: 'Hours & Pay', sub: 'Attendance' },
-  { key: 'Report', emoji: 'ðŸ“ˆ', label: 'Report', sub: 'P&L overview', ownerOnly: true },
-  { key: 'Farm Assets', emoji: '🏗', label: 'Farm Assets', sub: 'Equipment & assets' },
-  { key: 'Settings', emoji: 'âš™ï¸', label: 'Settings', sub: 'Configuration' },
-  { key: 'Import', emoji: 'ðŸ“¥', label: 'Import', sub: 'Excel upload' },
-  { key: 'Admin Panel', emoji: 'ðŸ”’', label: 'Admin', sub: 'Super admin', ownerOnly: true },
+  { key: 'Costs', emoji: '🧾', label: 'Costs', sub: 'Farm expenses' },
+  { key: 'Workers', emoji: '👷', label: 'Workers', sub: 'Roster & wages' },
+  { key: 'Hours & Pay', emoji: '⏱️', label: 'Hours & Pay', sub: 'Attendance' },
+  { key: 'Report', emoji: '📈', label: 'Report', sub: 'P&L overview', ownerOnly: true },
+  { key: 'Farm Assets', emoji: '🏗️', label: 'Farm Assets', sub: 'Equipment & assets' },
+  { key: 'Settings', emoji: '⚙️', label: 'Settings', sub: 'Configuration' },
+  { key: 'Import', emoji: '📥', label: 'Import', sub: 'Excel upload' },
+  { key: 'Admin Panel', emoji: '🔐', label: 'Admin', sub: 'Super admin', ownerOnly: true },
 ];
-
 const BOTTOM_PRIMARY = ['Dashboard', 'Fields', 'Sales & Market', 'Stock'];
-
 export default function Layout({
   activeTab, onTabChange, user, onLogout,
   pageTitle, pageSub, primaryAction, onPrimaryAction,
@@ -26,12 +23,10 @@ export default function Layout({
   const role = user?.role || 'worker';
   const ac = avatarColor(user?.username || '');
   const isMore = !BOTTOM_PRIMARY.includes(activeTab);
-
   const goTab = (tab) => {
     onTabChange(tab);
     setShowMobileMore(false);
   };
-
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <div className="sidebar-desktop">
@@ -43,7 +38,6 @@ export default function Layout({
           lowStockCount={lowStockCount}
         />
       </div>
-
       <div className="main-content" style={{ marginLeft: 200, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         {/* Mobile header */}
         <div className="mobile-header">
@@ -52,14 +46,13 @@ export default function Layout({
           </div>
           <div className="mh-right">
             <button className="mobile-wa-btn" onClick={() => window.open('https://wa.me/', '_blank')}>
-              ðŸ“± WhatsApp
+              📱 WhatsApp
             </button>
             <div className="mobile-avatar" style={{ background: ac.bg }}>
               {initials(user?.username || '')}
             </div>
           </div>
         </div>
-
         <div className="topbar-desktop">
           <Topbar
             pageTitle={pageTitle}
@@ -69,37 +62,34 @@ export default function Layout({
             dashboardData={dashboardData}
           />
         </div>
-
         <main className="page-content-mobile" style={{ flex: 1, padding: '20px 24px', background: '#f9fafb' }}>
           {children}
         </main>
       </div>
-
       {/* Bottom nav */}
       <div className="bottom-nav">
         <button className={`bn-tab${activeTab === 'Dashboard' ? ' active' : ''}`} onClick={() => goTab('Dashboard')}>
-          <span className="bn-icon">ðŸ“Š</span>
+          <span className="bn-icon">🍊</span>
           <span className="bn-label">Home</span>
         </button>
         <button className={`bn-tab${activeTab === 'Fields' ? ' active' : ''}`} onClick={() => goTab('Fields')}>
-          <span className="bn-icon">ðŸŒ¾</span>
+          <span className="bn-icon">🌾</span>
           <span className="bn-label">Fields</span>
         </button>
         <button className={`bn-tab${activeTab === 'Sales & Market' ? ' active' : ''}`} onClick={() => goTab('Sales & Market')}>
-          <span className="bn-icon">ðŸšš</span>
+          <span className="bn-icon">🚚</span>
           <span className="bn-label">Sales</span>
         </button>
         <button className={`bn-tab${activeTab === 'Stock' ? ' active' : ''}`} onClick={() => goTab('Stock')}>
-          <span className="bn-icon">ðŸ“¦</span>
+          <span className="bn-icon">📦</span>
           <span className="bn-label">Stock</span>
           {lowStockCount > 0 && <span className="bn-badge">{lowStockCount}</span>}
         </button>
         <button className={`bn-tab${isMore ? ' active' : ''}`} onClick={() => setShowMobileMore(true)}>
-          <span className="bn-icon">â‹¯</span>
+          <span className="bn-icon">⋯</span>
           <span className="bn-label">More</span>
         </button>
       </div>
-
       {/* Mobile more drawer */}
       {showMobileMore && (
         <>
@@ -114,7 +104,6 @@ export default function Layout({
           }}>
             {/* Drag handle */}
             <div style={{ width: 36, height: 4, background: '#e5e7eb', borderRadius: 2, margin: '0 auto 16px' }} />
-
             {/* User info */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: ac.bg, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>
@@ -131,7 +120,6 @@ export default function Layout({
                 Logout
               </button>
             </div>
-
             {/* Menu grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
               {MORE_TABS.filter(t => !t.ownerOnly || role === 'owner').map(t => (
