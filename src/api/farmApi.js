@@ -49,7 +49,12 @@ export async function createTripEntry(data) {
   return res.data;
 }
 export async function updateTripEntry(id, data) {
-  const res = await api.patch(`/trips/entries/${id}/`, data);
+  // Map frontend field names to backend model field names
+  const mapped = { ...data };
+  if ('price_large' in mapped) { mapped.large_price = mapped.price_large; delete mapped.price_large; }
+  if ('price_medium' in mapped) { mapped.medium_price = mapped.price_medium; delete mapped.price_medium; }
+  if ('price_small' in mapped) { mapped.small_price = mapped.price_small; delete mapped.price_small; }
+  const res = await api.patch(`/trip-entries/${id}/`, mapped);
   return res.data;
 }
 export async function createGiveaway(data) {
