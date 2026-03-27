@@ -69,7 +69,7 @@ export default function Layout({
       {/* Bottom nav */}
       <div className="bottom-nav">
         <button className={`bn-tab${activeTab === 'Dashboard' ? ' active' : ''}`} onClick={() => goTab('Dashboard')}>
-          <span className="bn-icon">🍊</span>
+          <span className="bn-icon">🏠</span>
           <span className="bn-label">Home</span>
         </button>
         <button className={`bn-tab${activeTab === 'Fields' ? ' active' : ''}`} onClick={() => goTab('Fields')}>
