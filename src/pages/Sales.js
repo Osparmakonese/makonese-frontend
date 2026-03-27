@@ -90,7 +90,7 @@ export default function Sales() {
     e.preventDefault();
     depMut.mutate({
       location: departure.location,
-      departure_date: departure.departure_date,
+      trip_date: departure.departure_date,
       driver: departure.driver,
       status: 'pending',
       entries: departure.entries.map(en => ({
@@ -229,7 +229,7 @@ export default function Sales() {
 
   const submitDirect = (e) => {
     e.preventDefault();
-    incMut.mutate({ field: parseInt(direct.field), amount: parseFloat(direct.amount), description: direct.description, date: direct.date });
+    incMut.mutate({ field: parseInt(direct.field), amount: parseFloat(direct.amount), description: direct.description, income_date: direct.date });
   };
 
   const toggleExpand = (id) => setExpandedEntries(p => ({ ...p, [id]: !p[id] }));

@@ -27,7 +27,7 @@ export const createTrip = (data) => api.post('/trips/', data).then(r => r.data);
 
 // Income
 export const getIncome = () => api.get('/income/').then(r => r.data);
-export const createIncome = (data) => api.post('/income/', data).then(r => r.data);
+export const createIncome = (data) => api.post('/income/', { ...data, income_date: data.income_date || data.date }).then(r => r.data);
 
 // Workers
 export const getWorkers = () => api.get('/workers/').then(r => r.data);
