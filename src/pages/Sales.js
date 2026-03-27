@@ -213,7 +213,7 @@ export default function Sales() {
       }
 
       // 4. Settle trip
-      await settleTrip(settlingTrip.id, { return_date: returnDate });
+      await settleTrip(settlingTrip.id, { return_date: returnDate, entries: entriesPayload });
 
       // 5. Refetch
       qc.invalidateQueries({ queryKey: ['trips'] });
