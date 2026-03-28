@@ -89,7 +89,7 @@ export default function Report() {
     try {
       const apiKey = localStorage.getItem('anthropic_api_key');
       if (!apiKey) { setAnalysis('Add your Anthropic API key in Settings to use AI analysis.'); setAiLoading(false); return; }
-      const prompt = `Full financial analysis of Makonese Farm Season 2025:\n\nRevenue: $${totalRevenue} (Trips: $${tripRevenue}, Direct: $${directIncome})\nField costs: $${fieldCosts}\nWages: $${wagesOwed}\nTrip expenses: $${tripExpenses}\nFarm overhead (depreciation): $${totalDepreciation.toFixed(2)}\nNet: $${net}\n\nFields: ${JSON.stringify(fields.map(f => ({ name: f.name, crop: f.crop, revenue: f.revenue, costs: f.costs, labour: f.labour })))}\n\nFarm Assets: ${JSON.stringify((assets || []).map(a => ({ name: a.name, cost: a.cost, lifespan: a.lifespan })))}\n\nProvide: 1) Executive summary 2) Revenue analysis 3) Cost efficiency 4) Field performance 5) Asset depreciation impact 6) Recommendations for next season`;
+      const prompt = `Full financial analysis of Makonese Farm Season 2025:\n\nRevenue: $${totalRevenue} (Trips: $${tripRevenue}, Direct: $${directIncome})\nField costs: $${fieldCosts}\nWages: $${wagesOwed}\nTrip expenses: $${tripExpenses}\nFarm overhead (depreciation): $${totalDepreciation.toFixed(2)}\nNet: $${net}\n\nFields: ${JSON.stringify(fields.map(f => ({ name: f.name, crop: f.crop, revenue: f.total_revenue, costs: f.total_costs, labour: f.total_labour })))}\n\nFarm Assets: ${JSON.stringify((assets || []).map(a => ({ name: a.name, cost: a.cost, lifespan: a.lifespan })))}\n\nProvide: 1) Executive summary 2) Revenue analysis 3) Cost efficiency 4) Field performance 5) Asset depreciation impact 6) Recommendations for next season`;
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
@@ -189,14 +189,14 @@ export default function Report() {
               </tr></thead>
               <tbody>
                 {fields.map(f => {
-                  const fNet = (f.revenue || 0) - (f.costs || 0) - (f.labour || 0);
+                  const fNet = (f.total_revenue || 0) - (f.total_costs || 0) - (f.total_labour || 0);
                   return (
                     <tr key={f.id}>
                       <td style={{ ...S.td, fontWeight: 600 }}>{f.name}</td>
                       <td style={S.td}>{f.crop}</td>
-                      <td style={{ ...S.td, color: '#1a6b3a' }}>{fmt(f.revenue)}</td>
-                      <td style={{ ...S.td, color: '#c0392b' }}>{fmt(f.costs)}</td>
-                      <td style={{ ...S.td, color: '#c97d1a' }}>{fmt(f.labour)}</td>
+                      <td style={{ ...S.td, color: '#1a6b3a' }}>{fmt(f.total_revenue)}</td>
+                      <td style={{ ...S.td, color: '#c0392b' }}>{fmt(f.total_costs)}</td>
+                      <td style={{ ...S.td, color: '#c97d1a' }}>{fmt(f.total_labour)}</td>
                       <td style={{ ...S.td, fontWeight: 700, color: fNet >= 0 ? '#1a6b3a' : '#c0392b' }}>{fmt(fNet)}</td>
                     </tr>
                   );
