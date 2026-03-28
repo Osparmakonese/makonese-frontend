@@ -98,9 +98,9 @@ export default function FieldModal({ field, isOpen, onClose }) {
 
   if (!isOpen || !field) return null;
 
-  const rev = field.revenue || report?.revenue || 0;
-  const costs = (field.costs || 0) + (field.labour || 0);
-  const totalCosts = report?.total_costs || costs;
+  const rev = field.total_revenue || report?.field?.total_revenue || 0;
+  const costs = (field.total_costs || 0) + (field.total_labour || 0);
+  const totalCosts = report?.field?.total_costs || costs;
   const net = rev - totalCosts;
   const expenses = report?.expenses || [];
   const grouped = expenses.reduce((acc, e) => {
@@ -241,8 +241,8 @@ Identify:
           {age !== null && field.status === 'active' && (
             <div style={S.infoRow}><span style={S.infoLabel}>Age</span><span style={S.infoVal}>{age} days</span></div>
           )}
-          <div style={S.infoRow}><span style={S.infoLabel}>Input costs</span><span style={S.infoVal}>{fmt(field.costs || report?.input_costs || 0)}</span></div>
-          <div style={S.infoRow}><span style={S.infoLabel}>Labour costs</span><span style={S.infoVal}>{fmt(field.labour || report?.labour_costs || 0)}</span></div>
+          <div style={S.infoRow}><span style={S.infoLabel}>Input costs</span><span style={S.infoVal}>{fmt(field.total_costs || report?.input_costs || 0)}</span></div>
+          <div style={S.infoRow}><span style={S.infoLabel}>Labour costs</span><span style={S.infoVal}>{fmt(field.total_labour || report?.labour_costs || 0)}</span></div>
           <div style={S.infoRow}><span style={S.infoLabel}>Revenue earned</span><span style={S.infoVal}>{fmt(rev)}</span></div>
 
           {/* Expense history */}
