@@ -167,11 +167,10 @@ export default function Sales() {
     if (!settlingTrip) return;
     setSettling(true);
     try {
-      // Build entries payload for settle_trip
-      const entriesPayload = (settlingTrip.entries || []).map(ent => {
+      // 1. PATCH each entry via updateTripEntry so sold/price fields are saved
+      for (const ent of (settlingTrip.entries || [])) {
         const sd = settlementData[ent.id] || {};
-        return {
-          id: ent.id,
+        await updateTripEntry(ent.id, {
           large_sold: parseInt(sd.large_sold) || 0,
           medium_sold: parseInt(sd.medium_sold) || 0,
           small_sold: parseInt(sd.small_sold) || 0,
@@ -180,14 +179,14 @@ export default function Sales() {
           price_small: parseFloat(sd.price_small) || 0,
           crates_returned: parseInt(sd.returned) || 0,
           crates_damaged: parseInt(sd.damaged) || 0,
-        };
-      });
-      // Loop for giveaways and specials only
+        });
+      }
+
+      // 2. POST giveaways and special sales
       for (const ent of (settlingTrip.entries || [])) {
         const sd = settlementData[ent.id];
         if (!sd) continue;
 
-        // 2. POST giveaways
         for (const g of (sd.giveaways || [])) {
           if (parseInt(g.qty) > 0) {
             await createGiveaway({
@@ -202,7 +201,6 @@ export default function Sales() {
           }
         }
 
-        // 3. POST special sales
         for (const sp of (sd.specials || [])) {
           if (parseInt(sp.qty) > 0) {
             await createSpecialSale({
@@ -217,10 +215,10 @@ export default function Sales() {
         }
       }
 
-      // 4. Settle trip
-      await settleTrip(settlingTrip.id, { return_date: returnDate, entries: entriesPayload });
+      // 3. Settle trip (entries already patched, backend calculates revenue)
+      await settleTrip(settlingTrip.id, { return_date: returnDate });
 
-      // 5. Refetch
+      // 4. Refetch
       qc.invalidateQueries({ queryKey: ['trips'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       setSettlingTrip(null);
