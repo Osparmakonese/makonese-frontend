@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFields, createField, closeField, deleteField } from '../api/farmApi';
 import { fmt, today, cropEmoji, cropGradient, cropImage, IMAGES } from '../utils/format';
@@ -165,8 +165,8 @@ export default function Fields() {
           {isLoading && <p style={{ fontSize: 12, color: '#9ca3af' }}>Loading...</p>}
           <div style={S.fieldGrid}>
             {fields.map(f => {
-              const fRev = f.revenue || 0;
-              const fCost = (f.costs || 0) + (f.labour || 0);
+              const fRev = f.total_revenue || 0;
+              const fCost = (f.total_costs || 0) + (f.total_labour || 0);
               const fNet = fRev - fCost;
               return (
                 <div key={f.id} className="fcard" style={S.fcard}>
