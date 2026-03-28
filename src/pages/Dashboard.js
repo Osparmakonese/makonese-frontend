@@ -174,8 +174,8 @@ export default function Dashboard() {
           <div style={S.sectionTitle}>🌾 Active Fields</div>
           <div className="field-cards-desktop" style={S.fieldGrid}>
             {activeFields.slice(0, 4).map(f => {
-              const fRev = f.revenue || 0;
-              const fCost = (f.costs || 0) + (f.labour || 0);
+              const fRev = f.total_revenue || 0;
+              const fCost = (f.total_costs || 0) + (f.total_labour || 0);
               const fNet = fRev - fCost;
               return (
                 <div key={f.id} className="fcard" style={S.fcard} onClick={() => setSelectedField(f)}>
@@ -203,8 +203,8 @@ export default function Dashboard() {
 
           <div className="field-cards-mobile">
             {activeFields.slice(0, 6).map(f => {
-              const mfRev = f.revenue || 0;
-              const mfCost = (f.costs || 0) + (f.labour || 0);
+              const mfRev = f.total_revenue || 0;
+              const mfCost = (f.total_costs || 0) + (f.total_labour || 0);
               const mfNet = mfRev - mfCost;
               return (
                 <div key={f.id} className="field-card-mobile" onClick={() => setSelectedField(f)}>
