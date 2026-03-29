@@ -1,11 +1,11 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getStock, createStockItem, logStockUsage, getStockUsage, getFields } from '../api/farmApi';
+import { getStock, createStockItem, logStockUsage, getStockUsage, getFields, deleteStockItem } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
 
 const CATEGORIES = [['chemical','Chemical'],['fertilizer','Fertiliser'],['seed','Seed'],['fuel','Fuel'],['equipment','Equipment'],['other','Other']];
 const UNITS = [['litres','L'],['kg','kg'],['bags','bags'],['units','units'],['litres','bottles'],['units','packs']];
-const emptyItem = { name: '', category: 'chemical', opening_qty: '', unit: 'litres', unit_cost: '', alert_threshold: '' };
+const emptyItem = { name: '', category: 'chemical', opening_qty: '', unit: 'litres', total_cost: '', alert_threshold: '' };
 const emptyUsage = { item: '', field: '', opening_qty: '', date: today(), notes: '' };
 
 const S = {
@@ -35,6 +35,7 @@ export default function Stock() {
   const qc = useQueryClient();
   const [itemForm, setItemForm] = useState(emptyItem);
   const [usageForm, setUsageForm] = useState(emptyUsage);
+  const [delConfirm, setDelConfirm] = useState(null);
 
   const { data: stock = [] } = useQuery({ queryKey: ['stock'], queryFn: getStock });
   const { data: fields = [] } = useQuery({ queryKey: ['fields'], queryFn: getFields });
@@ -48,6 +49,10 @@ export default function Stock() {
     mutationFn: logStockUsage,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['stock'] }); qc.invalidateQueries({ queryKey: ['stockUsage'] }); qc.invalidateQueries({ queryKey: ['expenses'] }); qc.invalidateQueries({ queryKey: ['lowStock'] }); setUsageForm(emptyUsage); },
   });
+  const delMut = useMutation({
+    mutationFn: (id) => deleteStockItem(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['stock'] }); qc.invalidateQueries({ queryKey: ['lowStock'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setDelConfirm(null); },
+  });
 
   const setI = (k, v) => setItemForm(p => ({ ...p, [k]: v }));
   const setU = (k, v) => setUsageForm(p => ({ ...p, [k]: v }));
@@ -56,6 +61,11 @@ export default function Stock() {
   const qtyUsed = parseFloat(usageForm.opening_qty) || 0;
   const remainAfter = selectedItem ? (selectedItem.remaining ?? selectedItem.opening_qty) - qtyUsed : null;
   const costPreview = selectedItem ? qtyUsed * (selectedItem.unit_cost || 0) : 0;
+
+  // Auto-calculate unit cost from total cost and quantity
+  const formQty = parseFloat(itemForm.opening_qty) || 0;
+  const formTotalCost = parseFloat(itemForm.total_cost) || 0;
+  const autoUnitCost = formQty > 0 ? formTotalCost / formQty : 0;
 
   return (
     <>
@@ -73,7 +83,7 @@ export default function Stock() {
         <div>
           <div style={S.card}>
             <div style={S.cardTitle}>Add Stock Item</div>
-            <form onSubmit={e => { e.preventDefault(); addMut.mutate({ ...itemForm, opening_qty: parseFloat(itemForm.opening_qty) || 0, unit_cost: parseFloat(itemForm.unit_cost) || 0, alert_threshold: parseFloat(itemForm.alert_threshold) || 0 }); }}>
+            <form onSubmit={e => { e.preventDefault(); addMut.mutate({ name: itemForm.name, category: itemForm.category, opening_qty: formQty, unit: itemForm.unit, unit_cost: parseFloat(autoUnitCost.toFixed(2)), alert_threshold: parseFloat(itemForm.alert_threshold) || 0 }); }}>
               <div className="form-grid-2" style={S.row2}>
                 <div><label style={S.label}>Name</label><input style={S.input} value={itemForm.name} onChange={e => setI('name', e.target.value)} placeholder="e.g. Lambda Cyhalothrin" required /></div>
                 <div><label style={S.label}>Category</label><select style={S.input} value={itemForm.category} onChange={e => setI('category', e.target.value)}>{CATEGORIES.map(([v,l]) => <option key={v+l} value={v}>{l}</option>)}</select></div>
@@ -81,8 +91,11 @@ export default function Stock() {
               <div className="form-grid-3" style={S.row3}>
                 <div><label style={S.label}>Opening Qty</label><input style={S.input} type="number" min="0" step="0.01" value={itemForm.opening_qty} onChange={e => setI('opening_qty', e.target.value)} required placeholder="0" /></div>
                 <div><label style={S.label}>Unit</label><select style={S.input} value={itemForm.unit} onChange={e => setI('unit', e.target.value)}>{UNITS.map(([v,l]) => <option key={v+l} value={v}>{l}</option>)}</select></div>
-                <div><label style={S.label}>Unit Cost ($)</label><input style={S.input} type="number" min="0" step="0.01" value={itemForm.unit_cost} onChange={e => setI('unit_cost', e.target.value)} placeholder="0.00" /></div>
+                <div><label style={S.label}>Total Cost Bought ($)</label><input style={S.input} type="number" min="0" step="0.01" value={itemForm.total_cost} onChange={e => setI('total_cost', e.target.value)} placeholder="0.00" required /></div>
               </div>
+              {formQty > 0 && formTotalCost > 0 && (
+                <div style={S.preview}>Unit Cost: <strong>{fmt(autoUnitCost)}</strong> per {itemForm.unit} (auto-calculated)</div>
+              )}
               <label style={S.label}>Alert Threshold</label>
               <input style={S.input} type="number" min="0" step="0.01" value={itemForm.alert_threshold} onChange={e => setI('alert_threshold', e.target.value)} placeholder="Warn when below..." />
               <button style={S.btn} type="submit" disabled={addMut.isPending}>{addMut.isPending ? 'Saving...' : '+ Add Item'}</button>
@@ -118,13 +131,14 @@ export default function Stock() {
             const rem = s.remaining ?? s.opening_qty;
             const pct = s.opening_qty > 0 ? (rem / s.opening_qty) * 100 : 0;
             const isLow = rem <= (s.alert_threshold || 0);
+            const totalCost = parseFloat(s.unit_cost || 0) * parseFloat(s.opening_qty || 0);
             const itemUsage = (Array.isArray(usage) ? usage : []).filter(u => u.item === s.id).slice(0, 3);
             return (
               <div key={s.id} style={S.stockItem}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{s.name}</div>
-                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{s.category} - {fmt(s.unit_cost)}/{s.unit}</div>
+                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{s.category} - Total: {fmt(totalCost)} ({fmt(s.unit_cost)}/{s.unit})</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 18, fontWeight: 700, color: isLow ? '#c0392b' : '#1a6b3a', fontFamily: "'Playfair Display', serif" }}>{rem}</div>
@@ -132,17 +146,28 @@ export default function Stock() {
                   </div>
                 </div>
                 <div style={S.barTrack}><div style={S.barFill(isLow ? '#c0392b' : '#1a6b3a', pct)} /></div>
-                {isLow && <div style={{ fontSize: 10, color: '#c0392b', fontWeight: 600, marginTop: 4 }}>âš  Below alert threshold ({s.alert_threshold} {s.unit})</div>}
+                {isLow && <div style={{ fontSize: 10, color: '#c0392b', fontWeight: 600, marginTop: 4 }}>Below alert threshold ({s.alert_threshold} {s.unit})</div>}
                 {itemUsage.length > 0 && (
                   <div style={{ marginTop: 8 }}>
                     <div style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>RECENT:</div>
                     {itemUsage.map((u, i) => (
                       <div key={i} style={{ fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
-                        {u.date}: {u.opening_qty} {s.unit} â†’ {u.field_name || `Field #${u.field}`}
+                        {u.date}: {u.opening_qty} {s.unit} \u2192 {u.field_name || `Field #${u.field}`}
                       </div>
                     ))}
                   </div>
                 )}
+                <div style={{ marginTop: 8, textAlign: 'right' }}>
+                  {delConfirm === s.id ? (
+                    <div style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                      <span style={{ fontSize: 10, color: '#6b7280', marginRight: 4 }}>Delete this item?</span>
+                      <button onClick={() => delMut.mutate(s.id)} style={{ fontSize: 10, padding: '2px 8px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: 3, cursor: 'pointer', fontWeight: 600 }}>Yes</button>
+                      <button onClick={() => setDelConfirm(null)} style={{ fontSize: 10, padding: '2px 8px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 3, cursor: 'pointer' }}>No</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setDelConfirm(s.id)} style={{ fontSize: 10, padding: '3px 10px', background: '#fff', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 4, cursor: 'pointer' }}>Delete</button>
+                  )}
+                </div>
               </div>
             );
           })}
