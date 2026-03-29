@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFields, getExpenses, createExpense, deleteExpense, getStock } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
-import ConfirmModal from '../components/ConfirmModal';
+import ConfirmModal from '../components/ConfihrmModal';
 
 const CATS = [
   ['seeds_seedlings','Seed'],['fertilizer_chemicals','Fertiliser'],
@@ -40,7 +40,7 @@ export default function Costs({ onTabChange }) {
   const { data: fields = [] } = useQuery({ queryKey: ['fields'], queryFn: getFields });
   const { data: stock = [] } = useQuery({ queryKey: ['stock'], queryFn: getStock });
   const { data: expenses = [], isLoading } = useQuery({ queryKey: ['expenses'], queryFn: () => getExpenses() });
-  const mut = useMutation({ mutationFn: createExpense, onSuccess: () => { qc.invalidateQueries({ queryKey: ['expenses'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setForm(empty); } });
+  const mut = useMutation({ mutationFn: createExpense, onSuccess: () => { qc.invalidateQueries({ queryKey: ['expenses'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); qc.invalidateQueries({ queryKey: ['stock'] }); setForm(empty); } });
   const delMut = useMutation({ mutationFn: (id) => deleteExpense(id), onSuccess: () => { qc.invalidateQueries({ queryKey: ['expenses'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setDelConfirm(null); } });
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const isStockCat = STOCK_CATS.includes(form.category);
@@ -60,7 +60,7 @@ export default function Costs({ onTabChange }) {
     if (isStockCat) {
       if (!catItems.length || !form.stock_item || qty <= 0) return;
       const desc = sel ? qty + ' ' + sel.unit + ' ' + sel.name : form.description;
-      const payload = { field: parseInt(form.field), category: form.category, description: desc, amount: parseFloat(calcAmt.toFixed(2)), expense_date: form.expense_date, logged_by: form.logged_by };
+      const payload = { field: parseInt(form.field), category: form.category, description: desc, amount: parseFloat(calcAmt.toFixed(2)), expense_date: form.expense_date, logged_by: form.logged_by, stock_item: parseInt(form.stock_item), qty: qty };
       setPending(payload);
     } else {
       setPending({ field: parseInt(form.field), category: form.category, description: form.description, amount: parseFloat(form.amount), expense_date: form.expense_date, logged_by: form.logged_by });
