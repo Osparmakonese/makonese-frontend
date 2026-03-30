@@ -59,7 +59,7 @@ export default function Stock() {
 
   const selectedItem = stock.find(s => String(s.id) === String(usageForm.item));
   const qtyUsed = parseFloat(usageForm.opening_qty) || 0;
-  const remainAfter = selectedItem ? (selectedItem.remaining ?? selectedItem.opening_qty) - qtyUsed : null;
+  const remainAfter = selectedItem ? (selectedItem.remaining_qty ?? selectedItem.opening_qty) - qtyUsed : null;
   const costPreview = selectedItem ? qtyUsed * (selectedItem.unit_cost || 0) : 0;
 
   // Auto-calculate unit cost from total cost and quantity
@@ -106,7 +106,7 @@ export default function Stock() {
             <div style={S.cardTitle}>Log Usage</div>
             <form onSubmit={e => { e.preventDefault(); usageMut.mutate({ item: parseInt(usageForm.item), field: parseInt(usageForm.field), opening_qty: parseFloat(usageForm.opening_qty), date: usageForm.date, notes: usageForm.notes }); }}>
               <div className="form-grid-2" style={S.row2}>
-                <div><label style={S.label}>Item</label><select style={S.input} value={usageForm.item} onChange={e => setU('item', e.target.value)} required><option value="">Select...</option>{stock.map(s => <option key={s.id} value={s.id}>{s.name} ({s.remaining ?? s.opening_qty} {s.unit})</option>)}</select></div>
+                <div><label style={S.label}>Item</label><select style={S.input} value={usageForm.item} onChange={e => setU('item', e.target.value)} required><option value="">Select...</option>{stock.map(s => <option key={s.id} value={s.id}>{s.name} ({s.remaining_qty ?? s.opening_qty} {s.unit})</option>)}</select></div>
                 <div><label style={S.label}>Field</label><select style={S.input} value={usageForm.field} onChange={e => setU('field', e.target.value)} required><option value="">Select...</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
               </div>
               <div className="form-grid-2" style={S.row2}>
@@ -128,7 +128,7 @@ export default function Stock() {
           <div style={S.sectionTitle}>Stock Levels</div>
           {stock.length === 0 && <p style={{ fontSize: 11, color: '#9ca3af' }}>No stock items yet.</p>}
           {(Array.isArray(stock) ? stock : []).map(s => {
-            const rem = s.remaining ?? s.opening_qty;
+            const rem = s.remaining_qty ?? s.opening_qty;
             const pct = s.opening_qty > 0 ? (rem / s.opening_qty) * 100 : 0;
             const isLow = rem <= (s.alert_threshold || 0);
             const totalCost = parseFloat(s.unit_cost || 0) * parseFloat(s.opening_qty || 0);
