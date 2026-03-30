@@ -60,7 +60,7 @@ export default function Costs({ onTabChange }) {
     if (isStockCat) {
       if (!catItems.length || !form.stock_item || qty <= 0) return;
       const desc = sel ? qty + ' ' + sel.unit + ' ' + sel.name : form.description;
-      const payload = { field: parseInt(form.field), category: form.category, description: desc, amount: parseFloat(calcAmt.toFixed(2)), expense_date: form.expense_date, logged_by: form.logged_by, stock_item: parseInt(form.stock_item), qty: qty };
+      const payload = { field: parseInt(form.field), category: form.category, description: desc, amount: calcAmt, expense_date: form.expense_date, logged_by: form.logged_by, stock_item: parseInt(form.stock_item), qty: qty };
       setPending(payload);
     } else {
       setPending({ field: parseInt(form.field), category: form.category, description: form.description, amount: parseFloat(form.amount), expense_date: form.expense_date, logged_by: form.logged_by });
@@ -101,7 +101,7 @@ export default function Costs({ onTabChange }) {
                     {catItems.map(s => <option key={s.id} value={s.id}>{s.name} - {fmt(s.unit_cost)}/{s.unit} ({s.remaining_qty ?? s.opening_qty} {s.unit} left)</option>)}
                   </select>
                   <div className="form-grid-2" style={S.row2}>
-                    <div><label style={S.label}>Quantity Used{sel ? ' ('+sel.unit+')' : ''}</label><input style={S.input} type="number" min="0.01" step="0.01" value={form.qty} onChange={e => set('qty', e.target.value)} placeholder="e.g. 5" required /></div>
+                    <div><label style={S.label}>Quantity Used{sel ? ' ('+sel.unit+')' : ''}</label><input style={S.input} type="number" min="0.01" step="any" value={form.qty} onChange={e => set('qty', e.target.value)} placeholder="e.g. 5" required /></div>
                     <div><label style={S.label}>Date</label><input style={S.input} type="date" value={form.expense_date} onChange={e => set('expense_date', e.target.value)} /></div>
                   </div>
                   {sel && qty > 0 && (

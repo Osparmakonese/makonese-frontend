@@ -83,21 +83,21 @@ export default function Stock() {
         <div>
           <div style={S.card}>
             <div style={S.cardTitle}>Add Stock Item</div>
-            <form onSubmit={e => { e.preventDefault(); addMut.mutate({ name: itemForm.name, category: itemForm.category, opening_qty: formQty, unit: itemForm.unit, unit_cost: parseFloat(autoUnitCost.toFixed(2)), alert_threshold: parseFloat(itemForm.alert_threshold) || 0 }); }}>
+            <form onSubmit={e => { e.preventDefault(); addMut.mutate({ name: itemForm.name, category: itemForm.category, opening_qty: formQty, unit: itemForm.unit, unit_cost: autoUnitCost, alert_threshold: parseFloat(itemForm.alert_threshold) || 0 }); }}>
               <div className="form-grid-2" style={S.row2}>
                 <div><label style={S.label}>Name</label><input style={S.input} value={itemForm.name} onChange={e => setI('name', e.target.value)} placeholder="e.g. Lambda Cyhalothrin" required /></div>
                 <div><label style={S.label}>Category</label><select style={S.input} value={itemForm.category} onChange={e => setI('category', e.target.value)}>{CATEGORIES.map(([v,l]) => <option key={v+l} value={v}>{l}</option>)}</select></div>
               </div>
               <div className="form-grid-3" style={S.row3}>
-                <div><label style={S.label}>Opening Qty</label><input style={S.input} type="number" min="0" step="0.01" value={itemForm.opening_qty} onChange={e => setI('opening_qty', e.target.value)} required placeholder="0" /></div>
+                <div><label style={S.label}>Opening Qty</label><input style={S.input} type="number" min="0" step="any" value={itemForm.opening_qty} onChange={e => setI('opening_qty', e.target.value)} required placeholder="0" /></div>
                 <div><label style={S.label}>Unit</label><select style={S.input} value={itemForm.unit} onChange={e => setI('unit', e.target.value)}>{UNITS.map(([v,l]) => <option key={v+l} value={v}>{l}</option>)}</select></div>
-                <div><label style={S.label}>Total Cost Bought ($)</label><input style={S.input} type="number" min="0" step="0.01" value={itemForm.total_cost} onChange={e => setI('total_cost', e.target.value)} placeholder="0.00" required /></div>
+                <div><label style={S.label}>Total Cost Bought ($)</label><input style={S.input} type="number" min="0" step="any" value={itemForm.total_cost} onChange={e => setI('total_cost', e.target.value)} placeholder="0.00" required /></div>
               </div>
               {formQty > 0 && formTotalCost > 0 && (
                 <div style={S.preview}>Unit Cost: <strong>{fmt(autoUnitCost)}</strong> per {itemForm.unit} (auto-calculated)</div>
               )}
               <label style={S.label}>Alert Threshold</label>
-              <input style={S.input} type="number" min="0" step="0.01" value={itemForm.alert_threshold} onChange={e => setI('alert_threshold', e.target.value)} placeholder="Warn when below..." />
+              <input style={S.input} type="number" min="0" step="any" value={itemForm.alert_threshold} onChange={e => setI('alert_threshold', e.target.value)} placeholder="Warn when below..." />
               <button style={S.btn} type="submit" disabled={addMut.isPending}>{addMut.isPending ? 'Saving...' : '+ Add Item'}</button>
             </form>
           </div>
@@ -110,7 +110,7 @@ export default function Stock() {
                 <div><label style={S.label}>Field</label><select style={S.input} value={usageForm.field} onChange={e => setU('field', e.target.value)} required><option value="">Select...</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
               </div>
               <div className="form-grid-2" style={S.row2}>
-                <div><label style={S.label}>Qty Used</label><input style={S.input} type="number" min="0" step="0.01" value={usageForm.opening_qty} onChange={e => setU('opening_qty', e.target.value)} required placeholder="0" /></div>
+                <div><label style={S.label}>Qty Used</label><input style={S.input} type="number" min="0" step="any" value={usageForm.opening_qty} onChange={e => setU('opening_qty', e.target.value)} required placeholder="0" /></div>
                 <div><label style={S.label}>Date</label><input style={S.input} type="date" value={usageForm.date} onChange={e => setU('date', e.target.value)} /></div>
               </div>
               {selectedItem && qtyUsed > 0 && (
