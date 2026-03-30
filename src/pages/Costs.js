@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFields, getExpenses, createExpense, deleteExpense, getStock } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
-import ConfirmModal from '../components/ConfihrmModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const CATS = [
   ['seeds_seedlings','Seed'],['fertilizer_chemicals','Fertiliser'],
