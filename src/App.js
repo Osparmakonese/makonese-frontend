@@ -19,6 +19,12 @@ import Settings from './pages/Settings';
 import Import from './pages/Import';
 import AdminPanel from './pages/AdminPanel';
 import FarmAssets from './pages/FarmAssets';
+import Cattle from './pages/Cattle';
+import Goats from './pages/Goats';
+import Sheep from './pages/Sheep';
+import Pigs from './pages/Pigs';
+import Broilers from './pages/Broilers';
+import Layers from './pages/Layers';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 /* --- */
@@ -34,6 +40,12 @@ const PAGES = {
   'Settings': Settings,
   'Import': Import,
   'Farm Assets': FarmAssets,
+  'Cattle': Cattle,
+  'Goats': Goats,
+  'Sheep': Sheep,
+  'Pigs': Pigs,
+  'Broilers': Broilers,
+  'Layers': Layers,
   'Admin Panel': AdminPanel,
 };
 
@@ -44,6 +56,12 @@ const PAGE_META = {
   'Sales & Market': { title: 'Sales & Market', sub: 'Market trips and direct income' },
   'Costs': { title: 'Costs', sub: 'Farm expenses and inputs' },
   'Stock': { title: 'Stock', sub: 'Inventory and usage tracking' },
+  'Cattle': { title: 'Cattle', sub: 'Herd management and health records' },
+  'Goats': { title: 'Goats', sub: 'Goat records and health tracking' },
+  'Sheep': { title: 'Sheep', sub: 'Flock management and health records' },
+  'Pigs': { title: 'Pigs', sub: 'Pig management and litter tracking' },
+  'Broilers': { title: 'Broilers', sub: 'Meat bird batches and expenses' },
+  'Layers': { title: 'Layers', sub: 'Egg production and flock management' },
   'Workers': { title: 'Workers', sub: 'Roster and wage management' },
   'Hours & Pay': { title: 'Hours & Pay', sub: 'Attendance and payroll' },
   'Report': { title: 'Financial Report', sub: 'Season P&L "” Owner only' },
@@ -60,6 +78,12 @@ const PRIMARY_ACTIONS = {
   'Sales & Market': '+ Record trip',
   'Costs': '+ Log expense',
   'Stock': '+ Add stock',
+  'Cattle': '+ Add cattle',
+  'Goats': '+ Add goat',
+  'Sheep': '+ Add sheep',
+  'Pigs': '+ Add pig',
+  'Broilers': '+ Add batch',
+  'Layers': '+ Add flock',
   'Workers': '+ Add worker',
   'Hours & Pay': '+ Log hours',
   'Report': 'Export PDF',

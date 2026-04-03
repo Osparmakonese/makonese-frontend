@@ -5,6 +5,12 @@ import Logo from './Logo';
 import { initials, avatarColor } from '../utils/format';
 const MORE_TABS = [
   { key: 'Costs', emoji: '🧾', label: 'Costs', sub: 'Farm expenses' },
+  { key: 'Cattle', emoji: '🐄', label: 'Cattle', sub: 'Herd management' },
+  { key: 'Goats', emoji: '🐐', label: 'Goats', sub: 'Goat records' },
+  { key: 'Sheep', emoji: '🐑', label: 'Sheep', sub: 'Flock records' },
+  { key: 'Pigs', emoji: '🐷', label: 'Pigs', sub: 'Pig management' },
+  { key: 'Broilers', emoji: '🐔', label: 'Broilers', sub: 'Meat birds' },
+  { key: 'Layers', emoji: '🥚', label: 'Layers', sub: 'Egg production' },
   { key: 'Workers', emoji: '👷', label: 'Workers', sub: 'Roster & wages' },
   { key: 'Hours & Pay', emoji: '⏱️', label: 'Hours & Pay', sub: 'Attendance' },
   { key: 'Report', emoji: '📈', label: 'Report', sub: 'P&L overview', ownerOnly: true },

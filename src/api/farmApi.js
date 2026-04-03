@@ -99,3 +99,51 @@ export const deleteExpense = (id) => api.delete(`/expenses/${id}/`);
 export const getFarmAssets = () => api.get('/farm-assets/').then(r => r.data);
 export const createFarmAsset = (data) => api.post('/farm-assets/', data).then(r => r.data);
 export const deleteFarmAsset = (id) => api.delete('/farm-assets/' + id + '/');
+
+// Cattle
+export const getCattle = () => api.get('/cattle/').then(r => r.data);
+export const createCattle = (data) => api.post('/cattle/', data).then(r => r.data);
+export const deleteCattle = (id) => api.delete(`/cattle/${id}/`);
+export const getCattleHealth = (params) => api.get('/cattle-health/', { params }).then(r => r.data);
+export const createCattleHealth = (data) => api.post('/cattle-health/', data).then(r => r.data);
+
+// Goats
+export const getGoats = () => api.get('/goats/').then(r => r.data);
+export const createGoat = (data) => api.post('/goats/', data).then(r => r.data);
+export const deleteGoat = (id) => api.delete(`/goats/${id}/`);
+export const getGoatHealth = (params) => api.get('/goat-health/', { params }).then(r => r.data);
+export const createGoatHealth = (data) => api.post('/goat-health/', data).then(r => r.data);
+
+// Sheep
+export const getSheep = () => api.get('/sheep/').then(r => r.data);
+export const createSheep = (data) => api.post('/sheep/', data).then(r => r.data);
+export const deleteSheep = (id) => api.delete(`/sheep/${id}/`);
+export const getSheepHealth = (params) => api.get('/sheep-health/', { params }).then(r => r.data);
+export const createSheepHealth = (data) => api.post('/sheep-health/', data).then(r => r.data);
+
+// Pigs
+export const getPigs = () => api.get('/pigs/').then(r => r.data);
+export const createPig = (data) => api.post('/pigs/', data).then(r => r.data);
+export const deletePig = (id) => api.delete(`/pigs/${id}/`);
+export const getPigHealth = (params) => api.get('/pig-health/', { params }).then(r => r.data);
+export const createPigHealth = (data) => api.post('/pig-health/', data).then(r => r.data);
+
+// Broilers
+export const getBroilerBatches = () => api.get('/broiler-batches/').then(r => r.data);
+export const createBroilerBatch = (data) => api.post('/broiler-batches/', data).then(r => r.data);
+export const deleteBroilerBatch = (id) => api.delete(`/broiler-batches/${id}/`);
+export const getBroilerExpenses = (params) => api.get('/broiler-expenses/', { params }).then(r => r.data);
+export const createBroilerExpense = (data) => api.post('/broiler-expenses/', data).then(r => r.data);
+
+// Layers
+export const getLayerFlocks = () => api.get('/layer-flocks/').then(r => r.data);
+export const createLayerFlock = (data) => api.post('/layer-flocks/', data).then(r => r.data);
+export const deleteLayerFlock = (id) => api.delete(`/layer-flocks/${id}/`);
+export const getEggCollections = (params) => api.get('/egg-collections/', { params }).then(r => r.data);
+export const createEggCollection = (data) => api.post('/egg-collections/', data).then(r => r.data);
+export const getLayerExpenses = (params) => api.get('/layer-expenses/', { params }).then(r => r.data);
+export const createLayerExpense = (data) => api.post('/layer-expenses/', data).then(r => r.data);
+
+// Livestock Sales (shared)
+export const getLivestockSales = (params) => api.get('/livestock-sales/', { params }).then(r => r.data);
+export const createLivestockSale = (data) => api.post('/livestock-sales/', data).then(r => r.data);

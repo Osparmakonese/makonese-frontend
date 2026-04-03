@@ -76,6 +76,14 @@ const NAV_ITEMS = [
     { key: 'Farm Assets', emoji: '🏗', label: 'Farm Assets' },
     { key: 'Stock', emoji: '📦', label: 'Stock', showBadge: true },
   ]},
+  { section: 'LIVESTOCK', items: [
+    { key: 'Cattle', emoji: '🐄', label: 'Cattle' },
+    { key: 'Goats', emoji: '🐐', label: 'Goats' },
+    { key: 'Sheep', emoji: '🐑', label: 'Sheep' },
+    { key: 'Pigs', emoji: '🐷', label: 'Pigs' },
+    { key: 'Broilers', emoji: '🐔', label: 'Broilers' },
+    { key: 'Layers', emoji: '🥚', label: 'Layers' },
+  ]},
   { section: 'PEOPLE', items: [
     { key: 'Workers', emoji: '👷', label: 'Workers' },
     { key: 'Hours & Pay', emoji: '⏱', label: 'Hours & Pay' },
