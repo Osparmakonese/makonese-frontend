@@ -211,7 +211,7 @@ export default function Layers() {
                       <div style={S.flockCardInfo}>
                         <div style={S.flockCardName}>{flock.flock_name}</div>
                         <div style={S.flockCardMeta}>
-                          <span style={S.badge} style={{ ...S.badge, ...S.badgeActive }}>Active</span>
+                          <span style={{ ...S.badge, ...S.badgeActive }}>Active</span>
                           {flock.quantity} birds
                         </div>
                         <div style={{ fontSize: 10, color: '#9ca3af' }}>Mortality: {flock.mortality || 0} | Added: {flock.date_acquired}</div>

@@ -57,7 +57,7 @@ export default function Broilers() {
   const [pending, setPending] = useState(null);
 
   const { data: batches = [] } = useQuery({ queryKey: ['broilerBatches'], queryFn: getBroilerBatches });
-  const { data: expenses = [] } = useQuery({ queryKey: ['broilerExpenses'], queryFn: getBroilerExpenses });
+  const { data: expenses = [] } = useQuery({ queryKey: ['broilerExpenses'], queryFn: () => getBroilerExpenses() });
   const { data: sales = [] } = useQuery({ queryKey: ['livestockSales'], queryFn: () => getLivestockSales({ animal_type: 'broiler' }) });
 
   const addBatchMut = useMutation({

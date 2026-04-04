@@ -325,7 +325,7 @@ export default function Sheep() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                           <div>
                             <div style={{ fontSize: 12, fontWeight: 600, color: '#111827' }}>
-                              {sheepItem?.name || sheepItem?.tag_number || 'Unknown'} - {h.type}
+                              {sheepItem?.name || sheepItem?.tag_number || 'Unknown'} - {h.record_type}
                             </div>
                             {h.description && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{h.description}</div>}
                             <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 4 }}>

@@ -338,7 +338,7 @@ export default function Cattle() {
               {healthRecords.map(h => (
                 <div key={h.id} style={S.healthCard}>
                   <div style={{ fontWeight: 700, fontSize: 11, color: '#1a6b3a' }}>
-                    {(HEALTH_TYPES.find(t => t[0] === h.type) || [h.type, h.type])[1]}
+                    {(HEALTH_TYPES.find(t => t[0] === h.record_type) || [h.record_type, h.record_type])[1]}
                   </div>
                   <div style={{ fontSize: 10, color: '#6b7280', marginTop: 4 }}>
                     Cattle: {h.cattle_tag || `#${h.cattle}`} | Date: {h.date}

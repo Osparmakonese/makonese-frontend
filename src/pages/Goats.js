@@ -303,7 +303,7 @@ export default function Goats() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{goat ? `${goat.tag_number} - ${goat.name || 'Unnamed'}` : 'Unknown Goat'}</div>
-                        <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}><strong>{h.type}</strong>: {h.description}</div>
+                        <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}><strong>{h.record_type}</strong>: {h.description}</div>
                       </div>
                       <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 700, color: '#1a6b3a' }}>{fmt(h.cost || 0)}</div>
                     </div>

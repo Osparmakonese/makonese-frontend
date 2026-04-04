@@ -208,7 +208,7 @@ export default function Pigs() {
                 const pig = pigs.find(p => p.id === rec.pig);
                 return (
                   <div key={rec.id} style={S.healthRecord}>
-                    <div style={{ fontWeight: 600, color: '#111827' }}>{pig?.tag_number || 'Unknown'} - {rec.type}</div>
+                    <div style={{ fontWeight: 600, color: '#111827' }}>{pig?.tag_number || 'Unknown'} - {rec.record_type}</div>
                     <div style={{ color: '#6b7280', fontSize: 10, marginTop: 2 }}>{rec.date} {rec.vet_name && `• ${rec.vet_name}`}</div>
                     {rec.description && <div style={{ color: '#6b7280', fontSize: 10 }}>{rec.description}</div>}
                     {rec.cost && <div style={{ color: '#c97d1a', fontWeight: 600, fontSize: 10 }}>{fmt(rec.cost)}</div>}
