@@ -1,5 +1,5 @@
 import OfflineBanner from './OfflineBanner';
-// v2 "” production API routing fix
+// v2 - production API routing fix
 import { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -64,11 +64,11 @@ const PAGE_META = {
   'Layers': { title: 'Layers', sub: 'Egg production and flock management' },
   'Workers': { title: 'Workers', sub: 'Roster and wage management' },
   'Hours & Pay': { title: 'Hours & Pay', sub: 'Attendance and payroll' },
-  'Report': { title: 'Financial Report', sub: 'Season P&L "” Owner only' },
+  'Report': { title: 'Financial Report', sub: 'Season P&L - Owner only' },
   'Farm Assets': { title: 'Farm Assets', sub: 'Equipment and long-term investments' },
   'Settings': { title: 'Settings', sub: 'System configuration' },
   'Import': { title: 'Import Data', sub: 'Upload Excel to populate your farm data' },
-  'Admin Panel': { title: 'ðŸ” Super Admin Panel', sub: 'System administration "” visible to you only' },
+  'Admin Panel': { title: 'Super Admin Panel', sub: 'System administration - visible to you only' },
 };
 
 /* --- */
