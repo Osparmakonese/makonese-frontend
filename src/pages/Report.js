@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getDashboard, getFields, getWagesSummary, getFarmAssets } from '../api/farmApi';
+import { getDashboard, getFields, getWagesSummary, getFarmAssets, getLivestockSales, getCattle, getGoats, getSheep, getPigs, getBroilerBatches, getLayerFlocks, getEggCollections, getBroilerExpenses, getLayerExpenses } from '../api/farmApi';
 import { fmt, IMAGES } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 
@@ -56,6 +56,9 @@ export default function Report() {
   const { data: fields = [], isLoading: fLoad } = useQuery({ queryKey: ['fields'], queryFn: getFields });
   const { data: wages } = useQuery({ queryKey: ['wages'], queryFn: getWagesSummary });
   const { data: assets = [] } = useQuery({ queryKey: ['farmAssets'], queryFn: getFarmAssets });
+  const { data: livestockSales = [] } = useQuery({ queryKey: ['livestockSales'], queryFn: () => getLivestockSales() });
+  const { data: broilerExpenses = [] } = useQuery({ queryKey: ['broilerExpenses'], queryFn: () => getBroilerExpenses() });
+  const { data: layerExpenses = [] } = useQuery({ queryKey: ['layerExpenses'], queryFn: () => getLayerExpenses() });
 
   if (role !== 'owner') {
     return <div style={S.locked}><div style={{ fontSize: 32, marginBottom: 8 }}>🔒</div><p>Reports are only available to the farm owner.</p></div>;
@@ -76,8 +79,23 @@ export default function Report() {
     return sum + (parseFloat(a.cost) / years);
   }, 0);
 
-  const totalOutgoing = fieldCosts + wagesOwed + tripExpenses + totalDepreciation;
-  const net = totalRevenue - totalOutgoing;
+  // Livestock financials
+  const lsData = d.livestock || {};
+  const livestockSalesRev = (Array.isArray(livestockSales) ? livestockSales : []).reduce((s, x) => s + parseFloat(x.sale_price || 0), 0);
+  const livestockSalesByType = {};
+  (Array.isArray(livestockSales) ? livestockSales : []).forEach(s => {
+    if (!livestockSalesByType[s.animal_type]) livestockSalesByType[s.animal_type] = { revenue: 0, count: 0 };
+    livestockSalesByType[s.animal_type].revenue += parseFloat(s.sale_price || 0);
+    livestockSalesByType[s.animal_type].count += parseInt(s.quantity || 1);
+  });
+  const broilerCosts = (Array.isArray(broilerExpenses) ? broilerExpenses : []).reduce((s, x) => s + parseFloat(x.amount || 0), 0);
+  const layerCosts = (Array.isArray(layerExpenses) ? layerExpenses : []).reduce((s, x) => s + parseFloat(x.amount || 0), 0);
+  const livestockHealthCosts = lsData.total_costs || 0;
+  const totalLivestockCosts = broilerCosts + layerCosts + (livestockHealthCosts - broilerCosts - layerCosts > 0 ? livestockHealthCosts - broilerCosts - layerCosts : 0);
+  const livestockNet = livestockSalesRev - livestockHealthCosts;
+
+  const totalOutgoing = fieldCosts + wagesOwed + tripExpenses + totalDepreciation + livestockHealthCosts;
+  const net = totalRevenue + livestockSalesRev - totalOutgoing;
 
   const stockValue = d.stock_value ?? 0;
   const totalAssets = totalRevenue + stockValue + fieldCosts;
@@ -89,7 +107,7 @@ export default function Report() {
     try {
       const apiKey = localStorage.getItem('anthropic_api_key');
       if (!apiKey) { setAnalysis('Add your Anthropic API key in Settings to use AI analysis.'); setAiLoading(false); return; }
-      const prompt = `Full financial analysis of Makonese Farm Season 2025:\n\nRevenue: $${totalRevenue} (Trips: $${tripRevenue}, Direct: $${directIncome})\nField costs: $${fieldCosts}\nWages: $${wagesOwed}\nTrip expenses: $${tripExpenses}\nFarm overhead (depreciation): $${totalDepreciation.toFixed(2)}\nNet: $${net}\n\nFields: ${JSON.stringify(fields.map(f => ({ name: f.name, crop: f.crop, revenue: f.total_revenue, costs: f.total_costs, labour: f.total_labour })))}\n\nFarm Assets: ${JSON.stringify((assets || []).map(a => ({ name: a.name, cost: a.cost, lifespan: a.lifespan })))}\n\nProvide: 1) Executive summary 2) Revenue analysis 3) Cost efficiency 4) Field performance 5) Asset depreciation impact 6) Recommendations for next season`;
+      const prompt = `Full financial analysis of Makonese Farm Season 2025:\n\nRevenue: $${totalRevenue} (Trips: $${tripRevenue}, Direct: $${directIncome})\nLivestock Sales: $${livestockSalesRev}\nField costs: $${fieldCosts}\nWages: $${wagesOwed}\nTrip expenses: $${tripExpenses}\nLivestock costs (health/feed): $${livestockHealthCosts}\nFarm overhead (depreciation): $${totalDepreciation}\nNet: $${net}\n\nFields: ${JSON.stringify(fields.map(f => ({ name: f.name, crop: f.crop, revenue: f.total_revenue, costs: f.total_costs, labour: f.total_labour })))}\n\nFarm Assets: ${JSON.stringify((assets || []).map(a => ({ name: a.name, cost: a.cost, lifespan: a.lifespan })))}\n\nLivestock: ${JSON.stringify(lsData)}\nLivestock Sales by Type: ${JSON.stringify(livestockSalesByType)}\n\nProvide: 1) Executive summary 2) Revenue analysis (including livestock) 3) Cost efficiency 4) Field performance 5) Livestock performance 6) Asset depreciation impact 7) Recommendations for next season`;
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
@@ -124,12 +142,23 @@ export default function Report() {
             <div style={{ ...S.sectionTitle, marginBottom: 12 }}>Season P&amp;L</div>
             <div style={S.row}><span style={S.rowLabel}>Market trip revenue</span><span style={S.rowVal('#1a6b3a')}>{fmt(tripRevenue)}</span></div>
             <div style={S.row}><span style={S.rowLabel}>Direct sales</span><span style={S.rowVal('#1a6b3a')}>{fmt(directIncome)}</span></div>
-            <div style={{ ...S.row, fontWeight: 600 }}><span>Total Revenue</span><span style={{ color: '#1a6b3a', fontWeight: 700 }}>{fmt(totalRevenue)}</span></div>
+            {livestockSalesRev > 0 && <div style={S.row}><span style={S.rowLabel}>Livestock sales</span><span style={S.rowVal('#1a6b3a')}>{fmt(livestockSalesRev)}</span></div>}
+            <div style={{ ...S.row, fontWeight: 600 }}><span>Total Revenue</span><span style={{ color: '#1a6b3a', fontWeight: 700 }}>{fmt(totalRevenue + livestockSalesRev)}</span></div>
             <div style={{ height: 8 }} />
             <div style={{ fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', padding: '6px 0 2px' }}>Field Costs</div>
             <div style={S.row}><span style={S.rowLabel}>Input costs (seeds, chemicals, fuel)</span><span style={S.rowVal('#c0392b')}>{fmt(fieldCosts)}</span></div>
             <div style={S.row}><span style={S.rowLabel}>Wages owed</span><span style={S.rowVal('#c97d1a')}>{fmt(wagesOwed)}</span></div>
             <div style={S.row}><span style={S.rowLabel}>Trip expenses</span><span style={S.rowVal('#c0392b')}>{fmt(tripExpenses)}</span></div>
+            {livestockHealthCosts > 0 && (
+              <>
+                <div style={{ height: 6 }} />
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#6c5ce7', textTransform: 'uppercase', padding: '6px 0 2px' }}>Livestock Costs</div>
+                {lsData.cost_breakdown && Object.entries(lsData.cost_breakdown).filter(([,v]) => v > 0).map(([k, v]) => (
+                  <div key={k} style={S.row}><span style={S.rowLabel}>{k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span><span style={S.rowVal('#6c5ce7')}>{fmt(v)}</span></div>
+                ))}
+                <div style={{ ...S.row, fontWeight: 600 }}><span>Total Livestock Costs</span><span style={{ color: '#6c5ce7', fontWeight: 700 }}>{fmt(livestockHealthCosts)}</span></div>
+              </>
+            )}
             <div style={{ height: 6 }} />
             <div style={{ fontSize: 10, fontWeight: 700, color: '#c97d1a', textTransform: 'uppercase', padding: '6px 0 2px' }}>Farm Overhead</div>
             <div style={S.row}>
@@ -179,6 +208,43 @@ export default function Report() {
             </div>
           )}
 
+          {/* Livestock P&L */}
+          {(livestockSalesRev > 0 || livestockHealthCosts > 0) && (
+            <div style={{ ...S.overheadCard, borderLeftColor: '#6c5ce7' }}>
+              <div style={{ ...S.sectionTitle, marginBottom: 10, color: '#6c5ce7' }}>Livestock P&L</div>
+              <div style={S.infoBox}>Revenue from livestock sales vs health, feed, and medication costs.</div>
+              {Object.keys(livestockSalesByType).length > 0 && (
+                <table style={S.table}>
+                  <thead><tr>
+                    <th style={S.th}>Animal</th>
+                    <th style={S.th}>Qty Sold</th>
+                    <th style={S.th}>Revenue</th>
+                  </tr></thead>
+                  <tbody>
+                    {Object.entries(livestockSalesByType).map(([type, data]) => (
+                      <tr key={type}>
+                        <td style={{ ...S.td, fontWeight: 600, textTransform: 'capitalize' }}>{type}</td>
+                        <td style={S.td}>{data.count}</td>
+                        <td style={{ ...S.td, color: '#1a6b3a', fontWeight: 700 }}>{fmt(data.revenue)}</td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <td colSpan={2} style={{ ...S.td, fontWeight: 700 }}>Total Sales</td>
+                      <td style={{ ...S.td, color: '#1a6b3a', fontWeight: 700 }}>{fmt(livestockSalesRev)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+              <div style={{ marginTop: 10 }}>
+                <div style={S.row}><span style={S.rowLabel}>Total Livestock Costs</span><span style={S.rowVal('#c0392b')}>{fmt(livestockHealthCosts)}</span></div>
+                <div style={S.totalRow}>
+                  <span>{livestockNet >= 0 ? 'Livestock Profit' : 'Livestock Loss'}</span>
+                  <span style={{ color: livestockNet >= 0 ? '#1a6b3a' : '#c0392b', fontFamily: "'Playfair Display', serif", fontSize: 16 }}>{fmt(livestockNet)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Per-field */}
           <div style={S.sectionTitle}>Per-Field Performance</div>
           <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: 14 }}>
@@ -216,7 +282,8 @@ export default function Report() {
               <div style={S.row}><span style={S.rowLabel}>Cash from sales</span><span style={S.rowVal('#1a6b3a')}>{fmt(totalRevenue)}</span></div>
               <div style={S.row}><span style={S.rowLabel}>Stock on hand</span><span style={S.rowVal('#1a6b3a')}>{fmt(stockValue)}</span></div>
               <div style={S.row}><span style={S.rowLabel}>Crop investment</span><span style={S.rowVal('#1a6b3a')}>{fmt(fieldCosts)}</span></div>
-              <div style={{ ...S.row, fontWeight: 700, borderBottom: '2px solid #e5e7eb' }}><span>Total Assets</span><span style={{ color: '#1a6b3a' }}>{fmt(totalAssets)}</span></div>
+              {livestockSalesRev > 0 && <div style={S.row}><span style={S.rowLabel}>Livestock sales</span><span style={S.rowVal('#1a6b3a')}>{fmt(livestockSalesRev)}</span></div>}
+              <div style={{ ...S.row, fontWeight: 700, borderBottom: '2px solid #e5e7eb' }}><span>Total Assets</span><span style={{ color: '#1a6b3a' }}>{fmt(totalAssets + livestockSalesRev)}</span></div>
             </div>
             <div style={S.bsSection}>
               <div style={S.bsTitle}>Liabilities</div>
@@ -224,7 +291,8 @@ export default function Report() {
               <div style={S.row}><span style={S.rowLabel}>Input costs</span><span style={S.rowVal('#c0392b')}>{fmt(fieldCosts)}</span></div>
               <div style={S.row}><span style={S.rowLabel}>Trip expenses</span><span style={S.rowVal('#c0392b')}>{fmt(tripExpenses)}</span></div>
               <div style={S.row}><span style={S.rowLabel}>Asset depreciation</span><span style={S.rowVal('#c97d1a')}>{fmt(totalDepreciation)}</span></div>
-              <div style={{ ...S.row, fontWeight: 700, borderBottom: '2px solid #e5e7eb' }}><span>Total Liabilities</span><span style={{ color: '#c0392b' }}>{fmt(totalLiabilities)}</span></div>
+              {livestockHealthCosts > 0 && <div style={S.row}><span style={S.rowLabel}>Livestock costs</span><span style={S.rowVal('#6c5ce7')}>{fmt(livestockHealthCosts)}</span></div>}
+              <div style={{ ...S.row, fontWeight: 700, borderBottom: '2px solid #e5e7eb' }}><span>Total Liabilities</span><span style={{ color: '#c0392b' }}>{fmt(totalLiabilities + livestockHealthCosts)}</span></div>
             </div>
             <div style={S.netBox(farmNet >= 0)}>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>Farm Net Position</div>

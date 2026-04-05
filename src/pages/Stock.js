@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getStock, createStockItem, logStockUsage, getStockUsage, getFields, deleteStockItem } from '../api/farmApi';
+import { getStock, createStockItem, logStockUsage, getStockUsage, getFields, deleteStockItem, getCattle, getGoats, getSheep, getPigs, getBroilerBatches, getLayerFlocks } from '../api/farmApi';
 import { fmt, today, IMAGES } from '../utils/format';
 
 const CATEGORIES = [['chemical','Chemical'],['fertilizer','Fertiliser'],['seed','Seed'],['fuel','Fuel'],['equipment','Equipment'],['other','Other']];
 const UNITS = [['litres','L'],['kg','kg'],['bags','bags'],['units','units'],['litres','bottles'],['units','packs']];
 const emptyItem = { name: '', category: 'chemical', opening_qty: '', unit: 'litres', total_cost: '', alert_threshold: '' };
-const emptyUsage = { item: '', field: '', opening_qty: '', date: today(), notes: '' };
+const emptyUsage = { item: '', field: '', opening_qty: '', date: today(), notes: '', livestock_type: '', livestock_id: '' };
+const LIVESTOCK_TYPES = [['','-- Field only --'],['cattle','Cattle'],['goat','Goat'],['sheep','Sheep'],['pig','Pig'],['broiler','Broiler Batch'],['layer','Layer Flock']];
 
 const S = {
   banner: {
@@ -40,6 +41,21 @@ export default function Stock() {
   const { data: stock = [] } = useQuery({ queryKey: ['stock'], queryFn: getStock });
   const { data: fields = [] } = useQuery({ queryKey: ['fields'], queryFn: getFields });
   const { data: usage = [] } = useQuery({ queryKey: ['stockUsage'], queryFn: getStockUsage });
+  const { data: cattle = [] } = useQuery({ queryKey: ['cattle'], queryFn: getCattle });
+  const { data: goats = [] } = useQuery({ queryKey: ['goats'], queryFn: getGoats });
+  const { data: sheep = [] } = useQuery({ queryKey: ['sheep'], queryFn: getSheep });
+  const { data: pigs = [] } = useQuery({ queryKey: ['pigs'], queryFn: getPigs });
+  const { data: broilers = [] } = useQuery({ queryKey: ['broilerBatches'], queryFn: getBroilerBatches });
+  const { data: layers = [] } = useQuery({ queryKey: ['layerFlocks'], queryFn: getLayerFlocks });
+
+  const livestockOptions = {
+    cattle: (Array.isArray(cattle) ? cattle : []).filter(a => a.status === 'active').map(a => ({ id: a.id, label: `${a.tag_number} - ${a.name || a.breed}` })),
+    goat: (Array.isArray(goats) ? goats : []).filter(a => a.status === 'active').map(a => ({ id: a.id, label: `${a.tag_number} - ${a.name || a.breed}` })),
+    sheep: (Array.isArray(sheep) ? sheep : []).filter(a => a.status === 'active').map(a => ({ id: a.id, label: `${a.tag_number} - ${a.name || a.breed}` })),
+    pig: (Array.isArray(pigs) ? pigs : []).filter(a => a.status === 'active').map(a => ({ id: a.id, label: `${a.tag_number} - ${a.name || a.breed}` })),
+    broiler: (Array.isArray(broilers) ? broilers : []).filter(a => a.status === 'active').map(a => ({ id: a.id, label: `${a.batch_name} (${a.current_count} birds)` })),
+    layer: (Array.isArray(layers) ? layers : []).filter(a => a.status === 'active').map(a => ({ id: a.id, label: `${a.flock_name} (${a.current_count} birds)` })),
+  };
 
   const addMut = useMutation({
     mutationFn: createStockItem,
@@ -104,17 +120,32 @@ export default function Stock() {
 
           <div style={S.card}>
             <div style={S.cardTitle}>Log Usage</div>
-            <form onSubmit={e => { e.preventDefault(); usageMut.mutate({ item: parseInt(usageForm.item), field: parseInt(usageForm.field), opening_qty: parseFloat(usageForm.opening_qty), date: usageForm.date, notes: usageForm.notes }); }}>
+            <form onSubmit={e => { e.preventDefault(); const payload = { item: parseInt(usageForm.item), opening_qty: parseFloat(usageForm.opening_qty), date: usageForm.date, notes: usageForm.notes }; if (usageForm.field) payload.field = parseInt(usageForm.field); if (usageForm.livestock_type) { payload.livestock_type = usageForm.livestock_type; payload.livestock_id = parseInt(usageForm.livestock_id); } usageMut.mutate(payload); }}>
               <div className="form-grid-2" style={S.row2}>
                 <div><label style={S.label}>Item</label><select style={S.input} value={usageForm.item} onChange={e => setU('item', e.target.value)} required><option value="">Select...</option>{stock.map(s => <option key={s.id} value={s.id}>{s.name} ({s.remaining_qty ?? s.opening_qty} {s.unit})</option>)}</select></div>
-                <div><label style={S.label}>Field</label><select style={S.input} value={usageForm.field} onChange={e => setU('field', e.target.value)} required><option value="">Select...</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
+                <div><label style={S.label}>Field {usageForm.livestock_type ? '(optional)' : ''}</label><select style={S.input} value={usageForm.field} onChange={e => setU('field', e.target.value)} required={!usageForm.livestock_type}><option value="">Select...</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
               </div>
               <div className="form-grid-2" style={S.row2}>
                 <div><label style={S.label}>Qty Used</label><input style={S.input} type="number" min="0" step="any" value={usageForm.opening_qty} onChange={e => setU('opening_qty', e.target.value)} required placeholder="0" /></div>
                 <div><label style={S.label}>Date</label><input style={S.input} type="date" value={usageForm.date} onChange={e => setU('date', e.target.value)} /></div>
               </div>
+              <div className="form-grid-2" style={S.row2}>
+                <div><label style={S.label}>Link to Livestock (optional)</label>
+                  <select style={S.input} value={usageForm.livestock_type} onChange={e => { setU('livestock_type', e.target.value); setU('livestock_id', ''); }}>
+                    {LIVESTOCK_TYPES.map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                </div>
+                {usageForm.livestock_type && (
+                  <div><label style={S.label}>Select {usageForm.livestock_type}</label>
+                    <select style={S.input} value={usageForm.livestock_id} onChange={e => setU('livestock_id', e.target.value)} required>
+                      <option value="">Select...</option>
+                      {(livestockOptions[usageForm.livestock_type] || []).map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
               {selectedItem && qtyUsed > 0 && (
-                <div style={S.preview}>After this: <strong>{remainAfter} {selectedItem.unit}</strong> remaining - Cost to field: <strong>{fmt(costPreview)}</strong></div>
+                <div style={S.preview}>After this: <strong>{remainAfter} {selectedItem.unit}</strong> remaining - Cost to {usageForm.livestock_type ? usageForm.livestock_type : 'field'}: <strong>{fmt(costPreview)}</strong></div>
               )}
               <label style={S.label}>Notes</label>
               <input style={S.input} value={usageForm.notes} onChange={e => setU('notes', e.target.value)} placeholder="Optional" />
@@ -152,7 +183,7 @@ export default function Stock() {
                     <div style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>RECENT:</div>
                     {itemUsage.map((u, i) => (
                       <div key={i} style={{ fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
-                        {u.date}: {u.opening_qty} {s.unit} \u2192 {u.field_name || `Field #${u.field}`}
+                        {u.date}: {u.opening_qty} {s.unit} {'\u2192'} {u.livestock_name ? <span style={{ color: '#6c5ce7', fontWeight: 600 }}>{u.livestock_name}</span> : (u.field_name || `Field #${u.field}`)}
                       </div>
                     ))}
                   </div>

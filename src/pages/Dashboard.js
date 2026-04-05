@@ -306,6 +306,63 @@ export default function Dashboard() {
             )}
           </div>
 
+          {/* Livestock Summary */}
+          {d.livestock && d.livestock.total_animals > 0 && (
+            <div style={S.rightCard}>
+              <div style={{ ...S.sectionTitle, marginBottom: 10 }}>🐄 Livestock Overview</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 }}>
+                {[
+                  { label: 'Cattle', val: d.livestock.cattle, emoji: '🐄' },
+                  { label: 'Goats', val: d.livestock.goats, emoji: '🐐' },
+                  { label: 'Sheep', val: d.livestock.sheep, emoji: '🐑' },
+                  { label: 'Pigs', val: d.livestock.pigs, emoji: '🐷' },
+                  { label: 'Broilers', val: d.livestock.broilers, emoji: '🐔' },
+                  { label: 'Layers', val: d.livestock.layers, emoji: '🥚' },
+                ].filter(a => a.val > 0).map((a, i) => (
+                  <div key={i} style={{ textAlign: 'center', background: '#f9fafb', borderRadius: 6, padding: '6px 4px' }}>
+                    <div style={{ fontSize: 16 }}>{a.emoji}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{a.val}</div>
+                    <div style={{ fontSize: 8, color: '#9ca3af', textTransform: 'uppercase' }}>{a.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '6px 0', borderTop: '1px solid #f3f4f6' }}>
+                <span style={{ color: '#6b7280' }}>Sales Revenue</span>
+                <span style={{ fontWeight: 700, color: '#1a6b3a' }}>{fmt(d.livestock.sales_revenue)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
+                <span style={{ color: '#6b7280' }}>Health & Feed Costs</span>
+                <span style={{ fontWeight: 700, color: '#c0392b' }}>{fmt(d.livestock.total_costs)}</span>
+              </div>
+              {d.livestock.total_eggs > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
+                  <span style={{ color: '#6b7280' }}>Total Eggs Collected</span>
+                  <span style={{ fontWeight: 700, color: '#c97d1a' }}>{d.livestock.total_eggs}</span>
+                </div>
+              )}
+              {d.livestock.recent_health && d.livestock.recent_health.length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', marginBottom: 4 }}>Recent Health</div>
+                  {d.livestock.recent_health.slice(0, 3).map((h, i) => (
+                    <div key={i} style={{ fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
+                      {h.date}: {h.animal} - {h.desc} {h.cost > 0 && <span style={{ color: '#c0392b' }}>({fmt(h.cost)})</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {d.livestock.upcoming_vaccinations && d.livestock.upcoming_vaccinations.length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: '#c97d1a', textTransform: 'uppercase', marginBottom: 4 }}>Upcoming Vaccinations</div>
+                  {d.livestock.upcoming_vaccinations.slice(0, 3).map((v, i) => (
+                    <div key={i} style={{ fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
+                      {v.due}: {v.animal} - {v.desc}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div style={S.rightCard}>
             <div style={{ ...S.sectionTitle, marginBottom: 10 }}>💰 Wages Owed</div>
             {workers.filter(w => (w.wages_owed || w.owed || 0) > 0).slice(0, 5).map((w, i) => {
