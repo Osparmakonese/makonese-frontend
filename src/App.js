@@ -25,6 +25,12 @@ import Sheep from './pages/Sheep';
 import Pigs from './pages/Pigs';
 import Broilers from './pages/Broilers';
 import Layers from './pages/Layers';
+import Harvest from './pages/Harvest';
+import Budget from './pages/Budget';
+import Water from './pages/Water';
+import Loans from './pages/Loans';
+import MarketPrices from './pages/MarketPrices';
+import Economics from './pages/Economics';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 /* --- */
@@ -46,6 +52,12 @@ const PAGES = {
   'Pigs': Pigs,
   'Broilers': Broilers,
   'Layers': Layers,
+  'Harvest': Harvest,
+  'Budget': Budget,
+  'Water': Water,
+  'Loans': Loans,
+  'Market Prices': MarketPrices,
+  'Economics': Economics,
   'Admin Panel': AdminPanel,
 };
 
@@ -68,6 +80,12 @@ const PAGE_META = {
   'Farm Assets': { title: 'Farm Assets', sub: 'Equipment and long-term investments' },
   'Settings': { title: 'Settings', sub: 'System configuration' },
   'Import': { title: 'Import Data', sub: 'Upload Excel to populate your farm data' },
+  'Harvest': { title: 'Harvest & Yield', sub: 'Track harvest output per field' },
+  'Budget': { title: 'Season Budget', sub: 'Plan your spending vs actual' },
+  'Water': { title: 'Water & Irrigation', sub: 'Track water usage and rainfall' },
+  'Loans': { title: 'Loans & Credit', sub: 'Track borrowing and repayments' },
+  'Market Prices': { title: 'Market Prices', sub: 'Commodity price tracking' },
+  'Economics': { title: 'Farm Economics', sub: 'Profitability and enterprise analysis' },
   'Admin Panel': { title: 'Super Admin Panel', sub: 'System administration - visible to you only' },
 };
 
@@ -88,6 +106,11 @@ const PRIMARY_ACTIONS = {
   'Hours & Pay': '+ Log hours',
   'Report': 'Export PDF',
   'Farm Assets': '+ Add asset',
+  'Harvest': '+ Log harvest',
+  'Budget': '+ Add budget line',
+  'Water': '+ Log water',
+  'Loans': '+ Add loan',
+  'Market Prices': '+ Add price',
   'Settings': 'Save changes',
 };
 

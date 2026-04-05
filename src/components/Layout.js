@@ -5,6 +5,12 @@ import Logo from './Logo';
 import { initials, avatarColor } from '../utils/format';
 const MORE_TABS = [
   { key: 'Costs', emoji: '🧾', label: 'Costs', sub: 'Farm expenses' },
+  { key: 'Harvest', emoji: '🌾', label: 'Harvest', sub: 'Yield tracking' },
+  { key: 'Budget', emoji: '📋', label: 'Budget', sub: 'Plan vs actual' },
+  { key: 'Water', emoji: '💧', label: 'Water', sub: 'Irrigation logs' },
+  { key: 'Loans', emoji: '🏦', label: 'Loans', sub: 'Credit tracker' },
+  { key: 'Market Prices', emoji: '📊', label: 'Prices', sub: 'Commodity prices' },
+  { key: 'Economics', emoji: '📈', label: 'Economics', sub: 'Farm analytics', ownerOnly: true },
   { key: 'Cattle', emoji: '🐄', label: 'Cattle', sub: 'Herd management' },
   { key: 'Goats', emoji: '🐐', label: 'Goats', sub: 'Goat records' },
   { key: 'Sheep', emoji: '🐑', label: 'Sheep', sub: 'Flock records' },

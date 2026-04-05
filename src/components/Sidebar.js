@@ -84,6 +84,14 @@ const NAV_ITEMS = [
     { key: 'Broilers', emoji: '🐔', label: 'Broilers' },
     { key: 'Layers', emoji: '🥚', label: 'Layers' },
   ]},
+  { section: 'ECONOMICS', items: [
+    { key: 'Harvest', emoji: '🌾', label: 'Harvest' },
+    { key: 'Budget', emoji: '📋', label: 'Budget' },
+    { key: 'Water', emoji: '💧', label: 'Water' },
+    { key: 'Loans', emoji: '🏦', label: 'Loans' },
+    { key: 'Market Prices', emoji: '📊', label: 'Market Prices' },
+    { key: 'Economics', emoji: '📈', label: 'Economics' },
+  ]},
   { section: 'PEOPLE', items: [
     { key: 'Workers', emoji: '👷', label: 'Workers' },
     { key: 'Hours & Pay', emoji: '⏱', label: 'Hours & Pay' },

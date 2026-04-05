@@ -147,3 +147,37 @@ export const createLayerExpense = (data) => api.post('/layer-expenses/', data).t
 // Livestock Sales (shared)
 export const getLivestockSales = (params) => api.get('/livestock-sales/', { params }).then(r => r.data);
 export const createLivestockSale = (data) => api.post('/livestock-sales/', data).then(r => r.data);
+
+// Harvests (yield tracking)
+export const getHarvests = () => api.get('/harvests/').then(r => r.data);
+export const createHarvest = (data) => api.post('/harvests/', data).then(r => r.data);
+export const deleteHarvest = (id) => api.delete(`/harvests/${id}/`);
+
+// Season Budgets
+export const getSeasonBudgets = (season) => api.get('/season-budgets/', { params: season ? { season } : {} }).then(r => r.data);
+export const createSeasonBudget = (data) => api.post('/season-budgets/', data).then(r => r.data);
+export const updateSeasonBudget = (id, data) => api.patch(`/season-budgets/${id}/`, data).then(r => r.data);
+export const deleteSeasonBudget = (id) => api.delete(`/season-budgets/${id}/`);
+
+// Market Prices
+export const getMarketPrices = () => api.get('/market-prices/').then(r => r.data);
+export const createMarketPrice = (data) => api.post('/market-prices/', data).then(r => r.data);
+export const deleteMarketPrice = (id) => api.delete(`/market-prices/${id}/`);
+
+// Water Logs
+export const getWaterLogs = () => api.get('/water-logs/').then(r => r.data);
+export const createWaterLog = (data) => api.post('/water-logs/', data).then(r => r.data);
+export const deleteWaterLog = (id) => api.delete(`/water-logs/${id}/`);
+
+// Loans
+export const getLoans = () => api.get('/loans/').then(r => r.data);
+export const createLoan = (data) => api.post('/loans/', data).then(r => r.data);
+export const updateLoan = (id, data) => api.patch(`/loans/${id}/`, data).then(r => r.data);
+export const deleteLoan = (id) => api.delete(`/loans/${id}/`);
+
+// Loan Repayments
+export const getLoanRepayments = () => api.get('/loan-repayments/').then(r => r.data);
+export const createLoanRepayment = (data) => api.post('/loan-repayments/', data).then(r => r.data);
+
+// Analytics (Field Profitability, Enterprise Comparison, Cash Flow, Budget vs Actual)
+export const getAnalytics = () => api.get('/analytics/').then(r => r.data);
