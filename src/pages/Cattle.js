@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCattle, createCattle, deleteCattle, getCattleHealth, createCattleHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
-import { today, fmt, IMAGES } from '../utils/format';
+import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 
 const SEXES = [['bull','Bull'],['cow','Cow'],['calf','Calf']];
@@ -272,7 +272,7 @@ export default function Cattle() {
                   </div>
                   <div style={S.cardBody}>
                     {c.breed && <div>Breed: {c.breed}</div>}
-                    {c.weight_kg && <div>Weight: {c.weight_kg} kg</div>}
+                    {c.weight_kg && <div>Weight: {qty(c.weight_kg)} kg</div>}
                     {c.date_of_birth && <div>DOB: {c.date_of_birth}</div>}
                     {c.purchase_price && <div>Purchase: {fmt(c.purchase_price)}</div>}
                     {c.notes && <div style={{ marginTop: 6, fontStyle: 'italic', color: '#9ca3af' }}>{c.notes}</div>}

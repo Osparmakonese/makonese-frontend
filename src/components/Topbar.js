@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { fmt } from '../utils/format';
+import { fmt, qty } from '../utils/format';
 import { getDailySummary } from '../api/farmApi';
 
 const S = {
@@ -118,7 +118,7 @@ export default function Topbar({ pageTitle, pageSub, primaryAction, onPrimaryAct
       if (dashboardData && dashboardData.low_stock && dashboardData.low_stock.length > 0) {
         msg += `\n⚠️ *Low stock alerts:*\n`;
         dashboardData.low_stock.forEach(s => {
-          msg += `• ${s.name}: ${s.remaining_qty} ${s.unit} remaining\n`;
+          msg += `• ${s.name}: ${qty(s.remaining_qty)} ${s.unit} remaining\n`;
         });
       }
 

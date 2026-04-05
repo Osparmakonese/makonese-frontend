@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getStock, createStockItem, logStockUsage, getStockUsage, getFields, deleteStockItem, getCattle, getGoats, getSheep, getPigs, getBroilerBatches, getLayerFlocks } from '../api/farmApi';
-import { fmt, today, IMAGES } from '../utils/format';
+import { fmt, qty, today, IMAGES } from '../utils/format';
 
 const CATEGORIES = [['chemical','Chemical'],['fertilizer','Fertiliser'],['seed','Seed'],['fuel','Fuel'],['equipment','Equipment'],['other','Other']];
 const UNITS = [['litres','L'],['kg','kg'],['bags','bags'],['units','units'],['litres','bottles'],['units','packs']];
@@ -122,7 +122,7 @@ export default function Stock() {
             <div style={S.cardTitle}>Log Usage</div>
             <form onSubmit={e => { e.preventDefault(); const payload = { item: parseInt(usageForm.item), opening_qty: parseFloat(usageForm.opening_qty), date: usageForm.date, notes: usageForm.notes }; if (usageForm.field) payload.field = parseInt(usageForm.field); if (usageForm.livestock_type) { payload.livestock_type = usageForm.livestock_type; payload.livestock_id = parseInt(usageForm.livestock_id); } usageMut.mutate(payload); }}>
               <div className="form-grid-2" style={S.row2}>
-                <div><label style={S.label}>Item</label><select style={S.input} value={usageForm.item} onChange={e => setU('item', e.target.value)} required><option value="">Select...</option>{stock.map(s => <option key={s.id} value={s.id}>{s.name} ({s.remaining_qty ?? s.opening_qty} {s.unit})</option>)}</select></div>
+                <div><label style={S.label}>Item</label><select style={S.input} value={usageForm.item} onChange={e => setU('item', e.target.value)} required><option value="">Select...</option>{stock.map(s => <option key={s.id} value={s.id}>{s.name} ({qty(s.remaining_qty ?? s.opening_qty)} {s.unit})</option>)}</select></div>
                 <div><label style={S.label}>Field {usageForm.livestock_type ? '(optional)' : ''}</label><select style={S.input} value={usageForm.field} onChange={e => setU('field', e.target.value)} required={!usageForm.livestock_type}><option value="">Select...</option>{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
               </div>
               <div className="form-grid-2" style={S.row2}>
@@ -145,7 +145,7 @@ export default function Stock() {
                 )}
               </div>
               {selectedItem && qtyUsed > 0 && (
-                <div style={S.preview}>After this: <strong>{remainAfter} {selectedItem.unit}</strong> remaining - Cost to {usageForm.livestock_type ? usageForm.livestock_type : 'field'}: <strong>{fmt(costPreview)}</strong></div>
+                <div style={S.preview}>After this: <strong>{qty(remainAfter)} {selectedItem.unit}</strong> remaining - Cost to {usageForm.livestock_type ? usageForm.livestock_type : 'field'}: <strong>{fmt(costPreview)}</strong></div>
               )}
               <label style={S.label}>Notes</label>
               <input style={S.input} value={usageForm.notes} onChange={e => setU('notes', e.target.value)} placeholder="Optional" />
@@ -172,18 +172,18 @@ export default function Stock() {
                     <div style={{ fontSize: 10, color: '#9ca3af' }}>{s.category} - Total: {fmt(totalCost)} ({fmt(s.unit_cost)}/{s.unit})</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: isLow ? '#c0392b' : '#1a6b3a', fontFamily: "'Playfair Display', serif" }}>{rem}</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: isLow ? '#c0392b' : '#1a6b3a', fontFamily: "'Playfair Display', serif" }}>{qty(rem)}</div>
                     <div style={{ fontSize: 9, color: '#9ca3af' }}>{s.unit} left</div>
                   </div>
                 </div>
                 <div style={S.barTrack}><div style={S.barFill(isLow ? '#c0392b' : '#1a6b3a', pct)} /></div>
-                {isLow && <div style={{ fontSize: 10, color: '#c0392b', fontWeight: 600, marginTop: 4 }}>Below alert threshold ({s.alert_threshold} {s.unit})</div>}
+                {isLow && <div style={{ fontSize: 10, color: '#c0392b', fontWeight: 600, marginTop: 4 }}>Below alert threshold ({qty(s.alert_threshold)} {s.unit})</div>}
                 {itemUsage.length > 0 && (
                   <div style={{ marginTop: 8 }}>
                     <div style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>RECENT:</div>
                     {itemUsage.map((u, i) => (
                       <div key={i} style={{ fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
-                        {u.date}: {u.opening_qty} {s.unit} {'\u2192'} {u.livestock_name ? <span style={{ color: '#6c5ce7', fontWeight: 600 }}>{u.livestock_name}</span> : (u.field_name || `Field #${u.field}`)}
+                        {u.date}: {qty(u.opening_qty)} {s.unit} {'\u2192'} {u.livestock_name ? <span style={{ color: '#6c5ce7', fontWeight: 600 }}>{u.livestock_name}</span> : (u.field_name || `Field #${u.field}`)}
                       </div>
                     ))}
                   </div>

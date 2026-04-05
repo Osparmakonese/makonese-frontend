@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getBroilerBatches, createBroilerBatch, deleteBroilerBatch, getBroilerExpenses, createBroilerExpense, getLivestockSales, createLivestockSale } from '../api/farmApi';
-import { today, fmt, IMAGES } from '../utils/format';
+import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 
 const EXPENSE_CATEGORIES = [['feed', 'Feed'], ['medication', 'Medication'], ['vaccination', 'Vaccination'], ['equipment', 'Equipment'], ['other', 'Other']];
@@ -227,7 +227,7 @@ export default function Broilers() {
                       <div style={S.batchMeta}>Started: {fmt(batch.date_acquired)}</div>
                       <div style={S.batchMeta}>Current: <strong>{currentCount}</strong> of {batch.quantity} birds</div>
                       {mortality > 0 && <div style={S.batchMeta} style={{ color: '#c0392b' }}>Mortality: {mortality}</div>}
-                      {batch.target_weight && <div style={S.batchMeta}>Target: {batch.target_weight} kg</div>}
+                      {batch.target_weight && <div style={S.batchMeta}>Target: {qty(batch.target_weight)} kg</div>}
                       {batch.purchase_price && <div style={S.batchMeta}>Unit Cost: ${fmt(batch.purchase_price / batch.quantity)}</div>}
                       <div style={S.badge(statusColor, statusTextColor)}>
                         {currentCount > 0 ? 'Active' : 'Finished'}

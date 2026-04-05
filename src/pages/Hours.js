@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getWorkers, getFields, getAttendance, createAttendance, markPaid } from '../api/farmApi';
-import { fmt, today, initials, avatarColor, IMAGES } from '../utils/format';
+import { fmt, qty, today, initials, avatarColor, IMAGES } from '../utils/format';
 
 const empty = { worker: '', field: '', date: today(), hours: '', adjustment: '', adj_reason: '', notes: '' };
 
@@ -176,7 +176,7 @@ export default function Hours() {
                     </span>
                   </div>
                   <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>
-                    {a.work_date} &middot; {a.field_name || ''} &middot; {a.hours_worked || 0}hrs
+                    {a.work_date} &middot; {a.field_name || ''} &middot; {qty(a.hours_worked || 0)}hrs
                     {a.notes ? ` \u00B7 ${a.notes}` : ''}
                   </div>
                 </div>

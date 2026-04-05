@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getGoats, createGoat, deleteGoat, getGoatHealth, createGoatHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
-import { today, fmt, IMAGES } from '../utils/format';
+import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 
 const emptyGoat = { tag_number: '', name: '', breed: '', sex: 'buck', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', notes: '' };
@@ -270,7 +270,7 @@ export default function Goats() {
                     </div>
                   </div>
 
-                  {g.weight_kg && <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>Weight: <strong>{g.weight_kg} kg</strong></div>}
+                  {g.weight_kg && <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>Weight: <strong>{qty(g.weight_kg)} kg</strong></div>}
                   {g.date_of_birth && <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>DOB: <strong>{g.date_of_birth}</strong></div>}
                   {g.purchase_price > 0 && <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>Purchase: <strong>{fmt(g.purchase_price)}</strong></div>}
                   {g.notes && <div style={{ fontSize: 10, color: '#6b7280', fontStyle: 'italic', padding: '6px 10px', background: '#f9fafb', borderRadius: 6, marginBottom: 8 }}>{g.notes}</div>}

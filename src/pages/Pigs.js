@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPigs, createPig, deletePig, getPigHealth, createPigHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
-import { today, fmt, IMAGES } from '../utils/format';
+import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 
 const SEX_OPTIONS = [['boar', 'Boar'], ['sow', 'Sow'], ['piglet', 'Piglet']];
@@ -161,7 +161,7 @@ export default function Pigs() {
                           <span style={S.badge(sexColor)}>{pig.sex}</span>
                         </div>
                         {pig.breed && <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>Breed: {pig.breed}</div>}
-                        {pig.weight_kg && <div style={{ fontSize: 10, color: '#6b7280' }}>Weight: {pig.weight_kg} kg</div>}
+                        {pig.weight_kg && <div style={{ fontSize: 10, color: '#6b7280' }}>Weight: {qty(pig.weight_kg)} kg</div>}
                         {pig.litter_number && <div style={{ fontSize: 10, color: '#6b7280' }}>Litter: {pig.litter_number}</div>}
                         {pig.purchase_price && <div style={{ fontSize: 10, color: '#6b7280' }}>Price: {fmt(pig.purchase_price)}</div>}
                       </div>

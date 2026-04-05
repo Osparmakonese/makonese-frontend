@@ -47,6 +47,16 @@ export function fmt(n, currency) {
   }).format(num);
 }
 
+/**
+ * Format a quantity — strips trailing zeros.
+ * qty(4.000) → "4", qty(3.500) → "3.5", qty(0.250) → "0.25"
+ */
+export function qty(n) {
+  if (n == null || isNaN(n)) return '0';
+  const num = typeof n === 'string' ? parseFloat(n) : n;
+  return num.toString();
+}
+
 /** Today as YYYY-MM-DD */
 export function today() {
   const d = new Date();

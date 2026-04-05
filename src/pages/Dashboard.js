@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboard, getLowStock } from '../api/farmApi';
-import { fmt, cropEmoji, cropGradient, initials, avatarColor, IMAGES, cropImage } from '../utils/format';
+import { fmt, qty, cropEmoji, cropGradient, initials, avatarColor, IMAGES, cropImage } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 import FieldModal from '../components/FieldModal';
 
@@ -187,7 +187,7 @@ export default function Dashboard() {
                   </div>
                   <div style={S.fcardBody}>
                     <div style={S.fcardName}>{f.name}</div>
-                    <div style={S.fcardMeta}>{f.size_ha || f.size_hectares || f.hectares} ha - {f.plant_date || '-'}</div>
+                    <div style={S.fcardMeta}>{qty(f.size_ha || f.size_hectares || f.hectares)} ha - {f.plant_date || '-'}</div>
                     <div className={`pill-${f.status === 'active' ? 'green' : 'amber'}`} style={{ marginBottom: 8 }}>{f.status}</div>
                     <div style={S.fcardStats}>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#1a6b3a')}>{fmt(fRev)}</div><div style={S.fcardStatLabel}>Revenue</div></div>
@@ -215,7 +215,7 @@ export default function Dashboard() {
                     <span className="fcm-badge" style={{ color: f.status === 'active' ? '#1a6b3a' : '#c97d1a' }}>{f.status}</span>
                   </div>
                   <div className="fcm-body">
-                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{f.size_ha || f.size_hectares || f.hectares} ha - {f.crop}</div>
+                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{qty(f.size_ha || f.size_hectares || f.hectares)} ha - {f.crop}</div>
                     <div className="fcm-stats">
                       <div className="fcm-stat"><div className="fv" style={{ color: '#1a6b3a' }}>{fmt(mfRev)}</div><div className="fl">Rev</div></div>
                       <div className="fcm-stat"><div className="fv" style={{ color: '#c0392b' }}>{fmt(mfCost)}</div><div className="fl">Cost</div></div>
@@ -292,7 +292,7 @@ export default function Dashboard() {
                 <div key={s.id || i} style={S.stockRow}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: '#111827' }}>{s.name}</div>
-                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{s.remaining ?? 0} {s.unit} left</div>
+                    <div style={{ fontSize: 10, color: '#9ca3af' }}>{qty(s.remaining ?? 0)} {s.unit} left</div>
                     <div style={{ ...S.barTrack, marginTop: 4 }}>
                       <div style={S.barFill(pct < 25 ? '#c0392b' : '#1a6b3a', pct)} />
                     </div>

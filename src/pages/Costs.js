@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFields, getExpenses, createExpense, deleteExpense, getStock } from '../api/farmApi';
-import { fmt, today, IMAGES } from '../utils/format';
+import { fmt, qty as fmtQty, today, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 
 const CATS = [
@@ -98,7 +98,7 @@ export default function Costs({ onTabChange }) {
                   <label style={S.label}>Select Item from Stock</label>
                   <select style={S.input} value={form.stock_item} onChange={e => set('stock_item', e.target.value)} required>
                     <option value="">Select stock item...</option>
-                    {catItems.map(s => <option key={s.id} value={s.id}>{s.name} - {fmt(s.unit_cost)}/{s.unit} ({s.remaining_qty ?? s.opening_qty} {s.unit} left)</option>)}
+                    {catItems.map(s => <option key={s.id} value={s.id}>{s.name} - {fmt(s.unit_cost)}/{s.unit} ({fmtQty(s.remaining_qty ?? s.opening_qty)} {s.unit} left)</option>)}
                   </select>
                   <div className="form-grid-2" style={S.row2}>
                     <div><label style={S.label}>Quantity Used{sel ? ' ('+sel.unit+')' : ''}</label><input style={S.input} type="number" min="0.01" step="any" value={form.qty} onChange={e => set('qty', e.target.value)} placeholder="e.g. 5" required /></div>

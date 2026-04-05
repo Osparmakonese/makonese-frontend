@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSheep, createSheep, deleteSheep, getSheepHealth, createSheepHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
-import { today, fmt, IMAGES } from '../utils/format';
+import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 
 /* ── empty forms ── */
@@ -261,7 +261,7 @@ export default function Sheep() {
                       </div>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
                         <span style={S.badge(s.sex === 'ram' ? 'amber' : 'green')}>{s.sex}</span>
-                        {s.weight_kg > 0 && <span style={{ fontSize: 11, color: '#6b7280' }}>{s.weight_kg} kg</span>}
+                        {s.weight_kg > 0 && <span style={{ fontSize: 11, color: '#6b7280' }}>{qty(s.weight_kg)} kg</span>}
                         {s.status === 'sold' && <span style={S.badge('red')}>Sold</span>}
                       </div>
                     </div>

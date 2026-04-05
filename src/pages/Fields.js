@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFields, createField, closeField, deleteField } from '../api/farmApi';
-import { fmt, today, cropEmoji, cropGradient, cropImage, IMAGES } from '../utils/format';
+import { fmt, qty, today, cropEmoji, cropGradient, cropImage, IMAGES } from '../utils/format';
 import FieldModal from '../components/FieldModal';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -178,7 +178,7 @@ export default function Fields() {
                   </div>
                   <div style={S.fcardBody} onClick={() => setSelectedField(f)}>
                     <div style={S.fcardName}>{f.name}</div>
-                    <div style={S.fcardMeta}>{f.size_ha || f.hectares} ha - Planted {f.plant_date || '"”'}</div>
+                    <div style={S.fcardMeta}>{qty(f.size_ha || f.hectares)} ha - Planted {f.plant_date || '””'}</div>
                     <div style={S.fcardStats}>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#1a6b3a')}>{fmt(fRev)}</div><div style={S.fcardStatLabel}>Revenue</div></div>
                       <div style={S.fcardStat}><div style={S.fcardStatVal('#c0392b')}>{fmt(fCost)}</div><div style={S.fcardStatLabel}>Costs</div></div>
