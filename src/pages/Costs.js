@@ -108,7 +108,7 @@ export default function Costs({ onTabChange }) {
                     <div style={S.preview}>
                       <div style={{ fontWeight:700, marginBottom:4 }}>Cost Preview</div>
                       <div>{qty} {sel.unit} x {fmt(sel.unit_cost)}/{sel.unit} = <strong>{fmt(calcAmt)}</strong></div>
-                      {remaining !== null && <div style={{ marginTop:4, color: remaining < 0 ? '#c0392b' : '#1a6b3a' }}>{remaining < 0 ? 'Not enough stock available' : 'Remaining after: ' + remaining.toFixed(2) + ' ' + sel.unit}</div>}
+                      {remaining !== null && <div style={{ marginTop:4, color: remaining < 0 ? '#c0392b' : '#1a6b3a' }}>{remaining < 0 ? 'Not enough stock available' : 'Remaining after: ' + remaining + ' ' + sel.unit}</div>}
                     </div>
                   )}
                   <label style={S.label}>Logged By</label>

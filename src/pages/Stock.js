@@ -114,7 +114,7 @@ export default function Stock() {
                 <div><label style={S.label}>Date</label><input style={S.input} type="date" value={usageForm.date} onChange={e => setU('date', e.target.value)} /></div>
               </div>
               {selectedItem && qtyUsed > 0 && (
-                <div style={S.preview}>After this: <strong>{remainAfter?.toFixed(1)} {selectedItem.unit}</strong> remaining - Cost to field: <strong>{fmt(costPreview)}</strong></div>
+                <div style={S.preview}>After this: <strong>{remainAfter} {selectedItem.unit}</strong> remaining - Cost to field: <strong>{fmt(costPreview)}</strong></div>
               )}
               <label style={S.label}>Notes</label>
               <input style={S.input} value={usageForm.notes} onChange={e => setU('notes', e.target.value)} placeholder="Optional" />
