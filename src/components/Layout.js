@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import Logo from './Logo';
+import QuickCapture from './QuickCapture';
 import { initials, avatarColor } from '../utils/format';
 
 /*
@@ -99,6 +100,9 @@ export default function Layout({
           {children}
         </main>
       </div>
+
+      {/* Quick Capture FAB — always visible */}
+      <QuickCapture />
 
       {/* Bottom nav — Hick's Law: only 5 primary choices */}
       <div className="bottom-nav">

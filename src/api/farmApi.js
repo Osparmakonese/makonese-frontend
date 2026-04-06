@@ -181,3 +181,7 @@ export const createLoanRepayment = (data) => api.post('/loan-repayments/', data)
 
 // Analytics (Field Profitability, Enterprise Comparison, Cash Flow, Budget vs Actual)
 export const getAnalytics = () => api.get('/analytics/').then(r => r.data);
+export const getHealthScore = () => api.get('/analytics/health_score/').then(r => r.data);
+export const getBriefing = () => api.get('/analytics/briefing/').then(r => r.data);
+export const getAchievements = () => api.get('/analytics/achievements/').then(r => r.data);
+export const getSeasonalComparison = () => api.get('/analytics/seasonal_comparison/').then(r => r.data);

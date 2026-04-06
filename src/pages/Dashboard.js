@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getDashboard, getLowStock } from '../api/farmApi';
+import { getDashboard, getLowStock, getHealthScore, getBriefing, getAchievements, getSeasonalComparison } from '../api/farmApi';
 import { fmt, qty, cropEmoji, cropGradient, initials, avatarColor, IMAGES, cropImage } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 import FieldModal from '../components/FieldModal';
@@ -99,6 +99,10 @@ export default function Dashboard() {
   const [selectedField, setSelectedField] = useState(null);
   const { data, isLoading, error, refetch } = useQuery({ queryKey: ['dashboard'], queryFn: getDashboard });
   const { data: lowStock = [] } = useQuery({ queryKey: ['lowStock'], queryFn: getLowStock });
+  const { data: healthScore } = useQuery({ queryKey: ['healthScore'], queryFn: getHealthScore, staleTime: 60000 });
+  const { data: briefing } = useQuery({ queryKey: ['briefing'], queryFn: getBriefing, staleTime: 60000 });
+  const { data: achievementsData } = useQuery({ queryKey: ['achievements'], queryFn: getAchievements, staleTime: 60000 });
+  const { data: seasonal } = useQuery({ queryKey: ['seasonalComparison'], queryFn: getSeasonalComparison, staleTime: 60000 });
 
   if (isLoading) return <SkeletonDash />;
   if (error) return (
@@ -176,6 +180,195 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {/* === FARM HEALTH SCORE + AI BRIEFING + ACHIEVEMENTS === */}
+      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 16, marginBottom: 18 }}>
+        {/* Farm Health Score Gauge */}
+        {healthScore && (
+          <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '20px 16px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Farm Health Score</div>
+            {/* SVG Gauge */}
+            <div style={{ position: 'relative', width: 130, height: 80, margin: '0 auto 8px' }}>
+              <svg viewBox="0 0 130 80" style={{ width: '100%', height: '100%' }}>
+                {/* Background arc */}
+                <path d="M 15 75 A 55 55 0 0 1 115 75" fill="none" stroke="#f3f4f6" strokeWidth="10" strokeLinecap="round" />
+                {/* Score arc */}
+                <path d="M 15 75 A 55 55 0 0 1 115 75" fill="none"
+                  stroke={healthScore.score >= 65 ? '#1a6b3a' : healthScore.score >= 50 ? '#c97d1a' : '#c0392b'}
+                  strokeWidth="10" strokeLinecap="round"
+                  strokeDasharray={`${(healthScore.score / 100) * 157} 157`}
+                />
+              </svg>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, textAlign: 'center' }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, color: healthScore.score >= 65 ? '#1a6b3a' : healthScore.score >= 50 ? '#c97d1a' : '#c0392b', lineHeight: 1 }}>
+                  {healthScore.score}
+                </div>
+              </div>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: healthScore.score >= 65 ? '#1a6b3a' : healthScore.score >= 50 ? '#c97d1a' : '#c0392b', marginBottom: 8 }}>
+              {healthScore.grade}
+            </div>
+            {/* Score breakdown bars */}
+            <div style={{ textAlign: 'left' }}>
+              {healthScore.breakdown && Object.entries(healthScore.breakdown).map(([key, val]) => {
+                const max = healthScore.max_scores?.[key] || 20;
+                const pct = (val / max) * 100;
+                const labels = { debt_ratio: 'Debt', field_utilization: 'Fields', profitability: 'Profit', record_keeping: 'Records', water_consistency: 'Water', budget_discipline: 'Budget', diversification: 'Diverse' };
+                return (
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                    <span style={{ fontSize: 8, color: '#9ca3af', width: 40, flexShrink: 0 }}>{labels[key] || key}</span>
+                    <div style={{ flex: 1, height: 4, background: '#f3f4f6', borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: pct >= 70 ? '#1a6b3a' : pct >= 40 ? '#c97d1a' : '#c0392b', borderRadius: 2, transition: 'width 0.4s' }} />
+                    </div>
+                    <span style={{ fontSize: 8, color: '#6b7280', width: 20, textAlign: 'right' }}>{Math.round(val)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* AI Morning Briefing */}
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+            {'\u{1F4A1}'} Today's Briefing
+            {briefing?.total_alerts > 0 && (
+              <span style={{ background: '#fef3e2', color: '#92400e', fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 8 }}>
+                {briefing.total_alerts} alert{briefing.total_alerts !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          {briefing?.insights?.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {briefing.insights.slice(0, 5).map((insight, i) => {
+                const colors = { danger: '#c0392b', warning: '#c97d1a', success: '#1a6b3a', info: '#0369a1' };
+                const bgs = { danger: '#fdecea', warning: '#fef3e2', success: '#e8f5ee', info: '#eff6ff' };
+                const icons = { loan: '\u{1F3E6}', overdue: '\u26A0\uFE0F', water: '\u{1F4A7}', budget: '\u{1F4CB}', price: '\u{1F4C8}', wages: '\u{1F477}', stock: '\u{1F4E6}', health: '\u{1F489}' };
+                return (
+                  <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 10px', background: bgs[insight.type] || '#f9fafb', borderRadius: 8, borderLeft: `3px solid ${colors[insight.type] || '#6b7280'}` }}>
+                    <span style={{ fontSize: 16, flexShrink: 0 }}>{icons[insight.icon] || '\u{1F4CC}'}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#111827' }}>{insight.title}</div>
+                      <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>{insight.detail}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '20px 0', color: '#9ca3af', fontSize: 12 }}>
+              {'\u2705'} All clear — no urgent items today
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Achievement Milestones */}
+      {achievementsData?.achievements?.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+            {'\u{1F3C6}'} Achievements ({achievementsData.total_earned})
+          </div>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+            {achievementsData.achievements.map(a => {
+              const badgeIcons = { revenue: '\u{1F4B0}', profit: '\u2705', harvest: '\u{1F33E}', debt: '\u{1F513}', diverse: '\u{1F331}', livestock: '\u{1F404}', active: '\u{1F525}', water: '\u{1F4A7}', field: '\u{1F3DE}\uFE0F' };
+              return (
+                <div key={a.key} style={{ flexShrink: 0, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '10px 14px', textAlign: 'center', minWidth: 90, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                  <div style={{ fontSize: 22, marginBottom: 4 }}>{badgeIcons[a.icon] || '\u{1F3C6}'}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>{a.title}</div>
+                  <div style={{ fontSize: 8, color: '#9ca3af', marginTop: 2 }}>{a.desc}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Seasonal Comparison */}
+      {seasonal?.metrics && (
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 18px', marginBottom: 18, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 6 }}>
+                {'\u{1F4C5}'} Season vs Season
+              </div>
+              <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>
+                Current: {seasonal.current_period} vs Previous: {seasonal.previous_period}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }} className="seasonal-grid">
+            {seasonal.metrics.map(m => {
+              const isGood = m.invert ? m.change <= 0 : m.change >= 0;
+              const arrow = m.change >= 0 ? '\u25B2' : '\u25BC';
+              const changeColor = isGood ? '#1a6b3a' : '#c0392b';
+              const fmtVal = (v) => m.format === 'currency' ? `$${Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : m.format === 'kg' ? `${v.toLocaleString()} kg` : `${v.toLocaleString()} L`;
+              const barMax = Math.max(m.current, m.previous) || 1;
+              return (
+                <div key={m.key} style={{ background: '#f9fafb', borderRadius: 10, padding: '12px 14px', border: m.key === 'net' ? `2px solid ${m.current >= 0 ? '#1a6b3a' : '#c0392b'}` : '1px solid #e5e7eb' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase' }}>{m.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: changeColor }}>{arrow} {Math.abs(m.change)}%</span>
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: m.key === 'net' ? (m.current >= 0 ? '#1a6b3a' : '#c0392b') : '#111827', fontFamily: "'Playfair Display', serif", marginBottom: 8 }}>
+                    {m.key === 'net' && m.current < 0 ? '-' : ''}{fmtVal(m.current)}
+                  </div>
+                  {/* Comparison bars */}
+                  <div style={{ marginBottom: 4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                      <span style={{ fontSize: 8, color: '#6b7280', width: 36 }}>Now</span>
+                      <div style={{ flex: 1, height: 6, background: '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${(Math.abs(m.current) / barMax) * 100}%`, background: '#1a6b3a', borderRadius: 3 }} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 8, color: '#6b7280', width: 36 }}>Before</span>
+                      <div style={{ flex: 1, height: 6, background: '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${(Math.abs(m.previous) / barMax) * 100}%`, background: '#9ca3af', borderRadius: 3 }} />
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 8, color: '#9ca3af', textAlign: 'right' }}>
+                    Prev: {m.key === 'net' && m.previous < 0 ? '-' : ''}{fmtVal(m.previous)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Monthly trend mini-chart */}
+          {seasonal.monthly_trend && (
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 8 }}>
+                Monthly Trend (6 months)
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 60 }}>
+                {seasonal.monthly_trend.map((m, i) => {
+                  const maxVal = Math.max(...seasonal.monthly_trend.map(x => Math.max(x.revenue, x.costs))) || 1;
+                  const revH = (m.revenue / maxVal) * 50;
+                  const costH = (m.costs / maxVal) * 50;
+                  return (
+                    <div key={i} style={{ flex: 1, textAlign: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 2, height: 50 }}>
+                        <div style={{ width: 8, height: Math.max(revH, 2), background: '#1a6b3a', borderRadius: '2px 2px 0 0' }} title={`Rev: $${m.revenue.toFixed(0)}`} />
+                        <div style={{ width: 8, height: Math.max(costH, 2), background: '#c0392b', borderRadius: '2px 2px 0 0' }} title={`Cost: $${m.costs.toFixed(0)}`} />
+                      </div>
+                      <div style={{ fontSize: 8, color: '#9ca3af', marginTop: 3 }}>{m.month}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 6 }}>
+                <span style={{ fontSize: 8, color: '#1a6b3a', display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <span style={{ width: 8, height: 4, background: '#1a6b3a', borderRadius: 1, display: 'inline-block' }} /> Revenue
+                </span>
+                <span style={{ fontSize: 8, color: '#c0392b', display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <span style={{ width: 8, height: 4, background: '#c0392b', borderRadius: 1, display: 'inline-block' }} /> Costs
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="two-col-layout content-area" style={S.twoCol}>
         <div>
