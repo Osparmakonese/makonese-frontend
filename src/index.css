@@ -127,6 +127,13 @@ input, select, textarea, button {
   animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
 
+/* ── Von Restorff Effect: badge pulse animation ── */
+@keyframes badgePulse {
+  0% { box-shadow: 0 0 0 2px rgba(192,57,43,0.2); }
+  50% { box-shadow: 0 0 0 5px rgba(192,57,43,0.05); }
+  100% { box-shadow: 0 0 0 2px rgba(192,57,43,0.2); }
+}
+
 /* ── MOBILE BOTTOM NAV ── */
 .mobile-header { display: none; }
 .bottom-nav { display: none; }

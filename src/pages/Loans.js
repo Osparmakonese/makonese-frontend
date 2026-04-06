@@ -35,6 +35,8 @@ const S = {
   error: { fontSize: 10, color: '#c0392b', marginTop: 4 },
   sectionTitle: { fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 10, fontFamily: "'Playfair Display', serif" },
   loanCard: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16, marginBottom: 14 },
+  /* Von Restorff: overdue loans have red border to draw immediate attention */
+  loanCardOverdue: { background: '#fff5f5', border: '2px solid #c0392b', borderRadius: 10, padding: 16, marginBottom: 14, boxShadow: '0 2px 8px rgba(192,57,43,0.1)' },
   loanHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   loanLender: { fontSize: 13, fontWeight: 700, color: '#111827' },
   loanPurpose: { fontSize: 10, color: '#9ca3af', marginTop: 2 },
@@ -181,7 +183,7 @@ export default function Loans({ onTabChange }) {
                   const history = loan.repayments || [];
 
                   return (
-                    <div key={loan.id} style={S.loanCard}>
+                    <div key={loan.id} style={isOverdue ? S.loanCardOverdue : S.loanCard}>
                       <div style={S.loanHeader}>
                         <div>
                           <div style={S.loanLender}>{loan.lender_name}</div>

@@ -8,6 +8,10 @@ const S = {
   sectionTitle: { fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 16, fontFamily: "'Playfair Display', serif" },
   card: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 18, marginBottom: 20 },
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 },
+  /* Von Restorff: best field stands out with green accent */
+  calloutCardBest: { background: '#f0faf4', border: '2px solid #1a6b3a', borderRadius: 10, padding: 16, marginBottom: 14, boxShadow: '0 2px 8px rgba(26,107,58,0.12)' },
+  /* Von Restorff: worst field stands out with red accent */
+  calloutCardWorst: { background: '#fff5f5', border: '2px solid #c0392b', borderRadius: 10, padding: 16, marginBottom: 14, boxShadow: '0 2px 8px rgba(192,57,43,0.12)' },
   calloutCard: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16, marginBottom: 14 },
   calloutLabel: { fontSize: 10, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', marginBottom: 4 },
   calloutValue: { fontSize: 24, fontWeight: 700, color: '#1a6b3a', fontFamily: "'Playfair Display', serif" },
@@ -96,7 +100,7 @@ export default function Economics({ onTabChange }) {
         {bestField || worstField ? (
           <div style={S.twoCol}>
             {bestField && (
-              <div style={S.calloutCard}>
+              <div style={S.calloutCardBest}>
                 <div style={S.calloutLabel}>Best Performing Field</div>
                 <div style={S.calloutValue}>{fmt(bestField.net || 0)}</div>
                 <div style={S.calloutName}>{bestField.field_name || 'Field ' + bestField.field_id}</div>
@@ -104,7 +108,7 @@ export default function Economics({ onTabChange }) {
               </div>
             )}
             {worstField && (
-              <div style={S.calloutCard}>
+              <div style={S.calloutCardWorst}>
                 <div style={S.calloutLabel}>Worst Performing Field</div>
                 <div style={{ ...S.calloutValue, color: '#c0392b' }}>{fmt(worstField.net || 0)}</div>
                 <div style={S.calloutName}>{worstField.field_name || 'Field ' + worstField.field_id}</div>

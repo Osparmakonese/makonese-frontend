@@ -50,6 +50,13 @@ const S = {
     padding: '16px 18px', position: 'relative', overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
   },
+  /* Von Restorff Effect: Net Position card stands out from the other 3 */
+  metricCardHighlight: (isPositive) => ({
+    background: isPositive ? '#f0faf4' : '#fff5f5',
+    border: `2px solid ${isPositive ? '#1a6b3a' : '#c0392b'}`,
+    borderRadius: 10, padding: '16px 18px', position: 'relative', overflow: 'hidden',
+    boxShadow: isPositive ? '0 2px 8px rgba(26,107,58,0.15)' : '0 2px 8px rgba(192,57,43,0.15)',
+  }),
   metricIcon: (bg) => ({ width: 26, height: 26, borderRadius: 6, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, marginBottom: 8 }),
   metricLabel: { fontSize: 10, color: '#6b7280', fontWeight: 500, marginBottom: 2 },
   metricVal: (color) => ({ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color, lineHeight: 1.2 }),
@@ -139,9 +146,10 @@ export default function Dashboard() {
           { label: 'Total Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: '💰', pct: 100, trend: 'Season total' },
           { label: 'Total Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: '📉', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of revenue` },
           { label: 'Wages Owed', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: '👷', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
-          { label: 'Net Position', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? '✔' : '↓', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profitable' : 'Loss' },
+          { label: 'Net Position', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? '✔' : '↓', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profitable' : 'Loss', isNet: true },
         ].map((m, i) => (
-          <div key={i} style={S.metricCard}>
+          /* Von Restorff: Net Position card uses distinct style to isolate it */
+          <div key={i} style={m.isNet ? S.metricCardHighlight(net >= 0) : S.metricCard}>
             <div style={S.metricIcon(m.bg)}>{m.icon}</div>
             <div style={S.metricLabel}>{m.label}</div>
             <div style={S.metricVal(m.color)}>{m.value}</div>
