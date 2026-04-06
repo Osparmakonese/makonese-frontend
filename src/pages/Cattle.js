@@ -8,9 +8,10 @@ const SEXES = [['bull','Bull'],['cow','Cow'],['calf','Calf']];
 const HEALTH_TYPES = [['vaccination','Vaccination'],['treatment','Treatment'],['checkup','Checkup'],['deworming','Deworming'],['other','Other']];
 const STATUSES = [['all','All'],['active','Active'],['sold','Sold'],['deceased','Deceased'],['culled','Culled']];
 
-const emptyCattle = { tag_number: '', name: '', breed: '', sex: 'bull', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', notes: '' };
+const emptyCattle = { tag_number: '', name: '', breed: '', sex: 'bull', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', status: 'active', cause_of_death: '', date_of_death: '', notes: '' };
 const emptyHealth = { cattle: '', record_type: 'vaccination', description: '', date: today(), cost: '', vet_name: '', next_due: '', notes: '' };
-const emptySale = { quantity: '', buyer: '', sale_price: '', sale_date: today(), description: '' };
+const emptySale = { cattle: '', quantity: '1', buyer: '', sale_price: '', sale_date: today(), description: '' };
+const STATUS_OPTIONS = [['active','Active'],['sold','Sold'],['deceased','Deceased'],['culled','Culled']];
 
 const S = {
   banner: {
@@ -206,6 +207,21 @@ export default function Cattle() {
               <label style={S.label}>Weight (kg)</label>
               <input style={S.input} type="number" min="0" step="0.1" value={cattleForm.weight_kg} onChange={e => setCat('weight_kg', e.target.value)} placeholder="0.0" />
 
+              <label style={S.label}>Status</label>
+              <select style={S.input} value={cattleForm.status} onChange={e => setCat('status', e.target.value)}>
+                {STATUS_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+
+              {cattleForm.status === 'deceased' && (
+                <>
+                  <label style={S.label}>Cause of Death</label>
+                  <input style={S.input} value={cattleForm.cause_of_death} onChange={e => setCat('cause_of_death', e.target.value)} placeholder="e.g. Foot and Mouth Disease" />
+
+                  <label style={S.label}>Date of Death</label>
+                  <input style={S.input} type="date" value={cattleForm.date_of_death} onChange={e => setCat('date_of_death', e.target.value)} />
+                </>
+              )}
+
               <label style={S.label}>Notes</label>
               <textarea style={S.textarea} value={cattleForm.notes} onChange={e => setCat('notes', e.target.value)} placeholder="Optional notes..." />
 
@@ -262,8 +278,9 @@ export default function Cattle() {
                         <span style={S.badge(c.sex === 'bull' ? '#0369a1' : c.sex === 'cow' ? '#7c3aed' : '#6b7280')}>
                           {(SEXES.find(s => s[0] === c.sex) || [c.sex, c.sex])[1]}
                         </span>
-                        {c.is_sold && <span style={{ ...S.badge('#c0392b'), marginLeft: 4 }}>SOLD</span>}
-                        {c.health_status === 'sick' && <span style={{ ...S.badge('#c97d1a'), marginLeft: 4 }}>SICK</span>}
+                        {c.status === 'sold' && <span style={{ ...S.badge('#c0392b'), marginLeft: 4 }}>SOLD</span>}
+                        {c.status === 'deceased' && <span style={{ ...S.badge('#6b7280'), marginLeft: 4 }}>DECEASED</span>}
+                        {c.status === 'culled' && <span style={{ ...S.badge('#374151'), marginLeft: 4 }}>CULLED</span>}
                       </div>
                     </div>
                   </div>
@@ -272,6 +289,11 @@ export default function Cattle() {
                     {c.weight_kg && <div>Weight: {qty(c.weight_kg)} kg</div>}
                     {c.date_of_birth && <div>DOB: {c.date_of_birth}</div>}
                     {c.purchase_price && <div>Purchase: {fmt(c.purchase_price)}</div>}
+                    {c.status === 'deceased' && c.cause_of_death && (
+                      <div style={{ marginTop: 4, color: '#c0392b' }}>
+                        Cause: {c.cause_of_death}{c.date_of_death ? ` (${c.date_of_death})` : ''}
+                      </div>
+                    )}
                     {c.notes && <div style={{ marginTop: 6, fontStyle: 'italic', color: '#9ca3af' }}>{c.notes}</div>}
                   </div>
                   <div style={{ marginTop: 8 }}>
@@ -354,7 +376,27 @@ export default function Cattle() {
             <div>
               <div style={{ ...S.formCard, position: 'static', marginBottom: 16, padding: '14px 16px' }}>
                 <div style={{ ...S.formTitle, marginBottom: 10 }}>Log Sale</div>
-                <form onSubmit={(e) => { e.preventDefault(); saleMut.mutate({ ...saleForm, animal_type: 'cattle', quantity: parseInt(saleForm.quantity) || 1, sale_price: parseFloat(saleForm.sale_price) || 0 }); }}>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const payload = {
+                    animal_type: 'cattle',
+                    quantity: parseInt(saleForm.quantity) || 1,
+                    sale_price: parseFloat(saleForm.sale_price) || 0,
+                    sale_date: saleForm.sale_date,
+                    buyer: saleForm.buyer,
+                    description: saleForm.description,
+                  };
+                  if (saleForm.cattle) payload.cattle = parseInt(saleForm.cattle);
+                  saleMut.mutate(payload);
+                }}>
+                  <label style={S.label}>Sell from Herd <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional — links sale to animal)</span></label>
+                  <select style={S.input} value={saleForm.cattle} onChange={e => setSale('cattle', e.target.value)}>
+                    <option value="">Quick sale (no link)</option>
+                    {cattle.filter(c => c.status === 'active').map(c => (
+                      <option key={c.id} value={c.id}>{c.tag_number} - {c.name || c.breed || 'Unnamed'}</option>
+                    ))}
+                  </select>
+
                   <label style={S.label}>Quantity</label>
                   <input style={S.input} type="number" min="1" value={saleForm.quantity} onChange={e => setSale('quantity', e.target.value)} required placeholder="1" />
 

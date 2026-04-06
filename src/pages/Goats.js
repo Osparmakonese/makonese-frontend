@@ -4,9 +4,11 @@ import { getGoats, createGoat, deleteGoat, getGoatHealth, createGoatHealth, getL
 import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 
-const emptyGoat = { tag_number: '', name: '', breed: '', sex: 'buck', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', notes: '' };
+const emptyGoat = { tag_number: '', name: '', breed: '', sex: 'buck', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', status: 'active', cause_of_death: '', date_of_death: '', notes: '' };
 const emptyHealth = { goat: '', record_type: '', description: '', date: today(), cost: '', vet_name: '', next_due: '', notes: '' };
-const emptySale = { quantity: '', buyer: '', sale_price: '', sale_date: today(), description: '' };
+const emptySale = { goat: '', quantity: '1', buyer: '', sale_price: '', sale_date: today(), description: '' };
+
+const STATUS_OPTIONS = [['active','Active'],['sold','Sold'],['deceased','Deceased'],['culled','Culled']];
 
 const S = {
   banner: {
@@ -30,7 +32,11 @@ const S = {
   tab: (active) => ({ flex: 1, padding: '10px 0', textAlign: 'center', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid #e5e7eb', background: active ? '#1a6b3a' : '#fff', color: active ? '#fff' : '#374151', transition: 'all .15s', borderRadius: active ? '0' : '0' }),
   goatCard: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 16px', marginBottom: 10 },
   badge: (color) => ({ display: 'inline-block', fontSize: 9, fontWeight: 700, padding: '3px 10px', borderRadius: 12, textTransform: 'uppercase', background: color === 'buck' ? '#dcfce7' : color === 'doe' ? '#fef3c7' : '#f3f4f6', color: color === 'buck' ? '#166534' : color === 'doe' ? '#92400e' : '#374151' }),
-  statusBadge: (status) => ({ display: 'inline-block', fontSize: 9, fontWeight: 700, padding: '3px 10px', borderRadius: 12, textTransform: 'uppercase', background: status === 'active' ? '#dcfce7' : '#fee2e2', color: status === 'active' ? '#166534' : '#991b1b' }),
+  statusBadge: (status) => {
+    const map = { active: ['#dcfce7','#166534'], sold: ['#dbeafe','#1e40af'], deceased: ['#fee2e2','#991b1b'], culled: ['#fef3c7','#92400e'] };
+    const [bg, fg] = map[status] || map.active;
+    return { display: 'inline-block', fontSize: 9, fontWeight: 700, padding: '3px 10px', borderRadius: 12, textTransform: 'uppercase', background: bg, color: fg };
+  },
   preview: { background: '#e8f5ee', borderRadius: 7, padding: '10px 14px', fontSize: 11, color: '#1a6b3a', marginTop: 8 },
 };
 
@@ -72,8 +78,8 @@ export default function Goats() {
   const setH = (k, v) => setHealthForm(p => ({ ...p, [k]: v }));
   const setS = (k, v) => setSaleForm(p => ({ ...p, [k]: v }));
 
-  const filteredGoats = statusFilter === 'all' ? goats : goats.filter(g => g.status !== 'sold');
-  const activeGoatsCount = goats.filter(g => g.status !== 'sold').length;
+  const filteredGoats = statusFilter === 'all' ? goats : goats.filter(g => (g.status || 'active') === 'active');
+  const activeGoatsCount = goats.filter(g => (g.status || 'active') === 'active').length;
 
   const handleAddGoat = (e) => {
     e.preventDefault();
@@ -86,8 +92,10 @@ export default function Goats() {
       date_acquired: goatForm.date_acquired,
       purchase_price: parseFloat(goatForm.purchase_price) || 0,
       weight_kg: parseFloat(goatForm.weight_kg) || 0,
+      status: goatForm.status || 'active',
+      cause_of_death: goatForm.cause_of_death || '',
+      date_of_death: goatForm.date_of_death || null,
       notes: goatForm.notes || '',
-      status: 'active',
     });
   };
 
@@ -107,14 +115,16 @@ export default function Goats() {
 
   const handleAddSale = (e) => {
     e.preventDefault();
-    saleMut.mutate({
+    const payload = {
       animal_type: 'goat',
-      quantity: parseInt(saleForm.quantity),
+      quantity: parseInt(saleForm.quantity) || 1,
       buyer: saleForm.buyer,
       sale_price: parseFloat(saleForm.sale_price),
       sale_date: saleForm.sale_date,
       description: saleForm.description || '',
-    });
+    };
+    if (saleForm.goat) payload.goat = parseInt(saleForm.goat);
+    saleMut.mutate(payload);
   };
 
   return (
@@ -156,6 +166,18 @@ export default function Goats() {
                 <div><label style={S.label}>Purchase Price ($)</label><input style={S.input} type="number" min="0" step="0.01" value={goatForm.purchase_price} onChange={e => setG('purchase_price', e.target.value)} placeholder="0.00" /></div>
                 <div><label style={S.label}>Weight (kg)</label><input style={S.input} type="number" min="0" step="0.1" value={goatForm.weight_kg} onChange={e => setG('weight_kg', e.target.value)} placeholder="0.0" /></div>
               </div>
+
+              <label style={S.label}>Status</label>
+              <select style={S.select} value={goatForm.status} onChange={e => setG('status', e.target.value)}>
+                {STATUS_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+
+              {(goatForm.status === 'deceased' || goatForm.status === 'culled') && (
+                <div style={S.row2}>
+                  <div><label style={S.label}>Cause of Death</label><input style={S.input} value={goatForm.cause_of_death} onChange={e => setG('cause_of_death', e.target.value)} placeholder="e.g. illness" /></div>
+                  <div><label style={S.label}>Date of Death</label><input style={S.input} type="date" value={goatForm.date_of_death} onChange={e => setG('date_of_death', e.target.value)} /></div>
+                </div>
+              )}
 
               <label style={S.label}>Notes</label>
               <input style={S.input} value={goatForm.notes} onChange={e => setG('notes', e.target.value)} placeholder="Health notes, markings, etc." />
@@ -213,6 +235,14 @@ export default function Goats() {
             <div style={S.card}>
               <div style={S.cardTitle}>Log Sale</div>
               <form onSubmit={handleAddSale}>
+                <label style={S.label}>Sell from Herd <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional — links sale to animal)</span></label>
+                <select style={S.select} value={saleForm.goat} onChange={e => setS('goat', e.target.value)}>
+                  <option value="">Quick sale (no link)</option>
+                  {goats.filter(g => g.status === 'active' || !g.status).map(g => (
+                    <option key={g.id} value={g.id}>{g.tag_number} - {g.name || g.breed || 'Unnamed'}</option>
+                  ))}
+                </select>
+
                 <label style={S.label}>Quantity Sold</label>
                 <input style={S.input} type="number" min="1" value={saleForm.quantity} onChange={e => setS('quantity', e.target.value)} placeholder="Number of goats" required />
 
@@ -273,6 +303,11 @@ export default function Goats() {
                   {g.weight_kg && <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>Weight: <strong>{qty(g.weight_kg)} kg</strong></div>}
                   {g.date_of_birth && <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>DOB: <strong>{g.date_of_birth}</strong></div>}
                   {g.purchase_price > 0 && <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>Purchase: <strong>{fmt(g.purchase_price)}</strong></div>}
+                  {(g.status === 'deceased' || g.status === 'culled') && g.cause_of_death && (
+                    <div style={{ fontSize: 10, color: '#991b1b', marginBottom: 6, padding: '6px 10px', background: '#fef2f2', borderRadius: 6 }}>
+                      <strong>{g.status === 'deceased' ? 'Died' : 'Culled'}:</strong> {g.cause_of_death}{g.date_of_death && ` on ${g.date_of_death}`}
+                    </div>
+                  )}
                   {g.notes && <div style={{ fontSize: 10, color: '#6b7280', fontStyle: 'italic', padding: '6px 10px', background: '#f9fafb', borderRadius: 6, marginBottom: 8 }}>{g.notes}</div>}
 
                   <div style={{ marginTop: 8, textAlign: 'right' }}>

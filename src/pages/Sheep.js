@@ -5,9 +5,11 @@ import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 
 /* ── empty forms ── */
-const emptySheep = { tag_number: '', name: '', breed: '', sex: 'ewe', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', notes: '' };
+const emptySheep = { tag_number: '', name: '', breed: '', sex: 'ewe', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', status: 'active', cause_of_death: '', date_of_death: '', notes: '' };
 const emptyHealth = { sheep: '', record_type: 'vaccination', description: '', date: today(), cost: '', vet_name: '', next_due: '', notes: '' };
-const emptySale = { quantity: '', buyer: '', sale_price: '', sale_date: today(), description: '' };
+const emptySale = { sheep: '', quantity: '1', buyer: '', sale_price: '', sale_date: today(), description: '' };
+
+const STATUS_OPTIONS = [['active','Active'],['sold','Sold'],['deceased','Deceased'],['culled','Culled']];
 
 /* ── styles ── */
 const S = {
@@ -112,8 +114,10 @@ export default function Sheep() {
       date_acquired: sheepForm.date_acquired,
       purchase_price: parseFloat(sheepForm.purchase_price) || 0,
       weight_kg: parseFloat(sheepForm.weight_kg) || 0,
+      status: sheepForm.status || 'active',
+      cause_of_death: sheepForm.cause_of_death || '',
+      date_of_death: sheepForm.date_of_death || null,
       notes: sheepForm.notes || '',
-      status: 'active',
     });
   };
 
@@ -134,15 +138,16 @@ export default function Sheep() {
 
   const handleAddSale = (e) => {
     e.preventDefault();
-    saleMut.mutate({
+    const payload = {
       animal_type: 'sheep',
-      animal_id: parseInt(saleForm.sheep) || null,
-      quantity: parseInt(saleForm.quantity) || 0,
+      quantity: parseInt(saleForm.quantity) || 1,
       buyer: saleForm.buyer || '',
       sale_price: parseFloat(saleForm.sale_price) || 0,
       sale_date: saleForm.sale_date,
       description: saleForm.description || '',
-    });
+    };
+    if (saleForm.sheep) payload.sheep = parseInt(saleForm.sheep);
+    saleMut.mutate(payload);
   };
 
   const handleDeleteSheep = (id) => {
@@ -210,6 +215,18 @@ export default function Sheep() {
                 </div>
               </div>
 
+              <label style={S.label}>Status</label>
+              <select style={S.input} value={sheepForm.status} onChange={e => setSF('status', e.target.value)}>
+                {STATUS_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+
+              {(sheepForm.status === 'deceased' || sheepForm.status === 'culled') && (
+                <div style={S.row2}>
+                  <div><label style={S.label}>Cause of Death</label><input style={S.input} value={sheepForm.cause_of_death} onChange={e => setSF('cause_of_death', e.target.value)} placeholder="e.g. illness" /></div>
+                  <div><label style={S.label}>Date of Death</label><input style={S.input} type="date" value={sheepForm.date_of_death} onChange={e => setSF('date_of_death', e.target.value)} /></div>
+                </div>
+              )}
+
               <label style={S.label}>Notes</label>
               <textarea style={S.textarea} value={sheepForm.notes} onChange={e => setSF('notes', e.target.value)} placeholder="Additional notes..." />
 
@@ -263,7 +280,14 @@ export default function Sheep() {
                         <span style={S.badge(s.sex === 'ram' ? 'amber' : 'green')}>{s.sex}</span>
                         {s.weight_kg > 0 && <span style={{ fontSize: 11, color: '#6b7280' }}>{qty(s.weight_kg)} kg</span>}
                         {s.status === 'sold' && <span style={S.badge('red')}>Sold</span>}
+                        {s.status === 'deceased' && <span style={S.badge('red')}>Deceased</span>}
+                        {s.status === 'culled' && <span style={S.badge('amber')}>Culled</span>}
                       </div>
+                      {(s.status === 'deceased' || s.status === 'culled') && s.cause_of_death && (
+                        <div style={{ fontSize: 10, color: '#991b1b', marginTop: 6, padding: '6px 10px', background: '#fef2f2', borderRadius: 6 }}>
+                          <strong>{s.status === 'deceased' ? 'Died' : 'Culled'}:</strong> {s.cause_of_death}{s.date_of_death && ` on ${s.date_of_death}`}
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
@@ -345,6 +369,14 @@ export default function Sheep() {
               <>
                 <div style={S.sectionTitle}>Log Sale</div>
                 <form onSubmit={handleAddSale}>
+                  <label style={S.label}>Sell from Flock <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional — links sale to animal)</span></label>
+                  <select style={S.input} value={saleForm.sheep} onChange={e => setSAF('sheep', e.target.value)}>
+                    <option value="">Quick sale (no link)</option>
+                    {sheep.filter(s => (s.status || 'active') === 'active').map(s => (
+                      <option key={s.id} value={s.id}>{s.tag_number} - {s.name || s.breed || 'Unnamed'}</option>
+                    ))}
+                  </select>
+
                   <label style={S.label}>Quantity *</label>
                   <input style={S.input} type="number" step="1" min="1" value={saleForm.quantity} onChange={e => setSAF('quantity', e.target.value)} placeholder="Number of sheep" required />
 
