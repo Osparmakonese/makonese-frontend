@@ -158,10 +158,7 @@ export default function Cattle() {
   const healthCattleList = cattle.map(c => ({ id: c.id, label: `${c.tag_number} - ${c.name || 'Unnamed'}` }));
   const activeCattle = cattle.filter(c => !c.is_sold).length;
 
-  const filteredCattle = statusFilter === 'all' ? cattle : cattle.filter(c => {
-    return c.status === statusFilter;
-    return true;
-  });
+  const filteredCattle = statusFilter === 'all' ? cattle : cattle.filter(c => c.status === statusFilter);
 
   const cattleHealthByAnimal = (cattleId) => healthRecords.filter(h => h.cattle === cattleId);
 
