@@ -103,6 +103,7 @@ export const deleteFarmAsset = (id) => api.delete('/farm-assets/' + id + '/');
 // Cattle
 export const getCattle = () => api.get('/cattle/').then(r => r.data);
 export const createCattle = (data) => api.post('/cattle/', data).then(r => r.data);
+export const updateCattle = (id, data) => api.patch(`/cattle/${id}/`, data).then(r => r.data);
 export const deleteCattle = (id) => api.delete(`/cattle/${id}/`);
 export const getCattleHealth = (params) => api.get('/cattle-health/', { params }).then(r => r.data);
 export const createCattleHealth = (data) => api.post('/cattle-health/', data).then(r => r.data);
@@ -110,6 +111,7 @@ export const createCattleHealth = (data) => api.post('/cattle-health/', data).th
 // Goats
 export const getGoats = () => api.get('/goats/').then(r => r.data);
 export const createGoat = (data) => api.post('/goats/', data).then(r => r.data);
+export const updateGoat = (id, data) => api.patch(`/goats/${id}/`, data).then(r => r.data);
 export const deleteGoat = (id) => api.delete(`/goats/${id}/`);
 export const getGoatHealth = (params) => api.get('/goat-health/', { params }).then(r => r.data);
 export const createGoatHealth = (data) => api.post('/goat-health/', data).then(r => r.data);
@@ -117,6 +119,7 @@ export const createGoatHealth = (data) => api.post('/goat-health/', data).then(r
 // Sheep
 export const getSheep = () => api.get('/sheep/').then(r => r.data);
 export const createSheep = (data) => api.post('/sheep/', data).then(r => r.data);
+export const updateSheep = (id, data) => api.patch(`/sheep/${id}/`, data).then(r => r.data);
 export const deleteSheep = (id) => api.delete(`/sheep/${id}/`);
 export const getSheepHealth = (params) => api.get('/sheep-health/', { params }).then(r => r.data);
 export const createSheepHealth = (data) => api.post('/sheep-health/', data).then(r => r.data);
@@ -124,6 +127,7 @@ export const createSheepHealth = (data) => api.post('/sheep-health/', data).then
 // Pigs
 export const getPigs = () => api.get('/pigs/').then(r => r.data);
 export const createPig = (data) => api.post('/pigs/', data).then(r => r.data);
+export const updatePig = (id, data) => api.patch(`/pigs/${id}/`, data).then(r => r.data);
 export const deletePig = (id) => api.delete(`/pigs/${id}/`);
 export const getPigHealth = (params) => api.get('/pig-health/', { params }).then(r => r.data);
 export const createPigHealth = (data) => api.post('/pig-health/', data).then(r => r.data);

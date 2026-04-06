@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getGoats, createGoat, deleteGoat, getGoatHealth, createGoatHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
+import { getGoats, createGoat, updateGoat, deleteGoat, getGoatHealth, createGoatHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
 import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
+import LivestockEditModal from '../components/LivestockEditModal';
 
 const emptyGoat = { tag_number: '', name: '', breed: '', sex: 'buck', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', status: 'active', cause_of_death: '', date_of_death: '', notes: '' };
 const emptyHealth = { goat: '', record_type: '', description: '', date: today(), cost: '', vet_name: '', next_due: '', notes: '' };
@@ -48,6 +49,7 @@ export default function Goats() {
   const [activeTab, setActiveTab] = useState('herd'); // 'herd' | 'health' | 'sales'
   const [statusFilter, setStatusFilter] = useState('active'); // 'active' | 'all'
   const [delConfirm, setDelConfirm] = useState(null);
+  const [editAnimal, setEditAnimal] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
 
   const { data: goats = [] } = useQuery({ queryKey: ['goats'], queryFn: getGoats });
@@ -318,7 +320,10 @@ export default function Goats() {
                         <button onClick={() => setDelConfirm(null)} style={{ fontSize: 10, padding: '2px 8px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 3, cursor: 'pointer' }}>No</button>
                       </div>
                     ) : (
-                      <button onClick={() => setDelConfirm(g.id)} style={{ fontSize: 10, padding: '3px 10px', background: '#fff', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 4, cursor: 'pointer' }}>Delete</button>
+                      <span style={{ display: 'inline-flex', gap: 6 }}>
+                        <button onClick={() => setEditAnimal(g)} style={{ fontSize: 10, padding: '3px 10px', background: '#fff', color: '#1a6b3a', border: '1px solid #1a6b3a', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}>Edit</button>
+                        <button onClick={() => setDelConfirm(g.id)} style={{ fontSize: 10, padding: '3px 10px', background: '#fff', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 4, cursor: 'pointer' }}>Delete</button>
+                      </span>
                     )}
                   </div>
                 </div>
@@ -376,6 +381,18 @@ export default function Goats() {
       </div>
 
       <ConfirmModal isOpen={confirmModal !== null} onConfirm={() => { if (confirmModal) confirmModal(); setConfirmModal(null); }} onCancel={() => setConfirmModal(null)} fields={[]} />
+
+      <LivestockEditModal
+        isOpen={!!editAnimal}
+        animal={editAnimal}
+        animalLabel="Goat"
+        onClose={() => setEditAnimal(null)}
+        onSave={async (id, payload) => {
+          await updateGoat(id, payload);
+          qc.invalidateQueries({ queryKey: ['goats'] });
+          qc.invalidateQueries({ queryKey: ['dashboard'] });
+        }}
+      />
     </>
   );
 }

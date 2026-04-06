@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getPigs, createPig, deletePig, getPigHealth, createPigHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
+import { getPigs, createPig, updatePig, deletePig, getPigHealth, createPigHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
 import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
+import LivestockEditModal from '../components/LivestockEditModal';
 
 const SEX_OPTIONS = [['boar', 'Boar'], ['sow', 'Sow'], ['piglet', 'Piglet']];
 const HEALTH_TYPES = [['illness', 'Illness'], ['injury', 'Injury'], ['vaccination', 'Vaccination'], ['checkup', 'Checkup'], ['treatment', 'Treatment']];
@@ -52,7 +53,9 @@ export default function Pigs() {
   const [healthForm, setHealthForm] = useState(emptyHealth);
   const [saleForm, setSaleForm] = useState(emptySale);
   const [activeTab, setActiveTab] = useState('herd');
+  const [statusFilter, setStatusFilter] = useState('active');
   const [delConfirm, setDelConfirm] = useState(null);
+  const [editAnimal, setEditAnimal] = useState(null);
 
   const { data: pigs = [] } = useQuery({ queryKey: ['pigs'], queryFn: getPigs });
   const { data: health = [] } = useQuery({ queryKey: ['pigHealth'], queryFn: () => getPigHealth() });
@@ -175,8 +178,19 @@ export default function Pigs() {
           {/* HERD TAB */}
           {activeTab === 'herd' && (
             <div>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                {['active', 'sold', 'deceased', 'culled', 'all'].map(val => (
+                  <button key={val} onClick={() => setStatusFilter(val)} style={{
+                    padding: '5px 12px', borderRadius: 6,
+                    border: statusFilter === val ? '1px solid #1a6b3a' : '1px solid #e5e7eb',
+                    background: statusFilter === val ? '#e8f5ee' : '#fff',
+                    fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                    color: statusFilter === val ? '#1a6b3a' : '#6b7280',
+                  }}>{val[0].toUpperCase() + val.slice(1)}</button>
+                ))}
+              </div>
               {pigs.length === 0 && <p style={{ fontSize: 11, color: '#9ca3af' }}>No pigs recorded yet.</p>}
-              {pigs.map(pig => {
+              {(statusFilter === 'all' ? pigs : pigs.filter(p => (p.status || 'active') === statusFilter)).map(pig => {
                 const sexColor = pig.sex === 'boar' ? '#2563eb' : pig.sex === 'sow' ? '#ec4899' : '#8b5cf6';
                 return (
                   <div key={pig.id} style={S.pigCard}>
@@ -202,7 +216,10 @@ export default function Pigs() {
                           </div>
                         )}
                       </div>
-                      <button style={S.deleteBtn} onClick={() => setDelConfirm(pig.id)}>Delete</button>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button style={{ padding: '4px 8px', background: '#fff', color: '#1a6b3a', border: '1px solid #1a6b3a', borderRadius: 4, fontSize: 10, fontWeight: 600, cursor: 'pointer' }} onClick={() => setEditAnimal(pig)}>Edit</button>
+                        <button style={S.deleteBtn} onClick={() => setDelConfirm(pig.id)}>Delete</button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -296,6 +313,19 @@ export default function Pigs() {
           )}
         </div>
       </div>
+
+      <LivestockEditModal
+        isOpen={!!editAnimal}
+        animal={editAnimal}
+        animalLabel="Pig"
+        extraFields={[{ key: 'litter_number', label: 'Litter Number', type: 'number' }]}
+        onClose={() => setEditAnimal(null)}
+        onSave={async (id, payload) => {
+          await updatePig(id, payload);
+          qc.invalidateQueries({ queryKey: ['pigs'] });
+          qc.invalidateQueries({ queryKey: ['dashboard'] });
+        }}
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal

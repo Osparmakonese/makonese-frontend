@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getSheep, createSheep, deleteSheep, getSheepHealth, createSheepHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
+import { getSheep, createSheep, updateSheep, deleteSheep, getSheepHealth, createSheepHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
 import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
+import LivestockEditModal from '../components/LivestockEditModal';
 
 /* ── empty forms ── */
 const emptySheep = { tag_number: '', name: '', breed: '', sex: 'ewe', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', status: 'active', cause_of_death: '', date_of_death: '', notes: '' };
@@ -63,6 +64,7 @@ export default function Sheep() {
   const [activeTab, setActiveTab] = useState('flock'); // 'flock' | 'health' | 'sales'
   const [filterStatus, setFilterStatus] = useState('active'); // 'active' | 'sold' | 'all'
   const [delConfirm, setDelConfirm] = useState(null);
+  const [editAnimal, setEditAnimal] = useState(null);
 
   /* ── queries ── */
   const { data: sheep = [] } = useQuery({ queryKey: ['sheep'], queryFn: getSheep });
@@ -274,7 +276,10 @@ export default function Sheep() {
                           <div style={S.sheepName}>{s.name || s.tag_number}</div>
                           <div style={S.sheepMeta}>{s.tag_number} • {s.breed || 'Unknown breed'}</div>
                         </div>
-                        <button style={S.btnSmall} onClick={() => handleDeleteSheep(s.id)}>Delete</button>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, background: '#fff', color: '#1a6b3a', border: '1px solid #1a6b3a', borderRadius: 6, cursor: 'pointer' }} onClick={() => setEditAnimal(s)}>Edit</button>
+                          <button style={S.btnSmall} onClick={() => handleDeleteSheep(s.id)}>Delete</button>
+                        </div>
                       </div>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
                         <span style={S.badge(s.sex === 'ram' ? 'amber' : 'green')}>{s.sex}</span>
@@ -422,6 +427,18 @@ export default function Sheep() {
           </div>
         </div>
       </div>
+
+      <LivestockEditModal
+        isOpen={!!editAnimal}
+        animal={editAnimal}
+        animalLabel="Sheep"
+        onClose={() => setEditAnimal(null)}
+        onSave={async (id, payload) => {
+          await updateSheep(id, payload);
+          qc.invalidateQueries({ queryKey: ['sheep'] });
+          qc.invalidateQueries({ queryKey: ['dashboard'] });
+        }}
+      />
 
       {/* ── Delete Confirm Modal ── */}
       <ConfirmModal

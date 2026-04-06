@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCattle, createCattle, deleteCattle, getCattleHealth, createCattleHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
+import { getCattle, createCattle, updateCattle, deleteCattle, getCattleHealth, createCattleHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
 import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
+import LivestockEditModal from '../components/LivestockEditModal';
 
 const SEXES = [['bull','Bull'],['cow','Cow'],['calf','Calf']];
 const HEALTH_TYPES = [['vaccination','Vaccination'],['treatment','Treatment'],['checkup','Checkup'],['deworming','Deworming'],['other','Other']];
@@ -113,6 +114,7 @@ export default function Cattle() {
   const [tab, setTab] = useState('herd');
   const [statusFilter, setStatusFilter] = useState('all');
   const [delConfirm, setDelConfirm] = useState(null);
+  const [editAnimal, setEditAnimal] = useState(null);
   const [cattleConfirm, setCattleConfirm] = useState(false);
   const [pendingCattle, setPendingCattle] = useState(null);
 
@@ -304,7 +306,10 @@ export default function Cattle() {
                         <button onClick={() => setDelConfirm(null)} style={{ fontSize: 10, padding: '3px 10px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 4, cursor: 'pointer' }}>No</button>
                       </div>
                     ) : (
-                      <button onClick={() => setDelConfirm(c.id)} style={S.deleteBtn}>Delete</button>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => setEditAnimal(c)} style={{ fontSize: 10, padding: '3px 10px', background: '#fff', color: '#1a6b3a', border: '1px solid #1a6b3a', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}>Edit</button>
+                        <button onClick={() => setDelConfirm(c.id)} style={S.deleteBtn}>Delete</button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -448,6 +453,18 @@ export default function Cattle() {
           { label: 'Sex', value: (SEXES.find(s => s[0] === pendingCattle.sex) || [pendingCattle.sex, pendingCattle.sex])[1] },
           { label: 'Date Acquired', value: pendingCattle.date_acquired },
         ] : []}
+      />
+
+      <LivestockEditModal
+        isOpen={!!editAnimal}
+        animal={editAnimal}
+        animalLabel="Cattle"
+        onClose={() => setEditAnimal(null)}
+        onSave={async (id, payload) => {
+          await updateCattle(id, payload);
+          qc.invalidateQueries({ queryKey: ['cattle'] });
+          qc.invalidateQueries({ queryKey: ['dashboard'] });
+        }}
       />
     </>
   );
