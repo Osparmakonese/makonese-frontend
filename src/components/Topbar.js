@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { fmt, qty } from '../utils/format';
 import { getDailySummary } from '../api/farmApi';
+import NotificationBell from './NotificationBell';
 
 const S = {
   bar: {
@@ -153,6 +154,7 @@ export default function Topbar({ pageTitle, pageSub, primaryAction, onPrimaryAct
       </div>
       <div style={S.right}>
         <span style={S.dateChip}>{formatDate()}</span>
+        <NotificationBell />
         <button
           style={S.waBtn}
           onClick={sendWhatsApp}

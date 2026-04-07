@@ -45,3 +45,35 @@ self.addEventListener("sync", e => {
     ));
   }
 });
+
+// --- Web Push handler (#7 notifications) ---
+self.addEventListener("push", e => {
+  let data = { title: "Makonese Farm", body: "New alert", url: "/" };
+  try {
+    if (e.data) data = { ...data, ...e.data.json() };
+  } catch (_) {
+    if (e.data) data.body = e.data.text();
+  }
+  const opts = {
+    body: data.body,
+    icon: "/logo192.png",
+    badge: "/logo192.png",
+    data: { url: data.url || "/" },
+    tag: data.tag || "farm-alert",
+    renotify: true,
+  };
+  e.waitUntil(self.registration.showNotification(data.title, opts));
+});
+
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || "/";
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(clients => {
+      for (const c of clients) {
+        if ("focus" in c) { c.navigate(url); return c.focus(); }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })
+  );
+});

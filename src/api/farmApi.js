@@ -229,3 +229,27 @@ export const saveBlob = (blob, filename) => {
   window.URL.revokeObjectURL(url);
 };
 export const getSeasonalComparison = () => api.get('/analytics/seasonal_comparison/').then(r => r.data);
+
+// --- Notifications (#7) ---
+export const getNotifications = (unread = false) =>
+  api.get('/notifications/', { params: unread ? { unread: 1 } : {} }).then(r => r.data);
+export const getUnreadCount = () =>
+  api.get('/notifications/unread_count/').then(r => r.data);
+export const markNotificationRead = (id) =>
+  api.post(`/notifications/${id}/mark_read/`).then(r => r.data);
+export const markAllNotificationsRead = () =>
+  api.post('/notifications/mark_all_read/').then(r => r.data);
+export const scanNotifications = () =>
+  api.post('/notifications/scan/').then(r => r.data);
+export const getWaDigest = () =>
+  api.get('/notifications/wa_digest/').then(r => r.data);
+
+// --- Push Subscriptions (#7) ---
+export const getVapidKey = () =>
+  api.get('/push-subscriptions/vapid_key/').then(r => r.data);
+export const subscribePush = (data) =>
+  api.post('/push-subscriptions/', data).then(r => r.data);
+export const unsubscribePush = (endpoint) =>
+  api.post('/push-subscriptions/unsubscribe/', { endpoint }).then(r => r.data);
+export const sendTestPush = () =>
+  api.post('/push-subscriptions/test/').then(r => r.data);

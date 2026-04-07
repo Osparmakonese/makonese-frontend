@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getVapidKey, subscribePush, unsubscribePush, sendTestPush } from '../api/farmApi';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
 
 const S = {
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 },
@@ -40,6 +50,77 @@ export default function Settings() {
   const [reminder, setReminder] = useState(() => localStorage.getItem('reminder_9pm') === 'true');
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('anthropic_api_key') || '');
   const [saved, setSaved] = useState('');
+  const [pushOn, setPushOn] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMsg, setPushMsg] = useState('');
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.ready.then(reg =>
+        reg.pushManager.getSubscription().then(sub => setPushOn(!!sub))
+      ).catch(() => {});
+    }
+  }, []);
+
+  const togglePush = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setPushMsg('Browser push not supported on this device.');
+      return;
+    }
+    setPushBusy(true);
+    setPushMsg('');
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      if (pushOn) {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await unsubscribePush(sub.endpoint).catch(() => {});
+          await sub.unsubscribe();
+        }
+        setPushOn(false);
+        setPushMsg('Browser push disabled.');
+      } else {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          setPushMsg('Permission denied.');
+          setPushBusy(false);
+          return;
+        }
+        const { public_key } = await getVapidKey();
+        if (!public_key) {
+          setPushMsg('Server not configured for push yet.');
+          setPushBusy(false);
+          return;
+        }
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(public_key),
+        });
+        const json = sub.toJSON();
+        await subscribePush({
+          endpoint: json.endpoint,
+          p256dh: json.keys.p256dh,
+          auth: json.keys.auth,
+          user_agent: navigator.userAgent.slice(0, 280),
+        });
+        setPushOn(true);
+        setPushMsg('Browser push enabled.');
+      }
+    } catch (e) {
+      console.error(e);
+      setPushMsg('Could not update push: ' + (e.message || 'error'));
+    }
+    setPushBusy(false);
+  };
+
+  const testPush = async () => {
+    try {
+      await sendTestPush();
+      setPushMsg('Test push sent. Check your notifications.');
+    } catch (e) {
+      setPushMsg('Test failed.');
+    }
+  };
 
   useEffect(() => { localStorage.setItem('currency', currency); }, [currency]);
   useEffect(() => { localStorage.setItem('reminder_9pm', String(reminder)); }, [reminder]);
@@ -94,6 +175,24 @@ export default function Settings() {
           <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 4 }}>Required for Smart Analysis in Field Reports and the full AI Report.</p>
           <button style={S.btn} onClick={saveApiKey}>Save API Key</button>
           {saved === 'API key saved!' && <div style={S.saved}>✓ {saved}</div>}
+        </div>
+
+        <div style={S.card}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ flex: 1 }}>
+              <div style={S.cardTitle}>🔔 Browser Push Alerts</div>
+              <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 6 }}>Get real-time alerts on this device for low stock, wages owed, livestock health, and new sales.</p>
+              {pushMsg && <div style={{ fontSize: 10, color: '#1a6b3a', fontWeight: 600 }}>{pushMsg}</div>}
+              {pushOn && (
+                <button style={{ ...S.btn, marginTop: 8, background: '#2d9e58' }} onClick={testPush}>
+                  Send test push
+                </button>
+              )}
+            </div>
+            <button style={S.toggle(pushOn)} onClick={togglePush} disabled={pushBusy}>
+              <div style={S.toggleKnob(pushOn)} />
+            </button>
+          </div>
         </div>
 
         <div style={S.card}>
