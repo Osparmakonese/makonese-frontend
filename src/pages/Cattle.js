@@ -475,7 +475,7 @@ export default function Cattle() {
       <ConfirmModal
         isOpen={cattleConfirm}
         onCancel={() => setCattleConfirm(false)}
-        onConfirm={() => { setCattleConfirm(false); addCattleMut.mutate({ ...pendingCattle, purchase_price: pendingCattle.purchase_price ? parseFloat(pendingCattle.purchase_price) : 0, weight_kg: pendingCattle.weight_kg ? parseFloat(pendingCattle.weight_kg) : 0, mother: pendingCattle.mother ? parseInt(pendingCattle.mother) : null }); }}
+        onConfirm={() => { setCattleConfirm(false); addCattleMut.mutate({ ...pendingCattle, purchase_price: pendingCattle.purchase_price ? parseFloat(pendingCattle.purchase_price) : 0, weight_kg: pendingCattle.weight_kg ? parseFloat(pendingCattle.weight_kg) : 0, mother: pendingCattle.mother ? parseInt(pendingCattle.mother) : null, date_of_birth: pendingCattle.date_of_birth || null, date_of_death: pendingCattle.date_of_death || null }); }}
         fields={pendingCattle ? [
           { label: 'Tag Number', value: pendingCattle.tag_number },
           { label: 'Name', value: pendingCattle.name },
