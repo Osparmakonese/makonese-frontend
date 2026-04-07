@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getFields, createField, closeField, deleteField } from '../api/farmApi';
+import { getFields, createField, closeField, deleteField, getFieldsPnL } from '../api/farmApi';
 import { fmt, qty, today, cropEmoji, cropGradient, cropImage, IMAGES } from '../utils/format';
 import FieldModal from '../components/FieldModal';
 import ConfirmModal from '../components/ConfirmModal';
@@ -92,6 +92,13 @@ export default function Fields() {
   const [delConfirm, setDelConfirm] = useState(null);
 
   const { data: fields = [], isLoading } = useQuery({ queryKey: ['fields'], queryFn: getFields });
+  const { data: pnlData } = useQuery({ queryKey: ['fields-pnl'], queryFn: getFieldsPnL });
+  const pnlMap = React.useMemo(() => {
+    const m = {};
+    (pnlData?.fields || []).forEach(p => { m[p.field_id] = p; });
+    return m;
+  }, [pnlData]);
+  const [showPnlTable, setShowPnlTable] = useState(false);
 
   const addMut = useMutation({
     mutationFn: createField,
@@ -161,13 +168,73 @@ export default function Fields() {
 
         {/* Right: Field list */}
         <div>
-          <div style={S.sectionTitle}>All Fields ({fields.length})</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ ...S.sectionTitle, marginBottom: 0 }}>All Fields ({fields.length})</div>
+            <button
+              onClick={() => setShowPnlTable(v => !v)}
+              style={{
+                padding: '6px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                background: showPnlTable ? '#1a6b3a' : '#fff',
+                color: showPnlTable ? '#fff' : '#1a6b3a',
+                border: '1px solid #1a6b3a', borderRadius: 6,
+              }}
+            >{showPnlTable ? '‹ Back to Cards' : '📊 P&L Comparison'}</button>
+          </div>
+
+          {showPnlTable && pnlData && (
+            <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 10 }}>All Fields P&L Comparison</div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ background: '#f9fafb', textAlign: 'left' }}>
+                      <th style={{ padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Field</th>
+                      <th style={{ padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Crop</th>
+                      <th style={{ padding: '8px 10px', borderBottom: '1px solid #e5e7eb' }}>Size</th>
+                      <th style={{ padding: '8px 10px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Revenue</th>
+                      <th style={{ padding: '8px 10px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Expenses</th>
+                      <th style={{ padding: '8px 10px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Profit</th>
+                      <th style={{ padding: '8px 10px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Margin</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...(pnlData.fields || [])].sort((a, b) => b.profit - a.profit).map(p => (
+                      <tr key={p.field_id} style={{ cursor: 'pointer' }} onClick={() => {
+                        const f = fields.find(x => x.id === p.field_id);
+                        if (f) setSelectedField(f);
+                      }}>
+                        <td style={{ padding: '8px 10px', borderBottom: '1px solid #f3f4f6', fontWeight: 600 }}>{cropEmoji(p.crop)} {p.field_name}</td>
+                        <td style={{ padding: '8px 10px', borderBottom: '1px solid #f3f4f6', color: '#6b7280' }}>{p.crop}</td>
+                        <td style={{ padding: '8px 10px', borderBottom: '1px solid #f3f4f6', color: '#6b7280' }}>{p.size_ha} ha</td>
+                        <td style={{ padding: '8px 10px', borderBottom: '1px solid #f3f4f6', textAlign: 'right', color: '#1a6b3a', fontWeight: 600 }}>{fmt(p.revenue)}</td>
+                        <td style={{ padding: '8px 10px', borderBottom: '1px solid #f3f4f6', textAlign: 'right', color: '#c0392b' }}>{fmt(p.expenses)}</td>
+                        <td style={{ padding: '8px 10px', borderBottom: '1px solid #f3f4f6', textAlign: 'right', fontWeight: 700, color: p.profit >= 0 ? '#1a6b3a' : '#c0392b' }}>{fmt(p.profit)}</td>
+                        <td style={{ padding: '8px 10px', borderBottom: '1px solid #f3f4f6', textAlign: 'right', color: p.margin >= 0 ? '#1a6b3a' : '#c0392b' }}>{p.margin.toFixed(1)}%</td>
+                      </tr>
+                    ))}
+                    <tr style={{ background: '#f9fafb', fontWeight: 700 }}>
+                      <td style={{ padding: '10px', borderTop: '2px solid #1a6b3a' }} colSpan={3}>TOTAL</td>
+                      <td style={{ padding: '10px', borderTop: '2px solid #1a6b3a', textAlign: 'right', color: '#1a6b3a' }}>{fmt(pnlData.totals?.revenue || 0)}</td>
+                      <td style={{ padding: '10px', borderTop: '2px solid #1a6b3a', textAlign: 'right', color: '#c0392b' }}>{fmt(pnlData.totals?.expenses || 0)}</td>
+                      <td style={{ padding: '10px', borderTop: '2px solid #1a6b3a', textAlign: 'right', color: (pnlData.totals?.profit || 0) >= 0 ? '#1a6b3a' : '#c0392b' }}>{fmt(pnlData.totals?.profit || 0)}</td>
+                      <td style={{ padding: '10px', borderTop: '2px solid #1a6b3a' }}></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {(!pnlData.fields || pnlData.fields.length === 0) && (
+                <div style={{ padding: 20, fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>No fields to compare yet.</div>
+              )}
+            </div>
+          )}
+
           {isLoading && <p style={{ fontSize: 12, color: '#9ca3af' }}>Loading...</p>}
           <div style={S.fieldGrid}>
             {fields.map(f => {
-              const fRev = f.total_revenue || 0;
-              const fCost = (f.total_costs || 0) + (f.total_labour || 0);
-              const fNet = fRev - fCost;
+              const p = pnlMap[f.id];
+              const fRev = p ? p.revenue : (f.total_revenue || 0);
+              const fCost = p ? p.expenses : ((f.total_costs || 0) + (f.total_labour || 0));
+              const fNet = p ? p.profit : (fRev - fCost);
               return (
                 <div key={f.id} className="fcard" style={S.fcard}>
                   <div className="fcard-img" style={{ position: 'relative', height: 120, overflow: 'hidden' }} onClick={() => setSelectedField(f)}>

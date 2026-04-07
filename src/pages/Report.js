@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getDashboard, getFields, getWagesSummary, getFarmAssets, getLivestockSales, getCattle, getGoats, getSheep, getPigs, getBroilerBatches, getLayerFlocks, getEggCollections, getBroilerExpenses, getLayerExpenses } from '../api/farmApi';
+import { getDashboard, getFields, getWagesSummary, getFarmAssets, getLivestockSales, getCattle, getGoats, getSheep, getPigs, getBroilerBatches, getLayerFlocks, getEggCollections, getBroilerExpenses, getLayerExpenses, downloadReport, saveBlob } from '../api/farmApi';
 import { fmt, IMAGES } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 
@@ -51,6 +51,25 @@ export default function Report() {
   const role = user?.role || 'worker';
   const [analysis, setAnalysis] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const today = new Date();
+  const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+  const todayStr = today.toISOString().slice(0, 10);
+  const [rptStart, setRptStart] = useState(firstOfMonth);
+  const [rptEnd, setRptEnd] = useState(todayStr);
+  const [rptBusy, setRptBusy] = useState('');
+
+  const handleDownload = async (type, format) => {
+    const key = `${type}-${format}`;
+    setRptBusy(key);
+    try {
+      const blob = await downloadReport(type, format, { start: rptStart, end: rptEnd });
+      const ext = format === 'pdf' ? 'pdf' : 'xlsx';
+      saveBlob(blob, `${type}_${rptStart}_${rptEnd}.${ext}`);
+    } catch (err) {
+      alert('Report failed: ' + (err?.response?.data?.detail || err.message));
+    }
+    setRptBusy('');
+  };
 
   const { data: dash, isLoading: dLoad } = useQuery({ queryKey: ['dashboard'], queryFn: getDashboard });
   const { data: fields = [], isLoading: fLoad } = useQuery({ queryKey: ['fields'], queryFn: getFields });
@@ -134,6 +153,45 @@ export default function Report() {
         {aiLoading ? 'Analyzing...' : 'Full AI Financial Analysis - Season 2025 Deep Dive + Planning for Next Season'}
       </button>
       {analysis && <div style={S.aiResult}>{analysis}</div>}
+
+      {/* Export Reports */}
+      <div style={{ ...S.card, borderLeft: '4px solid #1a6b3a' }}>
+        <div style={{ ...S.sectionTitle, marginBottom: 10 }}>📥 Export Reports</div>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <label style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>From:</label>
+          <input type="date" value={rptStart} onChange={e => setRptStart(e.target.value)}
+            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 12 }} />
+          <label style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>To:</label>
+          <input type="date" value={rptEnd} onChange={e => setRptEnd(e.target.value)}
+            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 12 }} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
+          {[
+            { type: 'pnl', label: 'Monthly/Seasonal P&L', icon: '💰' },
+            { type: 'livestock', label: 'Livestock Summary', icon: '🐄' },
+            { type: 'fields', label: 'Field-by-Field', icon: '🌾' },
+            { type: 'wages', label: 'Worker Wages & Hours', icon: '👷' },
+          ].map(r => (
+            <div key={r.type} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, background: '#f9fafb' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#111827', marginBottom: 8 }}>{r.icon} {r.label}</div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  onClick={() => handleDownload(r.type, 'pdf')}
+                  disabled={rptBusy === `${r.type}-pdf`}
+                  style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: 'none', background: '#c0392b', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>
+                  {rptBusy === `${r.type}-pdf` ? '...' : 'PDF'}
+                </button>
+                <button
+                  onClick={() => handleDownload(r.type, 'xlsx')}
+                  disabled={rptBusy === `${r.type}-xlsx`}
+                  style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: 'none', background: '#1a6b3a', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>
+                  {rptBusy === `${r.type}-xlsx` ? '...' : 'XLSX'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="two-col-layout" style={S.twoCol}>
         <div>

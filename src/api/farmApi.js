@@ -205,4 +205,27 @@ export const getAnalytics = () => api.get('/analytics/').then(r => r.data);
 export const getHealthScore = () => api.get('/analytics/health_score/').then(r => r.data);
 export const getBriefing = () => api.get('/analytics/briefing/').then(r => r.data);
 export const getAchievements = () => api.get('/analytics/achievements/').then(r => r.data);
+
+// Field P&L (#5)
+export const getFieldsPnL = () => api.get('/fields/pnl/').then(r => r.data);
+export const getFieldPnL = (id, opening) => api.get(`/fields/${id}/pnl/`, { params: opening ? { opening } : {} }).then(r => r.data);
+
+// Reports (#6) — returns Blob for download
+export const downloadReport = async (type, format, params = {}) => {
+  const res = await api.get(`/reports/${type}/`, {
+    params: { ...params, format },
+    responseType: 'blob',
+  });
+  return res.data;
+};
+export const saveBlob = (blob, filename) => {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+};
 export const getSeasonalComparison = () => api.get('/analytics/seasonal_comparison/').then(r => r.data);

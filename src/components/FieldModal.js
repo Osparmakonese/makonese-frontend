@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getFieldReport, getFieldHistory } from '../api/farmApi';
+import { getFieldReport, getFieldHistory, getFieldPnL } from '../api/farmApi';
 import { fmt, cropEmoji, cropGradient, cropImage } from '../utils/format';
 
 const S = {
@@ -88,6 +88,12 @@ export default function FieldModal({ field, isOpen, onClose }) {
   const { data: report } = useQuery({
     queryKey: ['fieldReport', field?.id],
     queryFn: () => getFieldReport(field.id, field.opening_id),
+    enabled: !!field?.id && isOpen,
+  });
+
+  const { data: pnl } = useQuery({
+    queryKey: ['fieldPnl', field?.id],
+    queryFn: () => getFieldPnL(field.id),
     enabled: !!field?.id && isOpen,
   });
 
@@ -217,21 +223,49 @@ Identify:
 
         {/* Body */}
         <div style={S.body}>
-          {/* Stats */}
-          <div style={S.statsRow}>
-            <div style={S.statBox('green')}>
-              <div style={S.statVal('green')}>{fmt(rev)}</div>
-              <div style={S.statLabel}>Revenue</div>
+          {/* Stats — prefer live P&L if available */}
+          {(() => {
+            const pRev = pnl ? pnl.revenue : rev;
+            const pCost = pnl ? pnl.expenses : totalCosts;
+            const pNet = pnl ? pnl.profit : net;
+            return (
+              <div style={S.statsRow}>
+                <div style={S.statBox('green')}>
+                  <div style={S.statVal('green')}>{fmt(pRev)}</div>
+                  <div style={S.statLabel}>Revenue</div>
+                </div>
+                <div style={S.statBox('red')}>
+                  <div style={S.statVal('red')}>{fmt(pCost)}</div>
+                  <div style={S.statLabel}>Total Costs</div>
+                </div>
+                <div style={S.statBox(pNet >= 0 ? 'green' : 'red')}>
+                  <div style={S.statVal(pNet >= 0 ? 'green' : 'red')}>{fmt(pNet)}</div>
+                  <div style={S.statLabel}>Net Position</div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* P&L Breakdown */}
+          {pnl && (
+            <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#111827', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>P&L Breakdown</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11 }}>
+                <div style={{ color: '#6b7280' }}>Crate Revenue</div>
+                <div style={{ textAlign: 'right', color: '#1a6b3a', fontWeight: 600 }}>{fmt(pnl.crate_revenue)}</div>
+                <div style={{ color: '#6b7280' }}>Direct Income</div>
+                <div style={{ textAlign: 'right', color: '#1a6b3a', fontWeight: 600 }}>{fmt(pnl.direct_income)}</div>
+                <div style={{ color: '#6b7280', borderTop: '1px solid #e5e7eb', paddingTop: 6 }}>Tagged Expenses</div>
+                <div style={{ textAlign: 'right', color: '#c0392b', fontWeight: 600, borderTop: '1px solid #e5e7eb', paddingTop: 6 }}>{fmt(pnl.tagged_expenses)}</div>
+                <div style={{ color: '#6b7280' }}>Wages</div>
+                <div style={{ textAlign: 'right', color: '#c0392b', fontWeight: 600 }}>{fmt(pnl.wages)}</div>
+                <div style={{ color: '#6b7280' }}>Stock Used</div>
+                <div style={{ textAlign: 'right', color: '#c0392b', fontWeight: 600 }}>{fmt(pnl.stock_cost)}</div>
+                <div style={{ color: '#111827', fontWeight: 700, borderTop: '2px solid #1a6b3a', paddingTop: 6 }}>Profit Margin</div>
+                <div style={{ textAlign: 'right', fontWeight: 700, borderTop: '2px solid #1a6b3a', paddingTop: 6, color: pnl.margin >= 0 ? '#1a6b3a' : '#c0392b' }}>{pnl.margin.toFixed(1)}%</div>
+              </div>
             </div>
-            <div style={S.statBox('red')}>
-              <div style={S.statVal('red')}>{fmt(totalCosts)}</div>
-              <div style={S.statLabel}>Total Costs</div>
-            </div>
-            <div style={S.statBox(net >= 0 ? 'green' : 'red')}>
-              <div style={S.statVal(net >= 0 ? 'green' : 'red')}>{fmt(net)}</div>
-              <div style={S.statLabel}>Net Position</div>
-            </div>
-          </div>
+          )}
 
           {/* Info rows */}
           <div style={S.infoRow}><span style={S.infoLabel}>Crop</span><span style={S.infoVal}>{cropEmoji(field.crop)} {field.crop}</span></div>
