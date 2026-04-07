@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getBroilerBatches, createBroilerBatch, deleteBroilerBatch, getBroilerExpenses, createBroilerExpense, getLivestockSales, createLivestockSale } from '../api/farmApi';
+import {
+  getBroilerBatches, createBroilerBatch, updateBroilerBatch, deleteBroilerBatch,
+  getBroilerExpenses, createBroilerExpense, deleteBroilerExpense,
+  getLivestockSales, createLivestockSale, deleteLivestockSale,
+} from '../api/farmApi';
 import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 
 const EXPENSE_CATEGORIES = [['feed', 'Feed'], ['medication', 'Medication'], ['vaccination', 'Vaccination'], ['equipment', 'Equipment'], ['other', 'Other']];
 
 const emptyBatch = { batch_name: '', quantity: '', date_acquired: today(), purchase_price: '', target_weight: '', notes: '' };
-const emptyExpense = { batch: '', category: 'feed', description: '', amount: '', date: today(), notes: '' };
-const emptySale = { quantity: '', buyer: '', sale_price: '', sale_date: today(), description: '' };
+const emptyExpense = { batch: '', category: 'feed', description: '', amount: '', record_date: today(), notes: '' };
+const emptySale = { batch: '', quantity: '', buyer: '', sale_price: '', sale_date: today(), description: '' };
 
 const S = {
   banner: {
@@ -55,6 +59,9 @@ export default function Broilers() {
   const [delConfirm, setDelConfirm] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, setPending] = useState(null);
+  const [mortalityModal, setMortalityModal] = useState(null); // batch being edited
+  const [mortalityCount, setMortalityCount] = useState('');
+  const [rowDelete, setRowDelete] = useState(null); // {type:'expense'|'sale', id, label}
 
   const { data: batches = [] } = useQuery({ queryKey: ['broilerBatches'], queryFn: getBroilerBatches });
   const { data: expenses = [] } = useQuery({ queryKey: ['broilerExpenses'], queryFn: () => getBroilerExpenses() });
@@ -75,9 +82,24 @@ export default function Broilers() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['broilerExpenses'] }); qc.invalidateQueries({ queryKey: ['expenses'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setExpenseForm(emptyExpense); },
   });
 
+  const delExpenseMut = useMutation({
+    mutationFn: (id) => deleteBroilerExpense(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['broilerExpenses'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setRowDelete(null); },
+  });
+
   const addSaleMut = useMutation({
     mutationFn: createLivestockSale,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['livestockSales'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setSaleForm(emptySale); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['livestockSales'] }); qc.invalidateQueries({ queryKey: ['broilerBatches'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setSaleForm(emptySale); },
+  });
+
+  const delSaleMut = useMutation({
+    mutationFn: (id) => deleteLivestockSale(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['livestockSales'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setRowDelete(null); },
+  });
+
+  const updateBatchMut = useMutation({
+    mutationFn: ({ id, data }) => updateBroilerBatch(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['broilerBatches'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); setMortalityModal(null); setMortalityCount(''); },
   });
 
   const setB = (k, v) => setBatchForm(p => ({ ...p, [k]: v }));
@@ -117,7 +139,7 @@ export default function Broilers() {
       category: expenseForm.category,
       description: expenseForm.description,
       amount: parseFloat(expenseForm.amount),
-      date: expenseForm.date,
+      record_date: expenseForm.record_date || null,
       notes: expenseForm.notes,
     });
   };
@@ -127,6 +149,7 @@ export default function Broilers() {
     if (!saleForm.quantity || !saleForm.sale_price) return;
     addSaleMut.mutate({
       animal_type: 'broiler',
+      broiler_batch: saleForm.batch ? parseInt(saleForm.batch) : null,
       quantity: parseInt(saleForm.quantity),
       buyer: saleForm.buyer || null,
       sale_price: parseFloat(saleForm.sale_price),
@@ -135,12 +158,15 @@ export default function Broilers() {
     });
   };
 
-  // Calculate total active birds
-  const totalBirds = batches.reduce((sum, b) => {
-    const mortality = b.mortality_count || 0;
-    const current = b.quantity - mortality;
-    return sum + Math.max(0, current);
-  }, 0);
+  const submitMortality = () => {
+    if (!mortalityModal || mortalityCount === '') return;
+    const newMortality = (mortalityModal.mortality || 0) + parseInt(mortalityCount);
+    const newCurrent = Math.max(0, (mortalityModal.current_count || mortalityModal.quantity) - parseInt(mortalityCount));
+    updateBatchMut.mutate({ id: mortalityModal.id, data: { mortality: newMortality, current_count: newCurrent } });
+  };
+
+  // Calculate total active birds (use server-maintained current_count)
+  const totalBirds = batches.reduce((sum, b) => sum + (b.current_count || 0), 0);
 
   // Calculate totals for expenses and sales
   const totalExpenses = expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
@@ -237,8 +263,9 @@ export default function Broilers() {
                 </div>
               ) : (
                 batches.map(batch => {
-                  const mortality = batch.mortality_count || 0;
-                  const currentCount = Math.max(0, batch.quantity - mortality);
+                  const mortality = batch.mortality || 0;
+                  const currentCount = batch.current_count != null ? batch.current_count : Math.max(0, batch.quantity - mortality);
+                  const sold = Math.max(0, batch.quantity - mortality - currentCount);
                   const statusColor = currentCount > 0 ? '#dcfce7' : '#fee2e2';
                   const statusTextColor = currentCount > 0 ? '#166534' : '#991b1b';
                   const batchExpenses = expenses.filter(e => e.batch === batch.id).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
@@ -252,6 +279,7 @@ export default function Broilers() {
                       <div style={S.batchMeta}>Started: {fmt(batch.date_acquired)}</div>
                       <div style={S.batchMeta}>Current: <strong>{currentCount}</strong> of {batch.quantity} birds</div>
                       {mortality > 0 && <div style={{ ...S.batchMeta, color: '#c0392b' }}>Mortality: {mortality}</div>}
+                      {sold > 0 && <div style={{ ...S.batchMeta, color: '#1a6b3a' }}>Sold: {sold}</div>}
                       {batch.target_weight && <div style={S.batchMeta}>Target: {qty(batch.target_weight)} kg</div>}
                       <div style={S.badge(statusColor, statusTextColor)}>
                         {currentCount > 0 ? 'Active' : 'Finished'}
@@ -276,7 +304,15 @@ export default function Broilers() {
                           </div>
                         )}
                       </div>
-                      <button style={S.deleteBtn} onClick={() => setDelConfirm(batch)}>Delete</button>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                        <button
+                          style={{ flex: 1, padding: '6px', background: 'none', border: '1px solid #c97d1a', borderRadius: 6, color: '#c97d1a', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}
+                          onClick={() => { setMortalityModal(batch); setMortalityCount(''); }}
+                        >
+                          + Mortality
+                        </button>
+                        <button style={{ ...S.deleteBtn, marginTop: 0, flex: 1 }} onClick={() => setDelConfirm(batch)}>Delete</button>
+                      </div>
                     </div>
                   );
                 })
@@ -311,7 +347,7 @@ export default function Broilers() {
                     </div>
                     <div>
                       <label style={S.label}>Date</label>
-                      <input style={S.input} type="date" value={expenseForm.date} onChange={e => setE('date', e.target.value)} />
+                      <input style={S.input} type="date" value={expenseForm.record_date} onChange={e => setE('record_date', e.target.value)} />
                     </div>
                   </div>
 
@@ -335,9 +371,14 @@ export default function Broilers() {
                         <span>{exp.description || exp.category}</span>
                         <span style={S.expenseAmount}>${fmt(exp.amount)}</span>
                       </div>
-                      <div style={S.expenseRow}>
-                        <span style={{ color: '#9ca3af', fontSize: 10 }}>{fmt(exp.date)}</span>
-                        <span style={{ color: '#9ca3af', fontSize: 10 }}>{batches.find(b => b.id === exp.batch)?.batch_name || 'Unknown'}</span>
+                      <div style={{ ...S.expenseRow, alignItems: 'center' }}>
+                        <span style={{ color: '#9ca3af', fontSize: 10 }}>{fmt(exp.record_date || exp.date)} · {batches.find(b => b.id === exp.batch)?.batch_name || 'Unknown'}</span>
+                        <button
+                          onClick={() => setRowDelete({ type: 'expense', id: exp.id, label: `${exp.description || exp.category} ($${fmt(exp.amount)})` })}
+                          style={{ fontSize: 9, padding: '3px 6px', background: 'none', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 4, cursor: 'pointer' }}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -355,6 +396,12 @@ export default function Broilers() {
               <div style={S.card}>
                 <div style={S.cardTitle}>Log Sale</div>
                 <form onSubmit={submitSale}>
+                  <label style={S.label}>Batch (optional, decrements count)</label>
+                  <select style={S.input} value={saleForm.batch} onChange={e => setS('batch', e.target.value)}>
+                    <option value="">-- No batch link --</option>
+                    {batches.filter(b => (b.current_count || 0) > 0).map(b => <option key={b.id} value={b.id}>{b.batch_name} ({b.current_count} birds)</option>)}
+                  </select>
+
                   <label style={S.label}>Quantity (birds)</label>
                   <input style={S.input} type="number" min="1" value={saleForm.quantity} onChange={e => setS('quantity', e.target.value)} placeholder="10" required />
 
@@ -392,9 +439,14 @@ export default function Broilers() {
                         <span>{sale.quantity} birds - {sale.buyer || 'Direct'}</span>
                         <span style={S.saleAmount}>${fmt(sale.sale_price)}</span>
                       </div>
-                      <div style={S.saleRow}>
-                        <span style={{ color: '#9ca3af', fontSize: 10 }}>{fmt(sale.sale_date)}</span>
-                        <span style={{ color: '#9ca3af', fontSize: 10 }}>{sale.description || '-'}</span>
+                      <div style={{ ...S.saleRow, alignItems: 'center' }}>
+                        <span style={{ color: '#9ca3af', fontSize: 10 }}>{fmt(sale.sale_date)} · {sale.description || '-'}</span>
+                        <button
+                          onClick={() => setRowDelete({ type: 'sale', id: sale.id, label: `${sale.quantity} birds → ${sale.buyer || 'Direct'} ($${fmt(sale.sale_price)})` })}
+                          style={{ fontSize: 9, padding: '3px 6px', background: 'none', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 4, cursor: 'pointer' }}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -410,6 +462,43 @@ export default function Broilers() {
 
       {/* Confirm Batch Modal */}
       <ConfirmModal isOpen={confirmOpen} onConfirm={confirmBatch} onCancel={() => setConfirmOpen(false)} fields={confirmModalFields} />
+
+      {/* Mortality Modal */}
+      {mortalityModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 28, width: 400, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#111827', marginBottom: 6 }}>Record Mortality</div>
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 14 }}>Batch: <strong>{mortalityModal.batch_name}</strong> · Current: {mortalityModal.current_count || 0} birds</div>
+            <label style={S.label}>How many died?</label>
+            <input style={S.input} type="number" min="1" max={mortalityModal.current_count || mortalityModal.quantity} value={mortalityCount} onChange={e => setMortalityCount(e.target.value)} autoFocus placeholder="0" />
+            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+              <button onClick={() => { setMortalityModal(null); setMortalityCount(''); }} style={{ flex: 1, padding: '10px 0', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>Cancel</button>
+              <button onClick={submitMortality} disabled={!mortalityCount || updateBatchMut.isPending} style={{ flex: 1, padding: '10px 0', borderRadius: 6, border: 'none', background: '#c97d1a', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: (!mortalityCount || updateBatchMut.isPending) ? 0.5 : 1 }}>
+                {updateBatchMut.isPending ? 'Saving...' : 'Record'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Row Delete Confirm (expense or sale) */}
+      {rowDelete && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 28, width: 400, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#111827', marginBottom: 6 }}>Delete {rowDelete.type}?</div>
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 18 }}>Remove "<strong>{rowDelete.label}</strong>"? This action cannot be undone.</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setRowDelete(null)} style={{ flex: 1, padding: '10px 0', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>Cancel</button>
+              <button
+                onClick={() => rowDelete.type === 'expense' ? delExpenseMut.mutate(rowDelete.id) : delSaleMut.mutate(rowDelete.id)}
+                style={{ flex: 1, padding: '10px 0', borderRadius: 6, border: 'none', background: '#c0392b', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Batch Confirm */}
       {delConfirm && (

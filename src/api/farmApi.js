@@ -143,18 +143,25 @@ export const deletePigHealth = (id) => api.delete(`/pig-health/${id}/`);
 // Broilers
 export const getBroilerBatches = () => api.get('/broiler-batches/').then(r => r.data);
 export const createBroilerBatch = (data) => api.post('/broiler-batches/', data).then(r => r.data);
+export const updateBroilerBatch = (id, data) => api.patch(`/broiler-batches/${id}/`, data).then(r => r.data);
 export const deleteBroilerBatch = (id) => api.delete(`/broiler-batches/${id}/`);
 export const getBroilerExpenses = (params) => api.get('/broiler-expenses/', { params }).then(r => r.data);
 export const createBroilerExpense = (data) => api.post('/broiler-expenses/', data).then(r => r.data);
+export const updateBroilerExpense = (id, data) => api.patch(`/broiler-expenses/${id}/`, data).then(r => r.data);
+export const deleteBroilerExpense = (id) => api.delete(`/broiler-expenses/${id}/`);
 
 // Layers
 export const getLayerFlocks = () => api.get('/layer-flocks/').then(r => r.data);
 export const createLayerFlock = (data) => api.post('/layer-flocks/', data).then(r => r.data);
+export const updateLayerFlock = (id, data) => api.patch(`/layer-flocks/${id}/`, data).then(r => r.data);
 export const deleteLayerFlock = (id) => api.delete(`/layer-flocks/${id}/`);
 export const getEggCollections = (params) => api.get('/egg-collections/', { params }).then(r => r.data);
 export const createEggCollection = (data) => api.post('/egg-collections/', data).then(r => r.data);
+export const deleteEggCollection = (id) => api.delete(`/egg-collections/${id}/`);
 export const getLayerExpenses = (params) => api.get('/layer-expenses/', { params }).then(r => r.data);
 export const createLayerExpense = (data) => api.post('/layer-expenses/', data).then(r => r.data);
+export const updateLayerExpense = (id, data) => api.patch(`/layer-expenses/${id}/`, data).then(r => r.data);
+export const deleteLayerExpense = (id) => api.delete(`/layer-expenses/${id}/`);
 
 // Livestock Sales (shared)
 export const getLivestockSales = (params) => api.get('/livestock-sales/', { params }).then(r => r.data);
