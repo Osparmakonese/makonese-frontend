@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getPigs, createPig, updatePig, deletePig, getPigHealth, createPigHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
+import { getPigs, createPig, updatePig, deletePig, getPigHealth, createPigHealth, updatePigHealth, deletePigHealth, getLivestockSales, createLivestockSale, deleteLivestockSale } from '../api/farmApi';
 import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 import LivestockEditModal from '../components/LivestockEditModal';
+import HealthRecordEditModal from '../components/HealthRecordEditModal';
 
 const SEX_OPTIONS = [['boar', 'Boar'], ['sow', 'Sow'], ['piglet', 'Piglet']];
 const HEALTH_TYPES = [['illness', 'Illness'], ['injury', 'Injury'], ['vaccination', 'Vaccination'], ['checkup', 'Checkup'], ['treatment', 'Treatment']];
 
-const emptyPig = { tag_number: '', name: '', breed: '', sex: 'piglet', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', litter_number: '', status: 'active', cause_of_death: '', date_of_death: '', notes: '' };
-const emptyHealth = { pig: '', record_type: 'checkup', description: '', date: today(), cost: '', vet_name: '', next_due: '', notes: '' };
+const emptyPig = { tag_number: '', name: '', breed: '', sex: 'piglet', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', litter_number: '', status: 'active', cause_of_death: '', date_of_death: '', mother: '', notes: '' };
+const emptyHealth = { pig: '', record_type: 'checkup', description: '', record_date: today(), cost: '', vet_name: '', next_due: '', notes: '' };
 const emptySale = { pig: '', quantity: '1', buyer: '', sale_price: '', sale_date: today(), description: '' };
 
 const STATUS_OPTIONS = [['active','Active'],['sold','Sold'],['deceased','Deceased'],['culled','Culled']];
@@ -56,6 +57,7 @@ export default function Pigs() {
   const [statusFilter, setStatusFilter] = useState('active');
   const [delConfirm, setDelConfirm] = useState(null);
   const [editAnimal, setEditAnimal] = useState(null);
+  const [editHealth, setEditHealth] = useState(null);
 
   const { data: pigs = [] } = useQuery({ queryKey: ['pigs'], queryFn: getPigs });
   const { data: health = [] } = useQuery({ queryKey: ['pigHealth'], queryFn: () => getPigHealth() });
@@ -122,7 +124,7 @@ export default function Pigs() {
         <div>
           <div style={S.card}>
             <div style={S.cardTitle}>Add Pig</div>
-            <form onSubmit={e => { e.preventDefault(); addPigMut.mutate(pigForm); }}>
+            <form onSubmit={e => { e.preventDefault(); addPigMut.mutate({ ...pigForm, mother: pigForm.mother ? parseInt(pigForm.mother) : null }); }}>
               <div className="form-grid-2" style={S.row2}>
                 <div><label style={S.label}>Tag Number *</label><input style={S.input} value={pigForm.tag_number} onChange={e => setP('tag_number', e.target.value)} placeholder="e.g. PIG-001" required /></div>
                 <div><label style={S.label}>Name</label><input style={S.input} value={pigForm.name} onChange={e => setP('name', e.target.value)} placeholder="Pig name" /></div>
@@ -153,6 +155,14 @@ export default function Pigs() {
                   <div><label style={S.label}>Date of Death</label><input style={S.input} type="date" value={pigForm.date_of_death} onChange={e => setP('date_of_death', e.target.value)} /></div>
                 </div>
               )}
+
+              <label style={S.label}>Mother (for lineage)</label>
+              <select style={S.input} value={pigForm.mother} onChange={e => setP('mother', e.target.value)}>
+                <option value="">-- None --</option>
+                {pigs.filter(p => p.sex === 'sow' && (p.status || 'active') === 'active').map(p => (
+                  <option key={p.id} value={p.id}>{p.tag_number}{p.name ? ` - ${p.name}` : ''}</option>
+                ))}
+              </select>
 
               <label style={S.label}>Notes</label>
               <input style={S.input} value={pigForm.notes} onChange={e => setP('notes', e.target.value)} placeholder="Any additional info..." />
@@ -192,6 +202,13 @@ export default function Pigs() {
               {pigs.length === 0 && <p style={{ fontSize: 11, color: '#9ca3af' }}>No pigs recorded yet.</p>}
               {(statusFilter === 'all' ? pigs : pigs.filter(p => (p.status || 'active') === statusFilter)).map(pig => {
                 const sexColor = pig.sex === 'boar' ? '#2563eb' : pig.sex === 'sow' ? '#ec4899' : '#8b5cf6';
+                const linkedHealth = (Array.isArray(healthRecords) ? healthRecords : []).filter(h => h.pig === pig.id);
+                const healthCost = linkedHealth.reduce((s, h) => s + (parseFloat(h.cost) || 0), 0);
+                const linkedSale = pigSales.find(s => s.pig === pig.id);
+                const salePrice = linkedSale ? parseFloat(linkedSale.sale_price) || 0 : 0;
+                const purchasePrice = parseFloat(pig.purchase_price) || 0;
+                const totalCost = purchasePrice + healthCost;
+                const pnl = salePrice - totalCost;
                 return (
                   <div key={pig.id} style={S.pigCard}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -215,6 +232,13 @@ export default function Pigs() {
                             <strong>{pig.status === 'deceased' ? 'Died' : 'Culled'}:</strong> {pig.cause_of_death}{pig.date_of_death && ` on ${pig.date_of_death}`}
                           </div>
                         )}
+                        <div style={{ marginTop: 6, padding: '6px 8px', background: '#f9fafb', borderRadius: 6, fontSize: 10 }}>
+                          <div style={{ color: '#6b7280' }}>Costs: {fmt(totalCost)} {healthCost > 0 && <span>(health: {fmt(healthCost)})</span>}</div>
+                          {salePrice > 0 && <div style={{ color: '#6b7280' }}>Sale: {fmt(salePrice)}</div>}
+                          {(salePrice > 0 || (pig.status && pig.status !== 'active')) && (
+                            <div style={{ fontWeight: 700, color: pnl >= 0 ? '#1a6b3a' : '#c0392b' }}>P&amp;L: {pnl >= 0 ? '+' : ''}{fmt(pnl)}</div>
+                          )}
+                        </div>
                       </div>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button style={{ padding: '4px 8px', background: '#fff', color: '#1a6b3a', border: '1px solid #1a6b3a', borderRadius: 4, fontSize: 10, fontWeight: 600, cursor: 'pointer' }} onClick={() => setEditAnimal(pig)}>Edit</button>
@@ -240,7 +264,7 @@ export default function Pigs() {
                   </select>
                   <div className="form-grid-2" style={S.row2}>
                     <div><label style={S.label}>Type</label><select style={S.input} value={healthForm.record_type} onChange={e => setH('record_type', e.target.value)}>{HEALTH_TYPES.map(([v,l]) => <option key={v} value={v}>{l}</option>)}</select></div>
-                    <div><label style={S.label}>Date</label><input style={S.input} type="date" value={healthForm.date} onChange={e => setH('date', e.target.value)} /></div>
+                    <div><label style={S.label}>Date</label><input style={S.input} type="date" value={healthForm.record_date} onChange={e => setH('record_date', e.target.value)} /></div>
                   </div>
                   <label style={S.label}>Description</label>
                   <input style={S.input} value={healthForm.description} onChange={e => setH('description', e.target.value)} placeholder="e.g. Routine checkup" />
@@ -263,9 +287,13 @@ export default function Pigs() {
                 return (
                   <div key={rec.id} style={S.healthRecord}>
                     <div style={{ fontWeight: 600, color: '#111827' }}>{pig?.tag_number || 'Unknown'} - {rec.record_type}</div>
-                    <div style={{ color: '#6b7280', fontSize: 10, marginTop: 2 }}>{rec.date} {rec.vet_name && `• ${rec.vet_name}`}</div>
+                    <div style={{ color: '#6b7280', fontSize: 10, marginTop: 2 }}>{rec.record_date} {rec.vet_name && `• ${rec.vet_name}`}</div>
                     {rec.description && <div style={{ color: '#6b7280', fontSize: 10 }}>{rec.description}</div>}
                     {rec.cost && <div style={{ color: '#c97d1a', fontWeight: 600, fontSize: 10 }}>{fmt(rec.cost)}</div>}
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                      <button onClick={() => setEditHealth(rec)} style={{ fontSize: 9, padding: '2px 8px', background: '#fff', color: '#1a6b3a', border: '1px solid #1a6b3a', borderRadius: 3, cursor: 'pointer', fontWeight: 600 }}>Edit</button>
+                      <button onClick={async () => { if (window.confirm('Delete this health record?')) { await deletePigHealth(rec.id); qc.invalidateQueries({ queryKey: ['pigHealth'] }); } }} style={{ fontSize: 9, padding: '2px 8px', background: '#fff', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 3, cursor: 'pointer' }}>Delete</button>
+                    </div>
                   </div>
                 );
               })}
@@ -324,6 +352,16 @@ export default function Pigs() {
           await updatePig(id, payload);
           qc.invalidateQueries({ queryKey: ['pigs'] });
           qc.invalidateQueries({ queryKey: ['dashboard'] });
+        }}
+      />
+
+      <HealthRecordEditModal
+        isOpen={!!editHealth}
+        record={editHealth}
+        onClose={() => setEditHealth(null)}
+        onSave={async (id, payload) => {
+          await updatePigHealth(id, payload);
+          qc.invalidateQueries({ queryKey: ['pigHealth'] });
         }}
       />
 

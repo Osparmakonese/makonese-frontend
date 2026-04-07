@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getGoats, createGoat, updateGoat, deleteGoat, getGoatHealth, createGoatHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
+import { getGoats, createGoat, updateGoat, deleteGoat, getGoatHealth, createGoatHealth, updateGoatHealth, deleteGoatHealth, getLivestockSales, createLivestockSale, deleteLivestockSale } from '../api/farmApi';
 import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 import LivestockEditModal from '../components/LivestockEditModal';
+import HealthRecordEditModal from '../components/HealthRecordEditModal';
 
-const emptyGoat = { tag_number: '', name: '', breed: '', sex: 'buck', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', status: 'active', cause_of_death: '', date_of_death: '', notes: '' };
-const emptyHealth = { goat: '', record_type: '', description: '', date: today(), cost: '', vet_name: '', next_due: '', notes: '' };
+const emptyGoat = { tag_number: '', name: '', breed: '', sex: 'buck', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', status: 'active', cause_of_death: '', date_of_death: '', mother: '', notes: '' };
+const emptyHealth = { goat: '', record_type: '', description: '', record_date: today(), cost: '', vet_name: '', next_due: '', notes: '' };
 const emptySale = { goat: '', quantity: '1', buyer: '', sale_price: '', sale_date: today(), description: '' };
 
 const STATUS_OPTIONS = [['active','Active'],['sold','Sold'],['deceased','Deceased'],['culled','Culled']];
@@ -50,6 +51,7 @@ export default function Goats() {
   const [statusFilter, setStatusFilter] = useState('active'); // 'active' | 'all'
   const [delConfirm, setDelConfirm] = useState(null);
   const [editAnimal, setEditAnimal] = useState(null);
+  const [editHealth, setEditHealth] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
 
   const { data: goats = [] } = useQuery({ queryKey: ['goats'], queryFn: getGoats });
@@ -97,6 +99,7 @@ export default function Goats() {
       status: goatForm.status || 'active',
       cause_of_death: goatForm.cause_of_death || '',
       date_of_death: goatForm.date_of_death || null,
+      mother: goatForm.mother ? parseInt(goatForm.mother) : null,
       notes: goatForm.notes || '',
     });
   };
@@ -107,7 +110,7 @@ export default function Goats() {
       goat: parseInt(healthForm.goat),
       type: healthForm.record_type,
       description: healthForm.description,
-      date: healthForm.date,
+      record_date: healthForm.record_date,
       cost: parseFloat(healthForm.cost) || 0,
       vet_name: healthForm.vet_name || '',
       next_due: healthForm.next_due || '',
@@ -181,6 +184,14 @@ export default function Goats() {
                 </div>
               )}
 
+              <label style={S.label}>Mother (for lineage)</label>
+              <select style={S.select} value={goatForm.mother} onChange={e => setG('mother', e.target.value)}>
+                <option value="">-- None --</option>
+                {goats.filter(g => g.sex === 'doe' && (g.status || 'active') === 'active').map(g => (
+                  <option key={g.id} value={g.id}>{g.tag_number}{g.name ? ` - ${g.name}` : ''}</option>
+                ))}
+              </select>
+
               <label style={S.label}>Notes</label>
               <input style={S.input} value={goatForm.notes} onChange={e => setG('notes', e.target.value)} placeholder="Health notes, markings, etc." />
 
@@ -214,7 +225,7 @@ export default function Goats() {
                 <input style={S.input} value={healthForm.description} onChange={e => setH('description', e.target.value)} placeholder="What was done?" />
 
                 <div style={S.row2}>
-                  <div><label style={S.label}>Date</label><input style={S.input} type="date" value={healthForm.date} onChange={e => setH('date', e.target.value)} /></div>
+                  <div><label style={S.label}>Date</label><input style={S.input} type="date" value={healthForm.record_date} onChange={e => setH('record_date', e.target.value)} /></div>
                   <div><label style={S.label}>Cost ($)</label><input style={S.input} type="number" min="0" step="0.01" value={healthForm.cost} onChange={e => setH('cost', e.target.value)} placeholder="0.00" /></div>
                 </div>
 
@@ -286,7 +297,15 @@ export default function Goats() {
                 </select>
               </div>
               {filteredGoats.length === 0 && <p style={{ fontSize: 11, color: '#9ca3af' }}>No goats yet.</p>}
-              {filteredGoats.map(g => (
+              {filteredGoats.map(g => {
+                const linkedHealth = healthRecords.filter(h => h.goat === g.id);
+                const healthCost = linkedHealth.reduce((s, h) => s + (parseFloat(h.cost) || 0), 0);
+                const linkedSale = sales.find(s => s.goat === g.id);
+                const salePrice = linkedSale ? parseFloat(linkedSale.sale_price) || 0 : 0;
+                const purchasePrice = parseFloat(g.purchase_price) || 0;
+                const totalCost = purchasePrice + healthCost;
+                const pnl = salePrice - totalCost;
+                return (
                 <div key={g.id} style={S.goatCard}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <div>
@@ -311,6 +330,13 @@ export default function Goats() {
                     </div>
                   )}
                   {g.notes && <div style={{ fontSize: 10, color: '#6b7280', fontStyle: 'italic', padding: '6px 10px', background: '#f9fafb', borderRadius: 6, marginBottom: 8 }}>{g.notes}</div>}
+                  <div style={{ marginTop: 6, padding: '6px 8px', background: '#f9fafb', borderRadius: 6, fontSize: 10 }}>
+                    <div style={{ color: '#6b7280' }}>Costs: {fmt(totalCost)} {healthCost > 0 && <span>(health: {fmt(healthCost)})</span>}</div>
+                    {salePrice > 0 && <div style={{ color: '#6b7280' }}>Sale: {fmt(salePrice)}</div>}
+                    {(salePrice > 0 || (g.status && g.status !== 'active')) && (
+                      <div style={{ fontWeight: 700, color: pnl >= 0 ? '#1a6b3a' : '#c0392b' }}>P&amp;L: {pnl >= 0 ? '+' : ''}{fmt(pnl)}</div>
+                    )}
+                  </div>
 
                   <div style={{ marginTop: 8, textAlign: 'right' }}>
                     {delConfirm === g.id ? (
@@ -327,7 +353,8 @@ export default function Goats() {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </>
           )}
 
@@ -347,10 +374,14 @@ export default function Goats() {
                       </div>
                       <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 700, color: '#1a6b3a' }}>{fmt(h.cost || 0)}</div>
                     </div>
-                    <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Date: {h.date}</div>
+                    <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Date: {h.record_date}</div>
                     {h.vet_name && <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Vet: {h.vet_name}</div>}
                     {h.next_due && <div style={{ fontSize: 10, color: '#1a6b3a', fontWeight: 600, marginBottom: 4 }}>Next due: {h.next_due}</div>}
                     {h.notes && <div style={{ fontSize: 10, color: '#6b7280', fontStyle: 'italic', padding: '6px 10px', background: '#f9fafb', borderRadius: 6 }}>{h.notes}</div>}
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                      <button onClick={() => setEditHealth(h)} style={{ fontSize: 9, padding: '2px 8px', background: '#fff', color: '#1a6b3a', border: '1px solid #1a6b3a', borderRadius: 3, cursor: 'pointer', fontWeight: 600 }}>Edit</button>
+                      <button onClick={async () => { if (window.confirm('Delete this health record?')) { await deleteGoatHealth(h.id); qc.invalidateQueries({ queryKey: ['goatHealth'] }); } }} style={{ fontSize: 9, padding: '2px 8px', background: '#fff', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 3, cursor: 'pointer' }}>Delete</button>
+                    </div>
                   </div>
                 );
               })}
@@ -391,6 +422,16 @@ export default function Goats() {
           await updateGoat(id, payload);
           qc.invalidateQueries({ queryKey: ['goats'] });
           qc.invalidateQueries({ queryKey: ['dashboard'] });
+        }}
+      />
+
+      <HealthRecordEditModal
+        isOpen={!!editHealth}
+        record={editHealth}
+        onClose={() => setEditHealth(null)}
+        onSave={async (id, payload) => {
+          await updateGoatHealth(id, payload);
+          qc.invalidateQueries({ queryKey: ['goatHealth'] });
         }}
       />
     </>

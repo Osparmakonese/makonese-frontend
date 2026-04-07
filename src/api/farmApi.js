@@ -107,6 +107,8 @@ export const updateCattle = (id, data) => api.patch(`/cattle/${id}/`, data).then
 export const deleteCattle = (id) => api.delete(`/cattle/${id}/`);
 export const getCattleHealth = (params) => api.get('/cattle-health/', { params }).then(r => r.data);
 export const createCattleHealth = (data) => api.post('/cattle-health/', data).then(r => r.data);
+export const updateCattleHealth = (id, data) => api.patch(`/cattle-health/${id}/`, data).then(r => r.data);
+export const deleteCattleHealth = (id) => api.delete(`/cattle-health/${id}/`);
 
 // Goats
 export const getGoats = () => api.get('/goats/').then(r => r.data);
@@ -115,6 +117,8 @@ export const updateGoat = (id, data) => api.patch(`/goats/${id}/`, data).then(r 
 export const deleteGoat = (id) => api.delete(`/goats/${id}/`);
 export const getGoatHealth = (params) => api.get('/goat-health/', { params }).then(r => r.data);
 export const createGoatHealth = (data) => api.post('/goat-health/', data).then(r => r.data);
+export const updateGoatHealth = (id, data) => api.patch(`/goat-health/${id}/`, data).then(r => r.data);
+export const deleteGoatHealth = (id) => api.delete(`/goat-health/${id}/`);
 
 // Sheep
 export const getSheep = () => api.get('/sheep/').then(r => r.data);
@@ -123,6 +127,8 @@ export const updateSheep = (id, data) => api.patch(`/sheep/${id}/`, data).then(r
 export const deleteSheep = (id) => api.delete(`/sheep/${id}/`);
 export const getSheepHealth = (params) => api.get('/sheep-health/', { params }).then(r => r.data);
 export const createSheepHealth = (data) => api.post('/sheep-health/', data).then(r => r.data);
+export const updateSheepHealth = (id, data) => api.patch(`/sheep-health/${id}/`, data).then(r => r.data);
+export const deleteSheepHealth = (id) => api.delete(`/sheep-health/${id}/`);
 
 // Pigs
 export const getPigs = () => api.get('/pigs/').then(r => r.data);
@@ -131,6 +137,8 @@ export const updatePig = (id, data) => api.patch(`/pigs/${id}/`, data).then(r =>
 export const deletePig = (id) => api.delete(`/pigs/${id}/`);
 export const getPigHealth = (params) => api.get('/pig-health/', { params }).then(r => r.data);
 export const createPigHealth = (data) => api.post('/pig-health/', data).then(r => r.data);
+export const updatePigHealth = (id, data) => api.patch(`/pig-health/${id}/`, data).then(r => r.data);
+export const deletePigHealth = (id) => api.delete(`/pig-health/${id}/`);
 
 // Broilers
 export const getBroilerBatches = () => api.get('/broiler-batches/').then(r => r.data);
@@ -151,6 +159,8 @@ export const createLayerExpense = (data) => api.post('/layer-expenses/', data).t
 // Livestock Sales (shared)
 export const getLivestockSales = (params) => api.get('/livestock-sales/', { params }).then(r => r.data);
 export const createLivestockSale = (data) => api.post('/livestock-sales/', data).then(r => r.data);
+export const updateLivestockSale = (id, data) => api.patch(`/livestock-sales/${id}/`, data).then(r => r.data);
+export const deleteLivestockSale = (id) => api.delete(`/livestock-sales/${id}/`);
 
 // Harvests (yield tracking)
 export const getHarvests = () => api.get('/harvests/').then(r => r.data);

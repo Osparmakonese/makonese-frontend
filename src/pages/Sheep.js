@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getSheep, createSheep, updateSheep, deleteSheep, getSheepHealth, createSheepHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
+import { getSheep, createSheep, updateSheep, deleteSheep, getSheepHealth, createSheepHealth, updateSheepHealth, deleteSheepHealth, getLivestockSales, createLivestockSale, deleteLivestockSale } from '../api/farmApi';
 import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 import LivestockEditModal from '../components/LivestockEditModal';
+import HealthRecordEditModal from '../components/HealthRecordEditModal';
 
 /* ── empty forms ── */
-const emptySheep = { tag_number: '', name: '', breed: '', sex: 'ewe', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', status: 'active', cause_of_death: '', date_of_death: '', notes: '' };
-const emptyHealth = { sheep: '', record_type: 'vaccination', description: '', date: today(), cost: '', vet_name: '', next_due: '', notes: '' };
+const emptySheep = { tag_number: '', name: '', breed: '', sex: 'ewe', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', status: 'active', cause_of_death: '', date_of_death: '', mother: '', notes: '' };
+const emptyHealth = { sheep: '', record_type: 'vaccination', description: '', record_date: today(), cost: '', vet_name: '', next_due: '', wool_kg: '', notes: '' };
 const emptySale = { sheep: '', quantity: '1', buyer: '', sale_price: '', sale_date: today(), description: '' };
 
 const STATUS_OPTIONS = [['active','Active'],['sold','Sold'],['deceased','Deceased'],['culled','Culled']];
@@ -65,6 +66,7 @@ export default function Sheep() {
   const [filterStatus, setFilterStatus] = useState('active'); // 'active' | 'sold' | 'all'
   const [delConfirm, setDelConfirm] = useState(null);
   const [editAnimal, setEditAnimal] = useState(null);
+  const [editHealth, setEditHealth] = useState(null);
 
   /* ── queries ── */
   const { data: sheep = [] } = useQuery({ queryKey: ['sheep'], queryFn: getSheep });
@@ -119,6 +121,7 @@ export default function Sheep() {
       status: sheepForm.status || 'active',
       cause_of_death: sheepForm.cause_of_death || '',
       date_of_death: sheepForm.date_of_death || null,
+      mother: sheepForm.mother ? parseInt(sheepForm.mother) : null,
       notes: sheepForm.notes || '',
     });
   };
@@ -130,10 +133,11 @@ export default function Sheep() {
       animal_type: 'sheep',
       type: healthForm.record_type,
       description: healthForm.description || '',
-      date: healthForm.date,
+      record_date: healthForm.record_date,
       cost: parseFloat(healthForm.cost) || 0,
       vet_name: healthForm.vet_name || '',
       next_due: healthForm.next_due || null,
+      wool_kg: parseFloat(healthForm.wool_kg) || 0,
       notes: healthForm.notes || '',
     });
   };
@@ -229,6 +233,14 @@ export default function Sheep() {
                 </div>
               )}
 
+              <label style={S.label}>Mother (for lineage)</label>
+              <select style={S.input} value={sheepForm.mother} onChange={e => setSF('mother', e.target.value)}>
+                <option value="">-- None --</option>
+                {sheep.filter(s => s.sex === 'ewe' && (s.status || 'active') === 'active').map(s => (
+                  <option key={s.id} value={s.id}>{s.tag_number}{s.name ? ` - ${s.name}` : ''}</option>
+                ))}
+              </select>
+
               <label style={S.label}>Notes</label>
               <textarea style={S.textarea} value={sheepForm.notes} onChange={e => setSF('notes', e.target.value)} placeholder="Additional notes..." />
 
@@ -269,7 +281,16 @@ export default function Sheep() {
                 {filteredSheep.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '20px 10px', color: '#9ca3af', fontSize: 12 }}>No sheep found</div>
                 ) : (
-                  filteredSheep.map(s => (
+                  filteredSheep.map(s => {
+                    const linkedHealth = healthRecords.filter(h => h.sheep === s.id);
+                    const healthCost = linkedHealth.reduce((sum, h) => sum + (parseFloat(h.cost) || 0), 0);
+                    const woolKg = linkedHealth.reduce((sum, h) => sum + (parseFloat(h.wool_kg) || 0), 0);
+                    const linkedSale = sheepSales.find(sl => sl.sheep === s.id);
+                    const salePrice = linkedSale ? parseFloat(linkedSale.sale_price) || 0 : 0;
+                    const purchasePrice = parseFloat(s.purchase_price) || 0;
+                    const totalCost = purchasePrice + healthCost;
+                    const pnl = salePrice - totalCost;
+                    return (
                     <div key={s.id} style={S.sheepCard}>
                       <div style={S.sheepCardRow}>
                         <div>
@@ -293,8 +314,17 @@ export default function Sheep() {
                           <strong>{s.status === 'deceased' ? 'Died' : 'Culled'}:</strong> {s.cause_of_death}{s.date_of_death && ` on ${s.date_of_death}`}
                         </div>
                       )}
+                      <div style={{ marginTop: 6, padding: '6px 8px', background: '#f9fafb', borderRadius: 6, fontSize: 10 }}>
+                        <div style={{ color: '#6b7280' }}>Costs: {fmt(totalCost)} {healthCost > 0 && <span>(health: {fmt(healthCost)})</span>}</div>
+                        {woolKg > 0 && <div style={{ color: '#6b7280' }}>Wool: {woolKg.toFixed(2)} kg</div>}
+                        {salePrice > 0 && <div style={{ color: '#6b7280' }}>Sale: {fmt(salePrice)}</div>}
+                        {(salePrice > 0 || (s.status && s.status !== 'active')) && (
+                          <div style={{ fontWeight: 700, color: pnl >= 0 ? '#1a6b3a' : '#c0392b' }}>P&amp;L: {pnl >= 0 ? '+' : ''}{fmt(pnl)}</div>
+                        )}
+                      </div>
                     </div>
-                  ))
+                    );
+                  })
                 )}
               </>
             )}
@@ -321,7 +351,7 @@ export default function Sheep() {
                   <div style={S.row2}>
                     <div>
                       <label style={S.label}>Date</label>
-                      <input style={S.input} type="date" value={healthForm.date} onChange={e => setHF('date', e.target.value)} required />
+                      <input style={S.input} type="date" value={healthForm.record_date} onChange={e => setHF('record_date', e.target.value)} required />
                     </div>
                     <div>
                       <label style={S.label}>Cost</label>
@@ -334,6 +364,9 @@ export default function Sheep() {
 
                   <label style={S.label}>Next Due</label>
                   <input style={S.input} type="date" value={healthForm.next_due} onChange={e => setHF('next_due', e.target.value)} />
+
+                  <label style={S.label}>Wool Yield (kg)</label>
+                  <input style={S.input} type="number" step="0.01" min="0" value={healthForm.wool_kg} onChange={e => setHF('wool_kg', e.target.value)} placeholder="For shearing records" />
 
                   <label style={S.label}>Notes</label>
                   <textarea style={S.textarea} value={healthForm.notes} onChange={e => setHF('notes', e.target.value)} placeholder="Additional notes..." />
@@ -358,7 +391,11 @@ export default function Sheep() {
                             </div>
                             {h.description && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{h.description}</div>}
                             <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 4 }}>
-                              {h.date} {h.vet_name && `• ${h.vet_name}`} {h.cost > 0 && `• ${fmt(h.cost)}`}
+                              {h.record_date} {h.vet_name && `• ${h.vet_name}`} {h.cost > 0 && `• ${fmt(h.cost)}`} {parseFloat(h.wool_kg) > 0 && `• ${h.wool_kg}kg wool`}
+                            </div>
+                            <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                              <button onClick={() => setEditHealth(h)} style={{ fontSize: 9, padding: '2px 8px', background: '#fff', color: '#1a6b3a', border: '1px solid #1a6b3a', borderRadius: 3, cursor: 'pointer', fontWeight: 600 }}>Edit</button>
+                              <button onClick={async () => { if (window.confirm('Delete this health record?')) { await deleteSheepHealth(h.id); qc.invalidateQueries({ queryKey: ['sheepHealth'] }); } }} style={{ fontSize: 9, padding: '2px 8px', background: '#fff', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 3, cursor: 'pointer' }}>Delete</button>
                             </div>
                           </div>
                         </div>
@@ -437,6 +474,17 @@ export default function Sheep() {
           await updateSheep(id, payload);
           qc.invalidateQueries({ queryKey: ['sheep'] });
           qc.invalidateQueries({ queryKey: ['dashboard'] });
+        }}
+      />
+
+      <HealthRecordEditModal
+        isOpen={!!editHealth}
+        record={editHealth}
+        showWoolKg={true}
+        onClose={() => setEditHealth(null)}
+        onSave={async (id, payload) => {
+          await updateSheepHealth(id, payload);
+          qc.invalidateQueries({ queryKey: ['sheepHealth'] });
         }}
       />
 

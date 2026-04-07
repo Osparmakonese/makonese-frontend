@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCattle, createCattle, updateCattle, deleteCattle, getCattleHealth, createCattleHealth, getLivestockSales, createLivestockSale } from '../api/farmApi';
+import { getCattle, createCattle, updateCattle, deleteCattle, getCattleHealth, createCattleHealth, updateCattleHealth, deleteCattleHealth, getLivestockSales, createLivestockSale, deleteLivestockSale } from '../api/farmApi';
 import { today, fmt, qty, IMAGES } from '../utils/format';
 import ConfirmModal from '../components/ConfirmModal';
 import LivestockEditModal from '../components/LivestockEditModal';
+import HealthRecordEditModal from '../components/HealthRecordEditModal';
 
 const SEXES = [['bull','Bull'],['cow','Cow'],['calf','Calf']];
 const HEALTH_TYPES = [['vaccination','Vaccination'],['treatment','Treatment'],['checkup','Checkup'],['deworming','Deworming'],['other','Other']];
 const STATUSES = [['all','All'],['active','Active'],['sold','Sold'],['deceased','Deceased'],['culled','Culled']];
 
-const emptyCattle = { tag_number: '', name: '', breed: '', sex: 'bull', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', status: 'active', cause_of_death: '', date_of_death: '', notes: '' };
-const emptyHealth = { cattle: '', record_type: 'vaccination', description: '', date: today(), cost: '', vet_name: '', next_due: '', notes: '' };
+const emptyCattle = { tag_number: '', name: '', breed: '', sex: 'bull', date_of_birth: '', date_acquired: today(), purchase_price: '', weight_kg: '', status: 'active', cause_of_death: '', date_of_death: '', mother: '', notes: '' };
+const emptyHealth = { cattle: '', record_type: 'vaccination', description: '', record_date: today(), cost: '', vet_name: '', next_due: '', notes: '' };
 const emptySale = { cattle: '', quantity: '1', buyer: '', sale_price: '', sale_date: today(), description: '' };
 const STATUS_OPTIONS = [['active','Active'],['sold','Sold'],['deceased','Deceased'],['culled','Culled']];
 
@@ -115,6 +116,7 @@ export default function Cattle() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [delConfirm, setDelConfirm] = useState(null);
   const [editAnimal, setEditAnimal] = useState(null);
+  const [editHealth, setEditHealth] = useState(null);
   const [cattleConfirm, setCattleConfirm] = useState(false);
   const [pendingCattle, setPendingCattle] = useState(null);
 
@@ -224,6 +226,14 @@ export default function Cattle() {
                 </>
               )}
 
+              <label style={S.label}>Mother (for lineage)</label>
+              <select style={S.input} value={cattleForm.mother} onChange={e => setCat('mother', e.target.value)}>
+                <option value="">-- None --</option>
+                {cattle.filter(c => c.sex === 'cow' && c.status === 'active').map(c => (
+                  <option key={c.id} value={c.id}>{c.tag_number}{c.name ? ` - ${c.name}` : ''}</option>
+                ))}
+              </select>
+
               <label style={S.label}>Notes</label>
               <textarea style={S.textarea} value={cattleForm.notes} onChange={e => setCat('notes', e.target.value)} placeholder="Optional notes..." />
 
@@ -270,7 +280,15 @@ export default function Cattle() {
                 ))}
               </div>
 
-              {filteredCattle.map(c => (
+              {filteredCattle.map(c => {
+                const linkedHealth = healthRecords.filter(h => h.cattle === c.id);
+                const healthCost = linkedHealth.reduce((s, h) => s + (parseFloat(h.cost) || 0), 0);
+                const linkedSale = sales.find(s => s.cattle === c.id);
+                const salePrice = linkedSale ? parseFloat(linkedSale.sale_price) || 0 : 0;
+                const purchasePrice = parseFloat(c.purchase_price) || 0;
+                const totalCost = purchasePrice + healthCost;
+                const pnl = salePrice - totalCost;
+                return (
                 <div key={c.id} style={S.cattleCard}>
                   <div style={S.cardHeader}>
                     <div>
@@ -297,6 +315,13 @@ export default function Cattle() {
                       </div>
                     )}
                     {c.notes && <div style={{ marginTop: 6, fontStyle: 'italic', color: '#9ca3af' }}>{c.notes}</div>}
+                    <div style={{ marginTop: 6, padding: '6px 8px', background: '#f9fafb', borderRadius: 6, fontSize: 10 }}>
+                      <div style={{ color: '#6b7280' }}>Costs: {fmt(totalCost)} {healthCost > 0 && <span>(health: {fmt(healthCost)})</span>}</div>
+                      {salePrice > 0 && <div style={{ color: '#6b7280' }}>Sale: {fmt(salePrice)}</div>}
+                      {(salePrice > 0 || c.status !== 'active') && (
+                        <div style={{ fontWeight: 700, color: pnl >= 0 ? '#1a6b3a' : '#c0392b' }}>P&amp;L: {pnl >= 0 ? '+' : ''}{fmt(pnl)}</div>
+                      )}
+                    </div>
                   </div>
                   <div style={{ marginTop: 8 }}>
                     {delConfirm === c.id ? (
@@ -313,7 +338,8 @@ export default function Cattle() {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
 
               {filteredCattle.length === 0 && <p style={{ fontSize: 11, color: '#9ca3af' }}>No cattle to display.</p>}
             </div>
@@ -340,7 +366,7 @@ export default function Cattle() {
                   <textarea style={S.textarea} value={healthForm.description} onChange={e => setHealth('description', e.target.value)} placeholder="Details..." />
 
                   <div style={S.row2}>
-                    <div><label style={S.label}>Date</label><input style={S.input} type="date" value={healthForm.date} onChange={e => setHealth('date', e.target.value)} /></div>
+                    <div><label style={S.label}>Date</label><input style={S.input} type="date" value={healthForm.record_date} onChange={e => setHealth('record_date', e.target.value)} /></div>
                     <div><label style={S.label}>Cost</label><input style={S.input} type="number" min="0" step="0.01" value={healthForm.cost} onChange={e => setHealth('cost', e.target.value)} placeholder="0.00" /></div>
                   </div>
 
@@ -365,12 +391,16 @@ export default function Cattle() {
                     {(HEALTH_TYPES.find(t => t[0] === h.record_type) || [h.record_type, h.record_type])[1]}
                   </div>
                   <div style={{ fontSize: 10, color: '#6b7280', marginTop: 4 }}>
-                    Cattle: {h.cattle_tag || `#${h.cattle}`} | Date: {h.date}
+                    Cattle: {h.cattle_tag || `#${h.cattle}`} | Date: {h.record_date}
                   </div>
                   {h.description && <div style={{ fontSize: 10, color: '#555', marginTop: 4 }}>{h.description}</div>}
                   {h.cost && <div style={{ fontSize: 10, fontWeight: 600, color: '#1a6b3a', marginTop: 4 }}>Cost: {fmt(h.cost)}</div>}
                   {h.vet_name && <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>Vet: {h.vet_name}</div>}
                   {h.next_due && <div style={{ fontSize: 10, color: '#c97d1a', marginTop: 2 }}>Next Due: {h.next_due}</div>}
+                  <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                    <button onClick={() => setEditHealth(h)} style={{ fontSize: 9, padding: '2px 8px', background: '#fff', color: '#1a6b3a', border: '1px solid #1a6b3a', borderRadius: 3, cursor: 'pointer', fontWeight: 600 }}>Edit</button>
+                    <button onClick={async () => { if (window.confirm('Delete this health record?')) { await deleteCattleHealth(h.id); qc.invalidateQueries({ queryKey: ['cattleHealth'] }); } }} style={{ fontSize: 9, padding: '2px 8px', background: '#fff', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 3, cursor: 'pointer' }}>Delete</button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -445,7 +475,7 @@ export default function Cattle() {
       <ConfirmModal
         isOpen={cattleConfirm}
         onCancel={() => setCattleConfirm(false)}
-        onConfirm={() => { setCattleConfirm(false); addCattleMut.mutate({ ...pendingCattle, purchase_price: pendingCattle.purchase_price ? parseFloat(pendingCattle.purchase_price) : 0, weight_kg: pendingCattle.weight_kg ? parseFloat(pendingCattle.weight_kg) : 0 }); }}
+        onConfirm={() => { setCattleConfirm(false); addCattleMut.mutate({ ...pendingCattle, purchase_price: pendingCattle.purchase_price ? parseFloat(pendingCattle.purchase_price) : 0, weight_kg: pendingCattle.weight_kg ? parseFloat(pendingCattle.weight_kg) : 0, mother: pendingCattle.mother ? parseInt(pendingCattle.mother) : null }); }}
         fields={pendingCattle ? [
           { label: 'Tag Number', value: pendingCattle.tag_number },
           { label: 'Name', value: pendingCattle.name },
@@ -466,6 +496,18 @@ export default function Cattle() {
           qc.invalidateQueries({ queryKey: ['dashboard'] });
         }}
       />
+
+      <HealthRecordEditModal
+        isOpen={!!editHealth}
+        record={editHealth}
+        onClose={() => setEditHealth(null)}
+        onSave={async (id, payload) => {
+          await updateCattleHealth(id, payload);
+          qc.invalidateQueries({ queryKey: ['cattleHealth'] });
+        }}
+      />
+
+      {/* Sales now also have inline delete; full edit deferred */}
     </>
   );
 }
