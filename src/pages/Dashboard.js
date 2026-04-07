@@ -58,12 +58,14 @@ const S = {
   metricsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 },
   metricCard: {
     ...card, padding: '14px 16px',
+    position: 'relative', overflow: 'hidden',
   },
   metricCardHighlight: (isPositive) => ({
     ...card, padding: '14px 16px',
     background: isPositive ? '#f0faf4' : '#fff5f5',
     border: `2px solid ${isPositive ? '#1a6b3a' : '#c0392b'}`,
     boxShadow: isPositive ? '0 2px 8px rgba(26,107,58,0.12)' : '0 2px 8px rgba(192,57,43,0.12)',
+    position: 'relative', overflow: 'hidden',
   }),
   metricIcon: (bg) => ({ width: 24, height: 24, borderRadius: 6, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, marginBottom: 6 }),
   metricLabel: { fontSize: 10, color: '#6b7280', fontWeight: 500, marginBottom: 2 },
