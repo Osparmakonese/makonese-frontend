@@ -208,6 +208,27 @@ export default function Broilers() {
                 <div style={S.totalValue}>{totalBirds}</div>
                 <div style={S.totalLabel}>Active Birds Across All Batches</div>
               </div>
+              {(() => {
+                const purchaseCosts = batches.reduce((s, b) => s + (parseFloat(b.purchase_price) || 0), 0);
+                const totalCost = purchaseCosts + totalExpenses;
+                const profit = totalSalesRevenue - totalCost;
+                const isProfit = profit >= 0;
+                return (
+                  <div style={{ background: isProfit ? '#f0faf4' : '#fff5f5', border: `1px solid ${isProfit ? '#bbf7d0' : '#fca5a5'}`, borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>All Batches P&L</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11 }}>
+                      <div><span style={{ color: '#6b7280' }}>Purchase:</span> <strong>${fmt(purchaseCosts)}</strong></div>
+                      <div><span style={{ color: '#6b7280' }}>Expenses:</span> <strong style={{ color: '#c0392b' }}>${fmt(totalExpenses)}</strong></div>
+                      <div><span style={{ color: '#6b7280' }}>Revenue:</span> <strong style={{ color: '#1a6b3a' }}>${fmt(totalSalesRevenue)}</strong></div>
+                      <div><span style={{ color: '#6b7280' }}>Total Cost:</span> <strong>${fmt(totalCost)}</strong></div>
+                    </div>
+                    <div style={{ borderTop: `1px solid ${isProfit ? '#bbf7d0' : '#fca5a5'}`, marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>{isProfit ? 'Profit' : 'Loss'}:</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: isProfit ? '#1a6b3a' : '#c0392b' }}>${fmt(Math.abs(profit))}</span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div style={S.sectionTitle}>Batch List</div>
               {batches.length === 0 ? (
@@ -220,17 +241,40 @@ export default function Broilers() {
                   const currentCount = Math.max(0, batch.quantity - mortality);
                   const statusColor = currentCount > 0 ? '#dcfce7' : '#fee2e2';
                   const statusTextColor = currentCount > 0 ? '#166534' : '#991b1b';
+                  const batchExpenses = expenses.filter(e => e.batch === batch.id).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+                  const purchaseCost = parseFloat(batch.purchase_price) || 0;
+                  const totalCost = purchaseCost + batchExpenses;
+                  const costPerBird = batch.quantity > 0 ? totalCost / batch.quantity : 0;
 
                   return (
                     <div key={batch.id} style={S.batchCard}>
                       <div style={S.batchName}>{batch.batch_name}</div>
                       <div style={S.batchMeta}>Started: {fmt(batch.date_acquired)}</div>
                       <div style={S.batchMeta}>Current: <strong>{currentCount}</strong> of {batch.quantity} birds</div>
-                      {mortality > 0 && <div style={S.batchMeta} style={{ color: '#c0392b' }}>Mortality: {mortality}</div>}
+                      {mortality > 0 && <div style={{ ...S.batchMeta, color: '#c0392b' }}>Mortality: {mortality}</div>}
                       {batch.target_weight && <div style={S.batchMeta}>Target: {qty(batch.target_weight)} kg</div>}
-                      {batch.purchase_price && <div style={S.batchMeta}>Unit Cost: ${fmt(batch.purchase_price / batch.quantity)}</div>}
                       <div style={S.badge(statusColor, statusTextColor)}>
                         {currentCount > 0 ? 'Active' : 'Finished'}
+                      </div>
+                      <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 6, padding: '8px 10px', marginTop: 6, fontSize: 10 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                          <span style={{ color: '#6b7280' }}>Purchase:</span>
+                          <span style={{ color: '#111827', fontWeight: 600 }}>${fmt(purchaseCost)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                          <span style={{ color: '#6b7280' }}>Expenses:</span>
+                          <span style={{ color: '#c0392b', fontWeight: 600 }}>${fmt(batchExpenses)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e5e7eb', paddingTop: 3, marginTop: 3 }}>
+                          <span style={{ color: '#374151', fontWeight: 700 }}>Total Cost:</span>
+                          <span style={{ color: '#1a6b3a', fontWeight: 700 }}>${fmt(totalCost)}</span>
+                        </div>
+                        {currentCount > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
+                            <span style={{ color: '#6b7280' }}>Per bird:</span>
+                            <span style={{ color: '#374151', fontWeight: 600 }}>${fmt(costPerBird)}</span>
+                          </div>
+                        )}
                       </div>
                       <button style={S.deleteBtn} onClick={() => setDelConfirm(batch)}>Delete</button>
                     </div>
