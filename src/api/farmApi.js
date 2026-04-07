@@ -213,7 +213,7 @@ export const getFieldPnL = (id, opening) => api.get(`/fields/${id}/pnl/`, { para
 // Reports (#6) — returns Blob for download
 export const downloadReport = async (type, format, params = {}) => {
   const res = await api.get(`/reports/${type}/`, {
-    params: { ...params, format },
+    params: { ...params, fmt: format },
     responseType: 'blob',
   });
   return res.data;
