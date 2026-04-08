@@ -48,7 +48,7 @@ self.addEventListener("sync", e => {
 
 // --- Web Push handler (#7 notifications) ---
 self.addEventListener("push", e => {
-  let data = { title: "Farm Pulse", body: "New alert", url: "/" };
+  let data = { title: "Makonese Farm", body: "New alert", url: "/" };
   try {
     if (e.data) data = { ...data, ...e.data.json() };
   } catch (_) {

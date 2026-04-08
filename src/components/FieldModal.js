@@ -158,7 +158,7 @@ export default function FieldModal({ field, isOpen, onClose }) {
         return;
       }
       const history = await getFieldHistory(field.id);
-      const prompt = `You are an agricultural advisor for a working farm in Zimbabwe. Analyse the COMPLETE history of this field across all seasons.
+      const prompt = `You are an agricultural advisor for Makonese Farm Zimbabwe. Analyse the COMPLETE history of this field across all seasons.
 
 Field: ${field.name}
 Crop: ${field.crop}
