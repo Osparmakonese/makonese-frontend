@@ -1,7 +1,7 @@
 {
-  "short_name": "Makonese Farm",
-  "name": "Makonese Farm Financial System",
-  "description": "Farm financial management system",
+  "short_name": "Farm Pulse",
+  "name": "Farm Pulse — The pulse of your farm",
+  "description": "The pulse of your farm. Financial, field, livestock, and stock management for working farms.",
   "icons": [
     { "src": "favicon.ico", "sizes": "64x64 32x32 24x24 16x16", "type": "image/x-icon" },
     { "src": "logo192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
@@ -10,7 +10,7 @@
   "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#0D4A22",
+  "theme_color": "#1a6b3a",
   "background_color": "#ffffff",
   "scope": "/"
 }

@@ -63,7 +63,7 @@ const PAGES = {
 
 /* --- */
 const PAGE_META = {
-  'Dashboard': { title: 'Dashboard', sub: 'Season overview - Makonese Farm' },
+  'Dashboard': { title: 'Dashboard', sub: 'Season overview - Farm Pulse' },
   'Fields': { title: 'Fields', sub: 'Manage your farm fields' },
   'Sales & Market': { title: 'Sales & Market', sub: 'Market trips and direct income' },
   'Costs': { title: 'Costs', sub: 'Farm expenses and inputs' },

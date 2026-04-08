@@ -130,7 +130,7 @@ export default function Topbar({ pageTitle, pageSub, primaryAction, onPrimaryAct
       }
     }
 
-    msg += `\n— Makonese Farm System`;
+    msg += `\n— Farm Pulse`;
     return msg;
   }
 

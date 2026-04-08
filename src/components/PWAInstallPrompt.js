@@ -28,7 +28,7 @@ export default function PWAInstallPrompt() {
   return (
     <div style={{ position:'fixed', bottom:76, left:12, right:12, zIndex:999, background:'#1a6b3a', color:'#fff', borderRadius:12, padding:'14px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', boxShadow:'0 4px 24px rgba(0,0,0,0.3)', fontFamily:'Inter,sans-serif', gap:12 }}>
       <div style={{flex:1}}>
-        <div style={{fontSize:13,fontWeight:700,marginBottom:3}}>📲 Install Makonese Farm</div>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:3}}>📲 Install Farm Pulse</div>
         <div style={{fontSize:11,opacity:0.85}}>Add to home screen for quick access</div>
       </div>
       <div style={{display:'flex',gap:8,flexShrink:0}}>
