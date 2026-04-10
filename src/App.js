@@ -31,6 +31,10 @@ import Water from './pages/Water';
 import Loans from './pages/Loans';
 import MarketPrices from './pages/MarketPrices';
 import Economics from './pages/Economics';
+import Billing from './pages/Billing';
+import RetailDashboard from './pages/RetailDashboard';
+import Products from './pages/Products';
+import POS from './pages/POS';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 /* --- */
@@ -59,11 +63,17 @@ const PAGES = {
   'Market Prices': MarketPrices,
   'Economics': Economics,
   'Admin Panel': AdminPanel,
+  // Retail module
+  'Retail': RetailDashboard,
+  'Products': Products,
+  'POS': POS,
+  // Billing & Account
+  'Billing': Billing,
 };
 
 /* --- */
 const PAGE_META = {
-  'Dashboard': { title: 'Dashboard', sub: 'Season overview - Makonese Farm' },
+  'Dashboard': { title: 'Dashboard', sub: 'Season overview - Pewil' },
   'Fields': { title: 'Fields', sub: 'Manage your farm fields' },
   'Sales & Market': { title: 'Sales & Market', sub: 'Market trips and direct income' },
   'Costs': { title: 'Costs', sub: 'Farm expenses and inputs' },
@@ -87,6 +97,12 @@ const PAGE_META = {
   'Market Prices': { title: 'Market Prices', sub: 'Commodity price tracking' },
   'Economics': { title: 'Farm Economics', sub: 'Profitability and enterprise analysis' },
   'Admin Panel': { title: 'Super Admin Panel', sub: 'System administration - visible to you only' },
+  // Retail module
+  'Retail': { title: 'Retail Dashboard', sub: 'Store overview and daily metrics' },
+  'Products': { title: 'Products', sub: 'Product catalog and inventory' },
+  'POS': { title: 'Point of Sale', sub: 'Process sales and manage cart' },
+  // Billing
+  'Billing': { title: 'Billing', sub: 'Subscription, invoices, and usage' },
 };
 
 /* --- */
@@ -112,6 +128,10 @@ const PRIMARY_ACTIONS = {
   'Loans': '+ Add loan',
   'Market Prices': '+ Add price',
   'Settings': 'Save changes',
+  'Retail': null,
+  'Products': '+ Add product',
+  'POS': null,
+  'Billing': 'Change Plan',
 };
 
 /* --- */

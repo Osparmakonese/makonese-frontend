@@ -22,14 +22,36 @@ export function AuthProvider({ children }) {
       localStorage.setItem('access_token', res.data.access);
       localStorage.setItem('refresh_token', res.data.refresh);
 
-      // Decode role from JWT payload
+      // Decode claims from JWT payload
       let role = 'worker';
+      let tenant_id = null;
+      let tenant_slug = '';
+      let tenant_name = '';
+      let modules = ['farm'];
+      let plan = 'free';
+      let retail_perms = {};
       try {
         const payload = JSON.parse(atob(res.data.access.split('.')[1]));
         role = payload.role || 'owner';
+        tenant_id = payload.tenant_id || null;
+        tenant_slug = payload.tenant_slug || '';
+        tenant_name = payload.tenant_name || '';
+        modules = payload.modules || ['farm'];
+        plan = payload.plan || 'free';
+        retail_perms = payload.retail_perms || {};
       } catch { /* fallback */ }
 
-      const userData = { username, user_id: res.data.user_id, role };
+      const userData = {
+        username,
+        user_id: res.data.user_id || res.data.tenant_id,
+        role,
+        tenant_id: res.data.tenant_id || tenant_id,
+        tenant_slug: res.data.tenant_slug || tenant_slug,
+        tenant_name: res.data.tenant_name || tenant_name,
+        modules: res.data.modules || modules,
+        plan: res.data.plan || plan,
+        retail_perms: res.data.retail_perms || retail_perms,
+      };
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       return true;

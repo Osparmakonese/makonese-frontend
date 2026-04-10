@@ -132,8 +132,14 @@ const NAV_ITEMS = [
     { key: 'Workers', emoji: '\u{1F477}', label: 'Workers' },
     { key: 'Hours & Pay', emoji: '\u23F1', label: 'Hours & Pay' },
   ]},
+  { section: 'RETAIL', collapsible: true, items: [
+    { key: 'Retail', emoji: '\u{1F6D2}', label: 'Retail Dashboard' },
+    { key: 'POS', emoji: '\u{1F4B3}', label: 'Point of Sale' },
+    { key: 'Products', emoji: '\u{1F4E6}', label: 'Products' },
+  ]},
   { section: 'OWNER ONLY', ownerOnly: true, collapsible: false, items: [
     { key: 'Report', emoji: '\u{1F4C8}', label: 'Report' },
+    { key: 'Billing', emoji: '\u{1F4B0}', label: 'Billing' },
     { key: 'Settings', emoji: '\u2699\uFE0F', label: 'Settings' },
     { key: 'Import', emoji: '\u{1F4E5}', label: 'Import' },
     { key: 'Admin Panel', emoji: '\u{1F510}', label: 'Admin Panel' },
