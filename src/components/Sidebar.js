@@ -1,14 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { initials, avatarColor } from '../utils/format';
 import Logo from './Logo';
-
-/*
-  UX Laws applied:
-  - Hick's Law: Collapsible sections reduce visible choices from ~22 to ~12
-  - Miller's Law: 5 section groups (well within 7±2 chunk limit)
-  - Proximity Law: Clear spacing + dividers between section groups
-  - Von Restorff Effect: Active item has bold left accent bar + green tint
-*/
 
 const S = {
   sidebar: {
@@ -18,33 +10,45 @@ const S = {
     fontFamily: "'Inter', sans-serif",
   },
   brand: {
-    padding: '18px 14px 14px', borderBottom: '1px solid #e5e7eb',
+    padding: '16px 14px 12px', borderBottom: '1px solid #e5e7eb',
     display: 'flex', alignItems: 'center', gap: 10,
   },
-  nav: {
-    flex: 1, overflowY: 'auto', padding: '6px 8px',
-    display: 'flex', flexDirection: 'column', gap: 0,
+  /* Tenant switcher */
+  tsw: {
+    margin: '8px 8px 4px', padding: '9px 11px',
+    border: '1px solid #e5e7eb', borderRadius: 8,
+    cursor: 'pointer', transition: 'all 0.15s',
   },
-  /* --- Proximity Law: section groups with visual separation --- */
-  sectionGroup: {
-    marginBottom: 2, paddingBottom: 2,
-  },
-  sectionDivider: {
-    height: 1, background: '#f3f4f6', margin: '4px 10px',
-  },
-  /* --- Hick's Law: collapsible section headers --- */
+  tswName: { fontWeight: 700, fontSize: 12, color: '#111827' },
+  tswPlan: { fontSize: 9, color: '#6b7280', marginTop: 1 },
+  tswLabel: { fontSize: 8, color: '#1a6b3a', fontWeight: 600, marginTop: 2 },
+  /* Tenant dropdown */
+  tdd: (open) => ({
+    display: open ? 'block' : 'none',
+    position: 'absolute', left: 8, top: 118, width: 204,
+    background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.1)', zIndex: 200, overflow: 'hidden',
+  }),
+  tdo: (active) => ({
+    padding: '10px 14px', cursor: 'pointer', transition: 'background 0.15s',
+    borderBottom: '1px solid #f3f4f6',
+    background: active ? '#e8f5ee' : 'transparent',
+    borderLeft: active ? '3px solid #1a6b3a' : '3px solid transparent',
+  }),
+  tdoName: { fontWeight: 600, fontSize: 11, color: '#111827' },
+  tdoType: { fontSize: 9, color: '#6b7280' },
+  nav: { flex: 1, overflowY: 'auto', padding: '4px 8px' },
+  sectionGroup: { marginBottom: 2, paddingBottom: 2 },
+  sectionDivider: { height: 1, background: '#f3f4f6', margin: '4px 10px' },
   sectionHeader: (isCollapsible) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '10px 10px 4px', cursor: isCollapsible ? 'pointer' : 'default',
-    userSelect: 'none', borderRadius: 6,
-    transition: 'background 0.15s',
+    padding: '10px 10px 3px', cursor: isCollapsible ? 'pointer' : 'default',
+    userSelect: 'none', borderRadius: 4, transition: 'background 0.15s',
+    fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase',
+    letterSpacing: '0.08em',
   }),
-  sectionLabel: {
-    fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase',
-    letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6,
-  },
   sectionChevron: (expanded) => ({
-    fontSize: 8, color: '#9ca3af', transition: 'transform 0.2s ease',
+    fontSize: 10, color: '#9ca3af', transition: 'transform 0.2s',
     transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
   }),
   sectionCount: {
@@ -52,40 +56,31 @@ const S = {
     borderRadius: 8, padding: '1px 5px', marginLeft: 4, minWidth: 14,
     textAlign: 'center', lineHeight: '14px',
   },
-  /* --- Hick's Law: collapsible items wrapper --- */
+  sectionActiveDot: {
+    width: 6, height: 6, borderRadius: '50%', background: '#1a6b3a', marginLeft: 4,
+  },
   sectionItems: (expanded) => ({
     overflow: 'hidden', maxHeight: expanded ? 500 : 0,
     transition: 'max-height 0.25s ease-in-out', opacity: expanded ? 1 : 0,
   }),
-  /* --- Von Restorff Effect: active item stands out with left accent --- */
   navItem: (active) => ({
-    display: 'flex', alignItems: 'center', gap: 8,
-    padding: '7px 10px', borderRadius: 7, fontSize: 12,
+    display: 'flex', alignItems: 'center', gap: 7,
+    padding: '6px 10px', borderRadius: 7, fontSize: 11,
     fontWeight: active ? 600 : 500, cursor: 'pointer',
     background: active ? '#e8f5ee' : 'transparent',
     color: active ? '#1a6b3a' : '#374151',
-    transition: 'all 0.15s ease',
-    border: 'none', width: '100%', textAlign: 'left',
-    position: 'relative', fontFamily: 'inherit',
+    transition: 'all 0.15s', border: 'none', width: '100%', textAlign: 'left',
+    position: 'relative', fontFamily: 'inherit', margin: '1px 0',
     borderLeft: active ? '3px solid #1a6b3a' : '3px solid transparent',
-    marginLeft: active ? 0 : 0,
   }),
-  navEmoji: { fontSize: 14, width: 18, textAlign: 'center', flexShrink: 0 },
-  /* --- Von Restorff Effect: badge stands out with red pulse --- */
+  navEmoji: { width: 16, textAlign: 'center', fontSize: 13 },
   badge: {
-    position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-    background: '#c0392b', color: '#fff', fontSize: 8, fontWeight: 700,
-    padding: '2px 6px', borderRadius: 10, minWidth: 16, textAlign: 'center',
-    boxShadow: '0 0 0 2px rgba(192,57,43,0.2)',
+    position: 'absolute', right: 8, background: '#c0392b', color: '#fff',
+    fontSize: 7, fontWeight: 700, padding: '1px 5px', borderRadius: 10,
     animation: 'badgePulse 2s infinite',
   },
-  /* --- Von Restorff: collapsed section active indicator --- */
-  sectionActiveDot: {
-    width: 6, height: 6, borderRadius: '50%', background: '#1a6b3a',
-    marginLeft: 4, flexShrink: 0,
-  },
   userSection: {
-    borderTop: '1px solid #e5e7eb', padding: '12px 14px',
+    borderTop: '1px solid #e5e7eb', padding: '10px 14px',
     display: 'flex', alignItems: 'center', gap: 8,
   },
   avatar: (bg) => ({
@@ -93,13 +88,11 @@ const S = {
     color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: 10, fontWeight: 700, flexShrink: 0,
   }),
-  userInfo: { flex: 1, minWidth: 0 },
-  userName: { fontSize: 12, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  userRole: { fontSize: 10, color: '#9ca3af', textTransform: 'capitalize' },
+  userName: { fontSize: 11, fontWeight: 600, color: '#111827' },
+  userRole: { fontSize: 9, color: '#9ca3af', textTransform: 'capitalize' },
   logoutBtn: {
     background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer',
-    fontSize: 16, padding: 4, lineHeight: 1, flexShrink: 0,
-    transition: 'color 0.15s',
+    fontSize: 16, padding: 4, lineHeight: 1, flexShrink: 0, transition: 'color 0.15s',
   },
 };
 
@@ -108,7 +101,7 @@ const NAV_ITEMS = [
     { key: 'Dashboard', emoji: '\u{1F4CA}', label: 'Dashboard' },
     { key: 'Fields', emoji: '\u{1F33E}', label: 'Fields' },
     { key: 'Sales & Market', emoji: '\u{1F69A}', label: 'Sales & Market' },
-    { key: 'Costs', emoji: '\u{1F9FE}', label: 'Costs' },
+    { key: 'Costs', emoji: '\u{1F4B8}', label: 'Costs' },
     { key: 'Farm Assets', emoji: '\u{1F3D7}', label: 'Farm Assets' },
     { key: 'Stock', emoji: '\u{1F4E6}', label: 'Stock', showBadge: true },
   ]},
@@ -135,11 +128,11 @@ const NAV_ITEMS = [
   { section: 'RETAIL', collapsible: true, items: [
     { key: 'Retail', emoji: '\u{1F6D2}', label: 'Retail Dashboard' },
     { key: 'POS', emoji: '\u{1F4B3}', label: 'Point of Sale' },
-    { key: 'Products', emoji: '\u{1F4E6}', label: 'Products' },
+    { key: 'Products', emoji: '\u{1F3F7}', label: 'Products' },
   ]},
   { section: 'OWNER ONLY', ownerOnly: true, collapsible: false, items: [
     { key: 'Report', emoji: '\u{1F4C8}', label: 'Report' },
-    { key: 'Billing', emoji: '\u{1F4B0}', label: 'Billing' },
+    { key: 'Billing', emoji: '\u{1F4B3}', label: 'Billing' },
     { key: 'Settings', emoji: '\u2699\uFE0F', label: 'Settings' },
     { key: 'Import', emoji: '\u{1F4E5}', label: 'Import' },
     { key: 'Admin Panel', emoji: '\u{1F510}', label: 'Admin Panel' },
@@ -149,11 +142,15 @@ const NAV_ITEMS = [
 export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowStockCount = 0 }) {
   const role = user?.role || 'worker';
   const ac = avatarColor(user?.username || '');
-
-  /* Hick's Law: track which collapsible sections are expanded */
   const [expanded, setExpanded] = useState({});
+  const [ddOpen, setDdOpen] = useState(false);
+  const ddRef = useRef(null);
 
-  /* Auto-expand section if active tab is inside a collapsed section */
+  // Get tenant info from JWT stored in localStorage
+  const tenantName = user?.tenant_name || 'Makonese Farm';
+  const tenantPlan = user?.plan || 'free';
+  const planLabel = tenantPlan.charAt(0).toUpperCase() + tenantPlan.slice(1) + ' Plan';
+
   useEffect(() => {
     NAV_ITEMS.forEach(section => {
       if (section.collapsible && section.items.some(item => item.key === activeTab)) {
@@ -162,20 +159,48 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
     });
   }, [activeTab]);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (ddRef.current && !ddRef.current.contains(e.target)) setDdOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   const toggleSection = (sectionName) => {
     setExpanded(prev => ({ ...prev, [sectionName]: !prev[sectionName] }));
   };
-
-  /* Check if a collapsed section has the active tab */
-  const sectionHasActive = (section) => {
-    return section.items.some(item => item.key === activeTab);
-  };
+  const sectionHasActive = (section) => section.items.some(item => item.key === activeTab);
 
   return (
     <div style={S.sidebar}>
       {/* Brand */}
       <div style={S.brand}>
-        <Logo size={36} />
+        <Logo size={36} showText={true} />
+      </div>
+
+      {/* Tenant Switcher */}
+      <div ref={ddRef} style={{ position: 'relative' }}>
+        <div
+          style={S.tsw}
+          onClick={() => setDdOpen(!ddOpen)}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#1a6b3a'; e.currentTarget.style.background = '#e8f5ee'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.background = 'transparent'; }}
+        >
+          <div style={S.tswName}>{tenantName}</div>
+          <div style={S.tswPlan}>{planLabel}</div>
+          <div style={S.tswLabel}>{'\u25BE'} Switch tenant</div>
+        </div>
+        <div style={S.tdd(ddOpen)}>
+          <div style={S.tdo(true)}>
+            <div style={S.tdoName}>{tenantName}</div>
+            <div style={S.tdoType}>Agriculture {'\u2022'} {planLabel}</div>
+          </div>
+          <div style={{...S.tdo(false), padding: '10px 14px', textAlign: 'center', fontSize: 10, color: '#6b7280'}}>
+            More tenants coming soon
+          </div>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -188,46 +213,38 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
 
           return (
             <React.Fragment key={section.section}>
-              {/* Proximity Law: divider between sections */}
               {idx > 0 && <div style={S.sectionDivider} />}
-
               <div style={S.sectionGroup}>
-                {/* Section header — clickable for collapsible sections */}
                 <div
                   style={S.sectionHeader(isCollapsible)}
                   onClick={isCollapsible ? () => toggleSection(section.section) : undefined}
-                  onMouseEnter={(e) => { if (isCollapsible) e.currentTarget.style.background = '#f9fafb'; }}
-                  onMouseLeave={(e) => { if (isCollapsible) e.currentTarget.style.background = 'transparent'; }}
+                  onMouseEnter={e => { if (isCollapsible) e.currentTarget.style.background = '#f3f4f6'; }}
+                  onMouseLeave={e => { if (isCollapsible) e.currentTarget.style.background = 'transparent'; }}
                 >
-                  <div style={S.sectionLabel}>
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
                     {section.section}
-                    {/* Miller's Law: show count so users know what's inside collapsed sections */}
                     {isCollapsible && !isExpanded && (
                       <span style={S.sectionCount}>{section.items.length}</span>
                     )}
-                    {/* Von Restorff: green dot if active tab is in collapsed section */}
                     {isCollapsible && !isExpanded && hasActive && (
                       <span style={S.sectionActiveDot} />
                     )}
-                  </div>
+                  </span>
                   {isCollapsible && (
                     <span style={S.sectionChevron(isExpanded)}>{'\u25B6'}</span>
                   )}
                 </div>
-
-                {/* Section items — animated collapse for Hick's Law */}
                 <div style={S.sectionItems(isExpanded)}>
-                  {section.items.map((item) => (
+                  {section.items.map(item => (
                     <button
                       key={item.key}
                       style={S.navItem(activeTab === item.key)}
                       onClick={() => onTabChange(item.key)}
-                      onMouseEnter={(e) => { if (activeTab !== item.key) e.currentTarget.style.background = '#f3f4f6'; }}
-                      onMouseLeave={(e) => { if (activeTab !== item.key) e.currentTarget.style.background = 'transparent'; }}
+                      onMouseEnter={e => { if (activeTab !== item.key) e.currentTarget.style.background = '#f3f4f6'; }}
+                      onMouseLeave={e => { if (activeTab !== item.key) e.currentTarget.style.background = 'transparent'; }}
                     >
                       <span style={S.navEmoji}>{item.emoji}</span>
                       {item.label}
-                      {/* Von Restorff: red badge for low stock alerts */}
                       {item.showBadge && lowStockCount > 0 && (
                         <span style={S.badge}>{lowStockCount}</span>
                       )}
@@ -240,10 +257,10 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
         })}
       </nav>
 
-      {/* User section */}
+      {/* User footer */}
       <div style={S.userSection}>
         <div style={S.avatar(ac.bg)}>{initials(user?.username || '')}</div>
-        <div style={S.userInfo}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={S.userName}>{user?.username || 'User'}</div>
           <div style={S.userRole}>{role}</div>
         </div>
@@ -251,8 +268,8 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
           style={S.logoutBtn}
           onClick={onLogout}
           title="Logout"
-          onMouseEnter={(e) => { e.currentTarget.style.color = '#c0392b'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = '#9ca3af'; }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#c0392b'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#9ca3af'; }}
         >
           {'\u21E5'}
         </button>

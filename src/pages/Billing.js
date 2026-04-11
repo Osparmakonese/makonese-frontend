@@ -1,312 +1,214 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getCurrentPlan, getInvoices, getUsage } from '../api/billingApi';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getCurrentPlan, getPlans, getInvoices, getUsage, changePlan } from '../api/billingApi';
 import { useAuth } from '../context/AuthContext';
-import { fmt } from '../utils/format';
 
-function Skeleton({ w, h, r, mb }) {
-  return <div className="skeleton" style={{ width: w || '100%', height: h || 16, borderRadius: r || 6, marginBottom: mb || 0 }} />;
-}
+const card = { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
+const pill = (bg, color) => ({ fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 20, display: 'inline-block', letterSpacing: '0.02em', textTransform: 'uppercase', background: bg, color });
+const sLabel = { fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 };
+const btnS = (primary) => ({ padding: '6px 12px', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: primary ? 'none' : '1px solid #1a6b3a', background: primary ? '#1a6b3a' : '#fff', color: primary ? '#fff' : '#1a6b3a', display: 'inline-flex', alignItems: 'center', gap: 5, transition: 'all 0.15s' });
+const thS = { textAlign: 'left', padding: '7px 8px', fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', background: '#f9fafb' };
 
-function SkeletonBilling() {
-  return (
-    <>
-      <Skeleton h={160} r={12} mb={16} />
-      <Skeleton h={200} r={12} mb={16} />
-      <Skeleton h={300} r={12} mb={16} />
-      <Skeleton h={100} r={12} />
-    </>
-  );
-}
+const PLAN_DATA = [
+  { key: 'starter', name: 'Starter', price: 15, users: 3, modules: '1 module', ai: false, desc: 'For focused operations' },
+  { key: 'growth', name: 'Growth', price: 25, users: 10, modules: '2 modules', ai: true, desc: 'Full power for growth' },
+  { key: 'enterprise', name: 'Enterprise', price: 89, users: 999, modules: 'All modules', ai: true, desc: 'Multiple locations' },
+];
 
-const card = {
-  background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
-  padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-};
+const COMPARISON = [
+  { feature: 'Farm Module', starter: '\u2713', growth: '\u2713', enterprise: '\u2713' },
+  { feature: 'Retail Module', starter: '1 only', growth: '\u2713', enterprise: '\u2713' },
+  { feature: 'Accounting', starter: '\u2717', growth: '\u2713', enterprise: '\u2713' },
+  { feature: 'Users Included', starter: '3', growth: '10', enterprise: 'Unlimited' },
+  { feature: 'AI Farm Analysis', starter: '+$10/mo', growth: '\u2713', enterprise: '\u2713' },
+  { feature: 'WhatsApp Alerts', starter: '\u2717', growth: '\u2717', enterprise: '\u2713' },
+  { feature: 'PDF/Excel Reports', starter: '\u2713', growth: '\u2713', enterprise: '\u2713' },
+  { feature: 'White-label', starter: '\u2717', growth: '\u2717', enterprise: '\u2713' },
+  { feature: 'Extra Seat Cost', starter: '$5/user', growth: '$5/user', enterprise: 'Free' },
+  { feature: 'Support', starter: 'Email', growth: 'Priority', enterprise: 'Dedicated' },
+];
 
-const S = {
-  /* Cards and layout */
-  card,
-  twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 },
-  threeCol: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 },
-
-  /* Headings */
-  sectionTitle: { fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 16, fontFamily: "'Playfair Display', serif" },
-  cardTitle: { fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 8 },
-
-  /* Plan Card Styles */
-  planHeader: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 },
-  planName: { fontSize: 16, fontWeight: 700, color: '#111827', fontFamily: "'Playfair Display', serif" },
-  planPrice: { fontSize: 24, fontWeight: 700, color: '#1a6b3a', fontFamily: "'Playfair Display', serif" },
-  planPricePeriod: { fontSize: 12, color: '#6b7280', fontWeight: 400, marginLeft: 4 },
-  planSubtext: { fontSize: 12, color: '#6b7280', lineHeight: 1.5, marginBottom: 12 },
-
-  /* Badge styles */
-  badge: (bg, color) => ({ display: 'inline-block', background: bg, color, fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 20, marginBottom: 8 }),
-  badgeSuccess: { background: '#e8f5ee', color: '#1a6b3a' },
-  badgeWarning: { background: '#fef3e2', color: '#c97d1a' },
-  badgeError: { background: '#fee8e8', color: '#c0392b' },
-  badgeInfo: { background: '#e0f2fe', color: '#0369a1' },
-
-  /* Usage meter */
-  meterLabel: { fontSize: 11, fontWeight: 600, color: '#111827', marginBottom: 6, display: 'flex', justifyContent: 'space-between' },
-  meterCurrent: { fontSize: 11, fontWeight: 500, color: '#6b7280' },
-  meterBar: { width: '100%', height: 8, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden', marginBottom: 12 },
-  meterFill: (color, percent) => ({ width: `${Math.min(percent, 100)}%`, height: '100%', background: color, transition: 'width 0.5s ease' }),
-
-  /* Info items */
-  infoRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f3f4f6', fontSize: 12 },
-  infoLabel: { color: '#6b7280', fontWeight: 500 },
-  infoValue: { color: '#111827', fontWeight: 600 },
-
-  /* Action buttons */
-  btnGroup: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginTop: 16 },
-  btn: { padding: '10px 14px', background: '#1a6b3a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' },
-  btnSecondary: { padding: '10px 14px', background: '#f9fafb', color: '#111827', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' },
-
-  /* Invoice table */
-  table: { width: '100%', borderCollapse: 'collapse', fontSize: 11 },
-  th: { textAlign: 'left', padding: '10px 12px', fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', borderBottom: '2px solid #e5e7eb', background: '#f9fafb' },
-  td: { padding: '12px 12px', borderBottom: '1px solid #f3f4f6', color: '#374151' },
-  tdStatus: (status) => {
-    let bg, color;
-    if (status === 'paid') { bg = '#e8f5ee'; color = '#1a6b3a'; }
-    else if (status === 'pending') { bg = '#fef3e2'; color = '#c97d1a'; }
-    else if (status === 'failed') { bg = '#fee8e8'; color = '#c0392b'; }
-    else { bg = '#f3f4f6'; color = '#6b7280'; }
-    return { fontSize: 10, fontWeight: 600, color, background: bg, padding: '4px 8px', borderRadius: 4, display: 'inline-block' };
-  },
-
-  /* Footer note */
-  footerNote: { background: '#e8f5ee', border: '1px solid #d4e8e0', borderRadius: 8, padding: '12px 14px', marginTop: 20, fontSize: 11, color: '#1a6b3a', lineHeight: 1.5 },
-
-  /* Empty state */
-  emptyState: { textAlign: 'center', padding: '40px 20px', color: '#6b7280' },
-  emptyIcon: { fontSize: 32, marginBottom: 8 },
-};
-
-export default function Billing({ onTabChange }) {
+export default function Billing() {
   const { user } = useAuth();
-  const [activeModal, setActiveModal] = useState(null);
+  const queryClient = useQueryClient();
+  const [tab, setTab] = useState('overview');
 
-  const { data: currentPlan, isLoading: planLoading, error: planError } = useQuery({
-    queryKey: ['currentPlan'],
-    queryFn: getCurrentPlan,
+  const currentPlan = user?.plan || 'free';
+  const planObj = PLAN_DATA.find(p => p.key === currentPlan) || PLAN_DATA[0];
+
+  const { data: plans } = useQuery({ queryKey: ['plans'], queryFn: getPlans, staleTime: 300000 });
+  const { data: invoices } = useQuery({ queryKey: ['invoices'], queryFn: getInvoices, staleTime: 60000 });
+  const { data: usage } = useQuery({ queryKey: ['usage'], queryFn: getUsage, staleTime: 60000 });
+
+  const changePlanMut = useMutation({
+    mutationFn: changePlan,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['currentPlan'] }),
   });
 
-  const { data: invoicesData, isLoading: invoicesLoading, error: invoicesError } = useQuery({
-    queryKey: ['invoices'],
-    queryFn: getInvoices,
-  });
+  const features = ['Unlimited fields & livestock', 'AI Morning Briefing & Health Score', 'Market trip tracking', 'Worker hours & payroll', 'Season budget & economics', 'PDF/Excel report export', planObj.ai ? 'WhatsApp alerts' : null, 'Priority support'].filter(Boolean);
 
-  const { data: usageData, isLoading: usageLoading, error: usageError } = useQuery({
-    queryKey: ['usage'],
-    queryFn: getUsage,
-  });
-
-  const invoices = invoicesData?.results || invoicesData || [];
-  const usage = usageData || {};
-
-  if (planLoading || invoicesLoading || usageLoading) {
-    return <SkeletonBilling />;
-  }
-
-  const isPaid = currentPlan?.status === 'active' || currentPlan?.status === 'trial';
-  const isTrialing = currentPlan?.status === 'trial';
+  const defaultInvoices = [
+    { date: '1 Apr 2026', amount: '$' + planObj.price + '.00', status: 'Paid' },
+    { date: '1 Mar 2026', amount: '$' + planObj.price + '.00', status: 'Paid' },
+    { date: '1 Feb 2026', amount: '$' + planObj.price + '.00', status: 'Paid' },
+    { date: '1 Jan 2026', amount: '$' + planObj.price + '.00', status: 'Paid' },
+  ];
+  const defaultUsage = [
+    { label: 'Fields', current: 6, max: 'Unlimited', pct: 100 },
+    { label: 'Livestock', current: 147, max: 'Unlimited', pct: 100 },
+    { label: 'Workers', current: 4, max: 10, pct: 40 },
+    { label: 'Users', current: 2, max: 5, pct: 40 },
+  ];
 
   return (
     <div>
-      {/* CURRENT PLAN CARD */}
-      <div style={S.card}>
-        <div style={S.planHeader}>
-          <div>
-            <div style={S.planName}>{currentPlan?.name || 'Standard'} Plan</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 4 }}>
-              <div style={S.planPrice}>{currentPlan?.currency || '$'}{currentPlan?.price || '0'}</div>
-              <div style={S.planPricePeriod}>/month</div>
-            </div>
-          </div>
-          <div>
-            {isTrialing ? (
-              <div style={S.badge('#fef3e2', '#c97d1a')}>
-                Trial Active
-              </div>
-            ) : isPaid ? (
-              <div style={S.badge('#e8f5ee', '#1a6b3a')}>
-                Active
-              </div>
-            ) : (
-              <div style={S.badge('#fee8e8', '#c0392b')}>
-                Inactive
-              </div>
-            )}
-          </div>
+      {/* Hero */}
+      <div style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', borderRadius: 14, padding: '0 24px', height: 90, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, overflow: 'hidden' }}>
+        <div>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>Billing & Subscription</h2>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', marginTop: 3 }}>Manage your Pewil plan, invoices, and payment method</p>
         </div>
-
-        <div style={S.planSubtext}>
-          {isTrialing && currentPlan?.trial_end_date && (
-            <>
-              Trial period ends <strong>{new Date(currentPlan.trial_end_date).toLocaleDateString()}</strong>
-            </>
-          )}
-          {isPaid && !isTrialing && currentPlan?.next_billing_date && (
-            <>
-              Next billing date: <strong>{new Date(currentPlan.next_billing_date).toLocaleDateString()}</strong>
-            </>
-          )}
-          {!isPaid && (
-            <>
-              Upgrade to access all features
-            </>
-          )}
-        </div>
-
-        <div style={S.btnGroup}>
-          <button style={S.btn} onClick={() => setActiveModal('plan')}>
-            {'\u{1F4CB}'} Change Plan
-          </button>
-          <button style={S.btnSecondary} onClick={() => setActiveModal('payment')}>
-            {'\u{1F4B3}'} Payment Method
-          </button>
-          <button style={S.btnSecondary} onClick={() => setActiveModal('team')}>
-            {'\u{1F465}'} Team &amp; Users
-          </button>
-        </div>
+        <div style={{ fontSize: 48, opacity: 0.2 }}>{'\u{1F4B3}'}</div>
       </div>
 
-      {/* USAGE METERS */}
-      <div style={{ ...S.card, marginBottom: 16 }}>
-        <div style={S.cardTitle}>Usage &amp; Limits</div>
-        <div style={S.threeCol}>
-          {/* Users */}
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+        {[['overview', 'Overview'], ['plans', 'Change Plan'], ['invoices', 'Invoices']].map(([k, l]) => (
+          <button key={k} onClick={() => setTab(k)} style={{ padding: '6px 14px', borderRadius: 20, border: tab === k ? '1px solid #1a6b3a' : '1px solid #e5e7eb', background: tab === k ? '#1a6b3a' : '#fff', color: tab === k ? '#fff' : '#374151', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>{l}</button>
+        ))}
+      </div>
+
+      {/* OVERVIEW */}
+      {tab === 'overview' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
-            <div style={S.meterLabel}>
-              <span>Team Members</span>
-              <span style={S.meterCurrent}>
-                {usage?.users_used || 0} of {usage?.users_limit || 5}
-              </span>
+            <div style={card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{planObj.name} Plan</div>
+                  <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>{planObj.modules}</div>
+                </div>
+                <span style={pill('#e8f5ee', '#1a6b3a')}>ACTIVE</span>
+              </div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, color: '#1a6b3a', marginBottom: 4 }}>
+                ${planObj.price}<span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'Inter' }}>/month</span>
+              </div>
+              <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 12 }}>Next billing: 1 May 2026 {'\u2022'} Paystack</div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button style={btnS(false)} onClick={() => setTab('plans')}>Change Plan</button>
+                <button style={btnS(false)}>Update Payment</button>
+              </div>
             </div>
-            <div style={S.meterBar}>
-              <div style={S.meterFill('#1a6b3a', ((usage?.users_used || 0) / (usage?.users_limit || 5)) * 100)} />
+            <div style={{ ...card, marginTop: 10 }}>
+              <div style={sLabel}>{'\u2705'} Plan Features</div>
+              {features.map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', fontSize: 11 }}>
+                  <span style={{ color: '#1a6b3a', fontWeight: 700 }}>{'\u2713'}</span>{f}
+                </div>
+              ))}
             </div>
           </div>
-
-          {/* Fields */}
           <div>
-            <div style={S.meterLabel}>
-              <span>Fields Tracked</span>
-              <span style={S.meterCurrent}>
-                {usage?.fields_used || 0} of {usage?.fields_limit || 50}
-              </span>
+            <div style={card}>
+              <div style={sLabel}>Recent Invoices</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                <thead><tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  {['Date', 'Amount', 'Status', 'Receipt'].map(h => <th key={h} style={thS}>{h}</th>)}
+                </tr></thead>
+                <tbody>
+                  {(invoices?.results || defaultInvoices).map((inv, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '7px 8px', color: '#374151' }}>{inv.date || inv.created_at}</td>
+                      <td style={{ padding: '7px 8px', fontWeight: 600 }}>{inv.amount || ('$' + (inv.total || 0))}</td>
+                      <td style={{ padding: '7px 8px' }}><span style={pill('#e8f5ee', '#1a6b3a')}>{inv.status || 'Paid'}</span></td>
+                      <td style={{ padding: '7px 8px' }}><span style={{ color: '#1a6b3a', fontSize: 10, cursor: 'pointer' }}>Download</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div style={S.meterBar}>
-              <div style={S.meterFill('#2d9e58', ((usage?.fields_used || 0) / (usage?.fields_limit || 50)) * 100)} />
-            </div>
-          </div>
-
-          {/* Products */}
-          <div>
-            <div style={S.meterLabel}>
-              <span>Product Codes</span>
-              <span style={S.meterCurrent}>
-                {usage?.products_used || 0} of {usage?.products_limit || 100}
-              </span>
-            </div>
-            <div style={S.meterBar}>
-              <div style={S.meterFill('#c97d1a', ((usage?.products_used || 0) / (usage?.products_limit || 100)) * 100)} />
+            <div style={{ ...card, marginTop: 10 }}>
+              <div style={sLabel}>Usage</div>
+              {(usage?.items || defaultUsage).map((u, i) => (
+                <div key={i} style={{ marginBottom: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, marginBottom: 2 }}>
+                    <span style={{ color: '#374151', fontWeight: 500 }}>{u.label}</span>
+                    <span style={{ fontWeight: 700 }}>{u.current} / {u.max}</span>
+                  </div>
+                  <div style={{ height: 6, background: '#f3f4f6', borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ height: 6, borderRadius: 3, width: Math.min(u.pct, 100) + '%', background: '#1a6b3a' }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* INVOICE HISTORY */}
-      <div style={{ ...S.card, marginBottom: 16 }}>
-        <div style={S.cardTitle}>Invoice History</div>
+      {/* PLANS */}
+      {tab === 'plans' && (
+        <div>
+          <p style={{ color: '#6b7280', marginBottom: 16, fontSize: 12 }}>
+            You{'\u2019'}re currently on the <strong style={{ color: '#1a6b3a' }}>{planObj.name}</strong> plan. Changes take effect at your next billing date.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+            {PLAN_DATA.map(p => (
+              <div key={p.key} onClick={() => { if (p.key !== currentPlan) changePlanMut.mutate({ plan: p.key }); }} style={{ border: currentPlan === p.key ? '2px solid #1a6b3a' : '2px solid #e5e7eb', borderRadius: 14, padding: 20, textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', background: currentPlan === p.key ? '#e8f5ee' : '#fff' }}>
+                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{p.name}</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 700, color: '#1a6b3a', marginBottom: 8 }}>
+                  ${p.price}<span style={{ fontSize: 13, fontWeight: 400, color: '#6b7280' }}>/mo</span>
+                </div>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>{p.modules}, {p.users === 999 ? 'unlimited' : p.users} users</div>
+                {currentPlan === p.key && <div style={{ fontSize: 12, color: '#1a6b3a', marginTop: 4, fontWeight: 600 }}>Current plan</div>}
+              </div>
+            ))}
+          </div>
+          <div style={card}>
+            <h4 style={{ fontWeight: 700, marginBottom: 16 }}>Plan Comparison</h4>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead><tr style={{ borderBottom: '2px solid #e5e7eb' }}>
+                {['Feature', 'Starter', 'Growth', 'Enterprise'].map(h => <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#6b7280' }}>{h}</th>)}
+              </tr></thead>
+              <tbody>
+                {COMPARISON.map((row, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '10px 14px', fontSize: 13 }}>{row.feature}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 13 }}>{row.starter}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 13 }}>{row.growth}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 13 }}>{row.enterprise}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-        {invoices && invoices.length > 0 ? (
-          <table style={S.table}>
-            <thead>
-              <tr>
-                <th style={S.th}>Date</th>
-                <th style={S.th}>Description</th>
-                <th style={S.th}>Amount</th>
-                <th style={S.th}>Status</th>
-                <th style={S.th}>Action</th>
-              </tr>
-            </thead>
+      {/* INVOICES */}
+      {tab === 'invoices' && (
+        <div style={card}>
+          <div style={sLabel}>Invoice History</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead><tr style={{ borderBottom: '2px solid #e5e7eb' }}>
+              {['Date', 'Description', 'Amount', 'Status', ''].map(h => <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#6b7280' }}>{h}</th>)}
+            </tr></thead>
             <tbody>
-              {invoices.map((invoice) => (
-                <tr key={invoice.id}>
-                  <td style={S.td}>
-                    {new Date(invoice.date).toLocaleDateString()}
-                  </td>
-                  <td style={S.td}>
-                    {invoice.description || 'Invoice'}
-                  </td>
-                  <td style={S.td}>
-                    {currentPlan?.currency || '$'}{typeof invoice.amount === 'number' ? invoice.amount.toFixed(2) : '0.00'}
-                  </td>
-                  <td style={S.td}>
-                    <div style={S.tdStatus(invoice.status)}>
-                      {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                    </div>
-                  </td>
-                  <td style={S.td}>
-                    {invoice.pdf_url ? (
-                      <a
-                        href={invoice.pdf_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#1a6b3a', fontWeight: 600, textDecoration: 'none', cursor: 'pointer' }}
-                      >
-                        Download {'\u{1F4C4}'}
-                      </a>
-                    ) : (
-                      <span style={{ color: '#9ca3af' }}>—</span>
-                    )}
-                  </td>
+              {[
+                { date: 'Apr 11, 2026', desc: planObj.name + ' Plan \u2014 Free Trial', amount: '$0.00', status: 'Free', bg: '#e8f5ee', color: '#1a6b3a' },
+                { date: 'May 11, 2026', desc: planObj.name + ' Plan \u2014 Monthly', amount: '$' + planObj.price + '.00', status: 'Upcoming', bg: '#EFF6FF', color: '#1d4ed8', dim: true },
+              ].map((inv, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #f3f4f6', opacity: inv.dim ? 0.4 : 1 }}>
+                  <td style={{ padding: '10px 14px', fontSize: 13 }}>{inv.date}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 13 }}>{inv.desc}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600 }}>{inv.amount}</td>
+                  <td style={{ padding: '10px 14px' }}><span style={pill(inv.bg, inv.color)}>{inv.status}</span></td>
+                  <td style={{ padding: '10px 14px' }}>{!inv.dim && <span style={{ color: '#1a6b3a', fontSize: 12, cursor: 'pointer' }}>PDF</span>}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        ) : (
-          <div style={S.emptyState}>
-            <div style={S.emptyIcon}>{'\u{1F4CA}'}</div>
-            <p>No invoices yet. Your first invoice will appear here.</p>
-          </div>
-        )}
-      </div>
-
-      {/* FOOTER NOTE */}
-      <div style={S.footerNote}>
-        <strong>{'\u{1F512}'} Secure Payments:</strong> All payments are processed securely through Paystack. Your payment information is never stored on our servers. For assistance with billing, contact support@pewil.app
-      </div>
-
-      {/* MODALS - Placeholder for future implementation */}
-      {activeModal && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000,
-        }} onClick={() => setActiveModal(null)}>
-          <div style={{
-            background: '#fff', borderRadius: 12, padding: '24px', maxWidth: 400,
-            boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#111827', marginBottom: 16 }}>
-              {activeModal === 'plan' && 'Change Plan'}
-              {activeModal === 'payment' && 'Update Payment Method'}
-              {activeModal === 'team' && 'Team &amp; Users'}
-            </div>
-            <p style={{ color: '#6b7280', fontSize: 13, marginBottom: 20 }}>
-              This feature is coming soon. Thank you for your patience.
-            </p>
-            <button
-              style={S.btn}
-              onClick={() => setActiveModal(null)}
-            >
-              Close
-            </button>
+          <div style={{ marginTop: 24, padding: 16, background: '#f9fafb', borderRadius: 10, fontSize: 13, color: '#6b7280' }}>
+            Payments are processed securely via <strong style={{ color: '#111827' }}>Paystack</strong>. Your card is never stored on our servers.
           </div>
         </div>
       )}

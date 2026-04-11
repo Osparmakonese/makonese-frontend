@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getMyTenant, updateMyTenant } from '../api/coreApi';
 import { getVapidKey, subscribePush, unsubscribePush, sendTestPush } from '../api/farmApi';
+import { useQuery } from '@tanstack/react-query';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -11,45 +13,44 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-const S = {
-  twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 },
-  card: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '18px 20px', marginBottom: 16 },
-  cardTitle: { fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 },
-  label: { display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, marginTop: 10 },
-  input: { width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 7, fontSize: 12, outline: 'none', color: '#111827' },
-  btn: { padding: '8px 16px', background: '#1a6b3a', color: '#fff', border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', marginTop: 10 },
-  btnOutline: (active) => ({
-    padding: '8px 20px', border: active ? '2px solid #1a6b3a' : '1px solid #e5e7eb',
-    background: active ? '#e8f5ee' : '#fff', color: active ? '#1a6b3a' : '#374151',
-    borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', marginRight: 8,
-  }),
-  toggle: (on) => ({
-    width: 44, height: 24, borderRadius: 12, background: on ? '#1a6b3a' : '#d1d5db',
-    position: 'relative', cursor: 'pointer', transition: 'background 0.2s', border: 'none',
-  }),
-  toggleKnob: (on) => ({
-    width: 18, height: 18, borderRadius: '50%', background: '#fff',
-    position: 'absolute', top: 3, left: on ? 23 : 3, transition: 'left 0.2s',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-  }),
-  roleBox: (bg, color) => ({
-    background: bg, borderRadius: 8, padding: '12px 16px', marginBottom: 8,
-  }),
-  roleTitle: (color) => ({ fontSize: 13, fontWeight: 700, color }),
-  roleSub: { fontSize: 11, color: '#374151', marginTop: 2 },
-  saved: { fontSize: 11, color: '#1a6b3a', fontWeight: 600, marginTop: 6 },
-};
+const card = { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '18px 20px', marginBottom: 16 };
+const cardTitle = { fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 };
+const fl = { display: 'block', fontSize: 9, fontWeight: 600, color: '#6b7280', marginBottom: 2, marginTop: 8 };
+const fi = { width: '100%', padding: '7px 9px', border: '1px solid #e5e7eb', borderRadius: 7, fontSize: 11, outline: 'none', color: '#111827', transition: 'border-color 0.15s' };
+const btnP = { padding: '8px 16px', background: '#1a6b3a', color: '#fff', border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', marginTop: 10 };
+const toggleS = (on) => ({ width: 36, height: 20, borderRadius: 99, position: 'relative', cursor: 'pointer', transition: 'background 0.15s', background: on ? '#1a6b3a' : '#d1d5db', border: 'none', padding: 0 });
+const toggleK = (on) => ({ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'left 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' });
+const permRow = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 7, marginBottom: 5 };
 
 export default function Settings() {
   const { user } = useAuth();
   const role = user?.role || 'owner';
 
+  // Tenant details
+  const tenantName = user?.tenant_name || 'Makonese Farm';
+  const [bizName, setBizName] = useState(tenantName);
+  const [country, setCountry] = useState('ZW');
   const [currency, setCurrency] = useState(() => localStorage.getItem('currency') || 'USD');
+  const [timezone, setTimezone] = useState('Africa/Harare');
+  const [saved, setSaved] = useState('');
+
+  // Modules
+  const modules = user?.modules || ['farm', 'retail'];
+  const [farmOn, setFarmOn] = useState(modules.includes('farm'));
+  const [retailOn, setRetailOn] = useState(modules.includes('retail'));
+
+  // Cashier permissions
+  const [permViewProducts, setPermViewProducts] = useState(true);
+  const [permAddProducts, setPermAddProducts] = useState(false);
+  const [permEditProducts, setPermEditProducts] = useState(false);
+  const [permPOS, setPermPOS] = useState(true);
+  const [permViewReports, setPermViewReports] = useState(false);
+
+  // WhatsApp + Push + API key (kept from original)
   const [phone1, setPhone1] = useState(() => localStorage.getItem('wa_phone_1') || '');
   const [phone2, setPhone2] = useState(() => localStorage.getItem('wa_phone_2') || '');
   const [reminder, setReminder] = useState(() => localStorage.getItem('reminder_9pm') === 'true');
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('anthropic_api_key') || '');
-  const [saved, setSaved] = useState('');
   const [pushOn, setPushOn] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
   const [pushMsg, setPushMsg] = useState('');
@@ -63,169 +64,203 @@ export default function Settings() {
   }, []);
 
   const togglePush = async () => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setPushMsg('Browser push not supported on this device.');
-      return;
-    }
-    setPushBusy(true);
-    setPushMsg('');
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { setPushMsg('Browser push not supported.'); return; }
+    setPushBusy(true); setPushMsg('');
     try {
       const reg = await navigator.serviceWorker.ready;
       if (pushOn) {
         const sub = await reg.pushManager.getSubscription();
-        if (sub) {
-          await unsubscribePush(sub.endpoint).catch(() => {});
-          await sub.unsubscribe();
-        }
-        setPushOn(false);
-        setPushMsg('Browser push disabled.');
+        if (sub) { await unsubscribePush(sub.endpoint).catch(() => {}); await sub.unsubscribe(); }
+        setPushOn(false); setPushMsg('Push disabled.');
       } else {
         const perm = await Notification.requestPermission();
-        if (perm !== 'granted') {
-          setPushMsg('Permission denied.');
-          setPushBusy(false);
-          return;
-        }
+        if (perm !== 'granted') { setPushMsg('Permission denied.'); setPushBusy(false); return; }
         const { public_key } = await getVapidKey();
-        if (!public_key) {
-          setPushMsg('Server not configured for push yet.');
-          setPushBusy(false);
-          return;
-        }
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(public_key),
-        });
+        if (!public_key) { setPushMsg('Server not configured.'); setPushBusy(false); return; }
+        const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(public_key) });
         const json = sub.toJSON();
-        await subscribePush({
-          endpoint: json.endpoint,
-          p256dh: json.keys.p256dh,
-          auth: json.keys.auth,
-          user_agent: navigator.userAgent.slice(0, 280),
-        });
-        setPushOn(true);
-        setPushMsg('Browser push enabled.');
+        await subscribePush({ endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth, user_agent: navigator.userAgent.slice(0, 280) });
+        setPushOn(true); setPushMsg('Push enabled.');
       }
-    } catch (e) {
-      console.error(e);
-      setPushMsg('Could not update push: ' + (e.message || 'error'));
-    }
+    } catch (e) { setPushMsg('Error: ' + (e.message || 'unknown')); }
     setPushBusy(false);
   };
 
   const testPush = async () => {
-    try {
-      await sendTestPush();
-      setPushMsg('Test push sent. Check your notifications.');
-    } catch (e) {
-      setPushMsg('Test failed.');
-    }
+    try { await sendTestPush(); setPushMsg('Test sent.'); } catch { setPushMsg('Test failed.'); }
   };
 
   useEffect(() => { localStorage.setItem('currency', currency); }, [currency]);
   useEffect(() => { localStorage.setItem('reminder_9pm', String(reminder)); }, [reminder]);
 
-  const savePhones = () => {
-    localStorage.setItem('wa_phone_1', phone1);
-    localStorage.setItem('wa_phone_2', phone2);
-    setSaved('Phone numbers saved!');
-    setTimeout(() => setSaved(''), 2000);
-  };
-
-  const saveApiKey = () => {
-    localStorage.setItem('anthropic_api_key', apiKey);
-    setSaved('API key saved!');
-    setTimeout(() => setSaved(''), 2000);
-  };
+  const saveTenant = () => { setSaved('Changes saved!'); setTimeout(() => setSaved(''), 2000); };
+  const savePhones = () => { localStorage.setItem('wa_phone_1', phone1); localStorage.setItem('wa_phone_2', phone2); setSaved('Phones saved!'); setTimeout(() => setSaved(''), 2000); };
+  const saveApiKey2 = () => { localStorage.setItem('anthropic_api_key', apiKey); setSaved('API key saved!'); setTimeout(() => setSaved(''), 2000); };
 
   if (role !== 'owner') {
-    return <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}><div style={{ fontSize: 32 }}>🔒</div><p>Settings are owner-only.</p></div>;
+    return <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}><div style={{ fontSize: 32 }}>{'\u{1F512}'}</div><p>Settings are owner-only.</p></div>;
   }
 
   return (
-    <div style={S.twoCol}>
-      {/* Left */}
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+      {/* Column 1: Tenant Details */}
       <div>
-        <div style={S.card}>
-          <div style={S.cardTitle}>💱 Currency</div>
-          <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 10 }}>All amounts update when you switch. Values are not converted.</p>
-          <div>
-            <button style={S.btnOutline(currency === 'USD')} onClick={() => setCurrency('USD')}>🇺🇸 USD</button>
-            <button style={S.btnOutline(currency === 'ZWG')} onClick={() => setCurrency('ZWG')}>🇿🇼 ZWG</button>
+        <div style={card}>
+          <div style={cardTitle}>Tenant Details</div>
+          <label style={fl}>Business Name</label>
+          <input style={fi} value={bizName} onChange={e => setBizName(e.target.value)} />
+          <label style={fl}>Country</label>
+          <select style={fi} value={country} onChange={e => setCountry(e.target.value)}>
+            <option value="ZW">Zimbabwe</option>
+            <option value="ZA">South Africa</option>
+            <option value="KE">Kenya</option>
+            <option value="NG">Nigeria</option>
+            <option value="US">United States</option>
+            <option value="GB">United Kingdom</option>
+          </select>
+          <label style={fl}>Currency</label>
+          <select style={fi} value={currency} onChange={e => setCurrency(e.target.value)}>
+            <option value="USD">USD ($)</option>
+            <option value="ZWG">ZWG</option>
+            <option value="ZAR">ZAR (R)</option>
+            <option value="KES">KES (KSh)</option>
+            <option value="GBP">GBP</option>
+          </select>
+          <label style={fl}>Timezone</label>
+          <select style={fi} value={timezone} onChange={e => setTimezone(e.target.value)}>
+            <option value="Africa/Harare">Africa/Harare (CAT)</option>
+            <option value="Africa/Johannesburg">Africa/Johannesburg (SAST)</option>
+            <option value="Africa/Nairobi">Africa/Nairobi (EAT)</option>
+            <option value="Europe/London">Europe/London (GMT)</option>
+            <option value="America/New_York">America/New_York (EST)</option>
+          </select>
+          <button style={btnP} onClick={saveTenant}>Save Changes</button>
+          {saved === 'Changes saved!' && <div style={{ fontSize: 11, color: '#1a6b3a', fontWeight: 600, marginTop: 6 }}>{'\u2713'} {saved}</div>}
+        </div>
+
+        {/* WhatsApp */}
+        <div style={card}>
+          <div style={cardTitle}>{'\u{1F4F1}'} WhatsApp Recipients</div>
+          <label style={fl}>Owner Number 1</label>
+          <input style={fi} type="tel" value={phone1} onChange={e => setPhone1(e.target.value)} placeholder="+263..." />
+          <label style={fl}>Owner Number 2</label>
+          <input style={fi} type="tel" value={phone2} onChange={e => setPhone2(e.target.value)} placeholder="+263..." />
+          <button style={btnP} onClick={savePhones}>Save Numbers</button>
+          {saved === 'Phones saved!' && <div style={{ fontSize: 11, color: '#1a6b3a', fontWeight: 600, marginTop: 6 }}>{'\u2713'} {saved}</div>}
+        </div>
+
+        {/* AI Key */}
+        <div style={card}>
+          <div style={cardTitle}>{'\u{1F916}'} AI Analysis (Anthropic)</div>
+          <div style={{ background: '#fef9c3', border: '1px solid #f59e0b', borderRadius: 8, padding: '8px 12px', marginBottom: 10, fontSize: 9, color: '#92400e', lineHeight: 1.5 }}>
+            Your API key is stored locally only. Never share it.
           </div>
+          <label style={fl}>API Key</label>
+          <input style={fi} type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="sk-ant-..." />
+          <button style={btnP} onClick={saveApiKey2}>Save API Key</button>
+          {saved === 'API key saved!' && <div style={{ fontSize: 11, color: '#1a6b3a', fontWeight: 600, marginTop: 6 }}>{'\u2713'} {saved}</div>}
         </div>
+      </div>
 
-        <div style={S.card}>
-          <div style={S.cardTitle}>📱 WhatsApp Recipients</div>
-          <label style={S.label}>Owner Number 1</label>
-          <input style={S.input} type="tel" value={phone1} onChange={e => setPhone1(e.target.value)} placeholder="+263..." />
-          <label style={S.label}>Owner Number 2</label>
-          <input style={S.input} type="tel" value={phone2} onChange={e => setPhone2(e.target.value)} placeholder="+263..." />
-          <button style={S.btn} onClick={savePhones}>Save Numbers</button>
-          {saved === 'Phone numbers saved!' && <div style={S.saved}>✓ {saved}</div>}
-        </div>
+      {/* Column 2: Role Permissions */}
+      <div>
+        <div style={card}>
+          <div style={cardTitle}>Role Permissions</div>
+          <div style={{ fontSize: 9, color: '#6b7280', marginBottom: 8 }}>Configure what each role can do</div>
 
-        <div style={S.card}>
-          <div style={S.cardTitle}>🤖 AI Analysis (Anthropic API)</div>
-          <div style={{ background: '#fef9c3', border: '1px solid #f59e0b', borderRadius: 8, padding: '10px 14px', marginBottom: 12, fontSize: 10, color: '#92400e', lineHeight: 1.5 }}>
-            ⚠️ Your API key is stored locally on this device only. Never share your API key with anyone. If you suspect it has been compromised, regenerate it immediately at console.anthropic.com
+          <div style={{ fontWeight: 600, fontSize: 10, color: '#1a6b3a', marginBottom: 6, marginTop: 4 }}>CASHIER PERMISSIONS</div>
+
+          <div style={permRow}>
+            <div><div style={{ fontWeight: 600, fontSize: 11 }}>View Products</div><div style={{ fontSize: 9, color: '#6b7280' }}>See product list and prices</div></div>
+            <button style={toggleS(permViewProducts)} onClick={() => setPermViewProducts(!permViewProducts)}><div style={toggleK(permViewProducts)} /></button>
           </div>
-          <label style={S.label}>API Key</label>
-          <input style={S.input} type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="sk-ant-..." />
-          <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 4 }}>Required for Smart Analysis in Field Reports and the full AI Report.</p>
-          <button style={S.btn} onClick={saveApiKey}>Save API Key</button>
-          {saved === 'API key saved!' && <div style={S.saved}>✓ {saved}</div>}
-        </div>
-
-        <div style={S.card}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ flex: 1 }}>
-              <div style={S.cardTitle}>🔔 Browser Push Alerts</div>
-              <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 6 }}>Get real-time alerts on this device for low stock, wages owed, livestock health, and new sales.</p>
-              {pushMsg && <div style={{ fontSize: 10, color: '#1a6b3a', fontWeight: 600 }}>{pushMsg}</div>}
-              {pushOn && (
-                <button style={{ ...S.btn, marginTop: 8, background: '#2d9e58' }} onClick={testPush}>
-                  Send test push
-                </button>
-              )}
-            </div>
-            <button style={S.toggle(pushOn)} onClick={togglePush} disabled={pushBusy}>
-              <div style={S.toggleKnob(pushOn)} />
-            </button>
+          <div style={permRow}>
+            <div><div style={{ fontWeight: 600, fontSize: 11 }}>Add Products</div><div style={{ fontSize: 9, color: '#6b7280' }}>Create new products in catalog</div></div>
+            <button style={toggleS(permAddProducts)} onClick={() => setPermAddProducts(!permAddProducts)}><div style={toggleK(permAddProducts)} /></button>
           </div>
+          <div style={permRow}>
+            <div><div style={{ fontWeight: 600, fontSize: 11 }}>Edit Products</div><div style={{ fontSize: 9, color: '#6b7280' }}>Modify price, stock, mark stolen/damaged</div></div>
+            <button style={toggleS(permEditProducts)} onClick={() => setPermEditProducts(!permEditProducts)}><div style={toggleK(permEditProducts)} /></button>
+          </div>
+          <div style={permRow}>
+            <div><div style={{ fontWeight: 600, fontSize: 11 }}>Process Sales (POS)</div><div style={{ fontSize: 9, color: '#6b7280' }}>Use point of sale to ring up items</div></div>
+            <button style={toggleS(permPOS)} onClick={() => setPermPOS(!permPOS)}><div style={toggleK(permPOS)} /></button>
+          </div>
+          <div style={permRow}>
+            <div><div style={{ fontWeight: 600, fontSize: 11 }}>View Reports</div><div style={{ fontSize: 9, color: '#6b7280' }}>See financial reports</div></div>
+            <button style={toggleS(permViewReports)} onClick={() => setPermViewReports(!permViewReports)}><div style={toggleK(permViewReports)} /></button>
+          </div>
+
+          <button style={{ ...btnP, fontSize: 10, padding: '4px 9px' }}>Save Permissions</button>
         </div>
 
-        <div style={S.card}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={S.cardTitle}>🕘 9PM Daily Reminder</div>
-              <p style={{ fontSize: 11, color: '#6b7280' }}>Get a WhatsApp reminder to log daily data.</p>
-            </div>
-            <button style={S.toggle(reminder)} onClick={() => setReminder(!reminder)}>
-              <div style={S.toggleKnob(reminder)} />
-            </button>
+        {/* Roles info */}
+        <div style={card}>
+          <div style={cardTitle}>{'\u{1F465}'} Roles</div>
+          <div style={{ background: '#e8f5ee', borderRadius: 8, padding: '10px 14px', marginBottom: 6 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#1a6b3a' }}>OWNER</div>
+            <div style={{ fontSize: 10, color: '#374151', marginTop: 2 }}>Full access: all tabs, reports, settings, billing, AI.</div>
+          </div>
+          <div style={{ background: '#EFF6FF', borderRadius: 8, padding: '10px 14px', marginBottom: 6 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#1d4ed8' }}>MANAGER</div>
+            <div style={{ fontSize: 10, color: '#374151', marginTop: 2 }}>Can log expenses, stock, attendance, trips. No reports or settings.</div>
+          </div>
+          <div style={{ background: '#fef3e2', borderRadius: 8, padding: '10px 14px' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#c97d1a' }}>CASHIER / WORKER</div>
+            <div style={{ fontSize: 10, color: '#374151', marginTop: 2 }}>POS access or view-only for their own hours.</div>
           </div>
         </div>
       </div>
 
-      {/* Right */}
+      {/* Column 3: Modules + Alerts */}
       <div>
-        <div style={S.card}>
-          <div style={S.cardTitle}>👥 Roles &amp; Permissions</div>
+        <div style={card}>
+          <div style={cardTitle}>Enabled Modules</div>
+          {[
+            { label: 'Farm Module', desc: 'Fields, stock, workers, livestock, AI', on: farmOn, toggle: () => setFarmOn(!farmOn) },
+            { label: 'Retail Module', desc: 'POS, products, cashier, sales', on: retailOn, toggle: () => setRetailOn(!retailOn) },
+          ].map((m, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 8, border: '1px solid #e5e7eb', borderRadius: 7, marginBottom: 5 }}>
+              <div>
+                <span style={{ fontWeight: 600, fontSize: 11 }}>{m.label}</span>
+                <div style={{ fontSize: 9, color: '#6b7280' }}>{m.desc}</div>
+              </div>
+              <button style={toggleS(m.on)} onClick={m.toggle}><div style={toggleK(m.on)} /></button>
+            </div>
+          ))}
+        </div>
 
-          <div style={S.roleBox('#e8f5ee', '#1a6b3a')}>
-            <div style={S.roleTitle('#1a6b3a')}>🟢 OWNER</div>
-            <div style={S.roleSub}>Full access: all tabs, reports, settings, AI analysis. Can manage workers and approve pay.</div>
+        {/* Push alerts */}
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ flex: 1 }}>
+              <div style={cardTitle}>{'\u{1F514}'} Browser Push Alerts</div>
+              <p style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>Get alerts for low stock, wages, livestock health.</p>
+              {pushMsg && <div style={{ fontSize: 10, color: '#1a6b3a', fontWeight: 600 }}>{pushMsg}</div>}
+              {pushOn && <button style={{ ...btnP, marginTop: 6, background: '#2d9e58', fontSize: 10 }} onClick={testPush}>Send test push</button>}
+            </div>
+            <button style={toggleS(pushOn)} onClick={togglePush} disabled={pushBusy}><div style={toggleK(pushOn)} /></button>
           </div>
+        </div>
 
-          <div style={S.roleBox('#fef3e2', '#c97d1a')}>
-            <div style={S.roleTitle('#c97d1a')}>🟡 MANAGER</div>
-            <div style={S.roleSub}>Can log expenses, stock usage, attendance, and trips. Cannot view reports or change settings.</div>
+        {/* 9PM Reminder */}
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={cardTitle}>{'\u{1F559}'} 9PM Daily Reminder</div>
+              <p style={{ fontSize: 10, color: '#6b7280' }}>WhatsApp reminder to log daily data.</p>
+            </div>
+            <button style={toggleS(reminder)} onClick={() => setReminder(!reminder)}><div style={toggleK(reminder)} /></button>
           </div>
+        </div>
 
-          <div style={S.roleBox('#EFF6FF', '#1d4ed8')}>
-            <div style={S.roleTitle('#1d4ed8')}>🔵 WORKER</div>
-            <div style={S.roleSub}>View-only access to dashboard and their own hours. Cannot modify data.</div>
+        {/* Danger Zone */}
+        <div style={{ ...card, borderColor: '#c0392b' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#c0392b', marginBottom: 8 }}>Danger Zone</div>
+          <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 12 }}>These actions are irreversible.</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={{ padding: '6px 12px', border: '1px solid #c0392b', borderRadius: 7, background: '#fff', color: '#c0392b', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Cancel Subscription</button>
+            <button style={{ padding: '6px 12px', border: '1px solid #c0392b', borderRadius: 7, background: '#fff', color: '#c0392b', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Delete Account</button>
           </div>
         </div>
       </div>

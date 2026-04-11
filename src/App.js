@@ -88,7 +88,7 @@ const PAGE_META = {
   'Hours & Pay': { title: 'Hours & Pay', sub: 'Attendance and payroll' },
   'Report': { title: 'Financial Report', sub: 'Season P&L - Owner only' },
   'Farm Assets': { title: 'Farm Assets', sub: 'Equipment and long-term investments' },
-  'Settings': { title: 'Settings', sub: 'System configuration' },
+  'Settings': { title: 'Settings', sub: 'Tenant configuration - Pewil' },
   'Import': { title: 'Import Data', sub: 'Upload Excel to populate your farm data' },
   'Harvest': { title: 'Harvest & Yield', sub: 'Track harvest output per field' },
   'Budget': { title: 'Season Budget', sub: 'Plan your spending vs actual' },
@@ -96,13 +96,13 @@ const PAGE_META = {
   'Loans': { title: 'Loans & Credit', sub: 'Track borrowing and repayments' },
   'Market Prices': { title: 'Market Prices', sub: 'Commodity price tracking' },
   'Economics': { title: 'Farm Economics', sub: 'Profitability and enterprise analysis' },
-  'Admin Panel': { title: 'Super Admin Panel', sub: 'System administration - visible to you only' },
+  'Admin Panel': { title: 'Super Admin Panel', sub: 'Pewil system administration' },
   // Retail module
   'Retail': { title: 'Retail Dashboard', sub: 'Store overview and daily metrics' },
   'Products': { title: 'Products', sub: 'Product catalog and inventory' },
   'POS': { title: 'Point of Sale', sub: 'Process sales and manage cart' },
   // Billing
-  'Billing': { title: 'Billing', sub: 'Subscription, invoices, and usage' },
+  'Billing': { title: 'Billing', sub: 'Pewil subscription, invoices, and usage' },
 };
 
 /* --- */
