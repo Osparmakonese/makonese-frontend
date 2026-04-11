@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 
@@ -106,6 +106,12 @@ export default function Login() {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+        <p style={{ fontSize: 13, color: '#6b7280', marginTop: 20 }}>
+          Don't have an account?{' '}
+          <Link to="/register" style={{ color: '#1a6b3a', fontWeight: 600, textDecoration: 'none' }}>
+            Start free trial
+          </Link>
+        </p>
         <p style={S.footer}>Forgot your password? Contact the system owner.</p>
       </div>
     </div>

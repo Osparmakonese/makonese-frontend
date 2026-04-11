@@ -32,6 +32,7 @@ import Loans from './pages/Loans';
 import MarketPrices from './pages/MarketPrices';
 import Economics from './pages/Economics';
 import Billing from './pages/Billing';
+import Register from './pages/Register';
 import RetailDashboard from './pages/RetailDashboard';
 import Products from './pages/Products';
 import POS from './pages/POS';
@@ -188,6 +189,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route
         path="/"
         element={

@@ -150,6 +150,19 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
   const tenantName = user?.tenant_name || 'Makonese Farm';
   const tenantPlan = user?.plan || 'free';
   const planLabel = tenantPlan.charAt(0).toUpperCase() + tenantPlan.slice(1) + ' Plan';
+  const modules = user?.modules || ['farm'];
+
+  // Module-based section filtering:
+  // MAIN, LIVESTOCK, ECONOMICS, PEOPLE = require 'farm' module
+  // RETAIL = requires 'retail' module
+  // OWNER ONLY = always shown for owners
+  const FARM_SECTIONS = ['MAIN', 'LIVESTOCK', 'ECONOMICS', 'PEOPLE'];
+  const RETAIL_SECTIONS = ['RETAIL'];
+  const shouldShowSection = (sectionName) => {
+    if (FARM_SECTIONS.includes(sectionName)) return modules.includes('farm');
+    if (RETAIL_SECTIONS.includes(sectionName)) return modules.includes('retail');
+    return true; // OWNER ONLY always shows
+  };
 
   useEffect(() => {
     NAV_ITEMS.forEach(section => {
@@ -207,6 +220,7 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
       <nav style={S.nav}>
         {NAV_ITEMS.map((section, idx) => {
           if (section.ownerOnly && role !== 'owner') return null;
+          if (!shouldShowSection(section.section)) return null;
           const isCollapsible = section.collapsible;
           const isExpanded = isCollapsible ? !!expanded[section.section] : true;
           const hasActive = sectionHasActive(section);

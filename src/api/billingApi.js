@@ -12,3 +12,10 @@ export const getInvoices = () => api.get('/billing/billing/invoices/').then(r =>
 
 // Usage
 export const getUsage = () => api.get('/billing/billing/usage/').then(r => r.data);
+
+// Paystack payment
+export const initializePayment = (planSlug) =>
+  api.post('/billing/billing/initialize_payment/', { plan_slug: planSlug }).then(r => r.data);
+
+export const createSubscription = (data) =>
+  api.post('/billing/billing/create_subscription/', data).then(r => r.data);
