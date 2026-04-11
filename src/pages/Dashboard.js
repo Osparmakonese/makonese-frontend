@@ -165,10 +165,10 @@ export default function Dashboard() {
       {/* ═══ ROW 2: METRIC CARDS ═══ */}
       <div className="metric-grid-desktop" style={S.metricsGrid}>
         {[
-          { label: 'Total Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: '\u{1F4B0}', pct: 100, trend: 'Season total' },
-          { label: 'Total Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: '\u{1F4C9}', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of revenue` },
-          { label: 'Wages Owed', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: '\u{1F477}', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
-          { label: 'Net Position', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? '\u2714' : '\u2193', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profitable' : 'Loss', isNet: true },
+          { label: 'Total Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: '💰', pct: 100, trend: 'Season total' },
+          { label: 'Total Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: '📉', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of revenue` },
+          { label: 'Wages Owed', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: '👷', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
+          { label: 'Net Position', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? '✔' : '↓', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profitable' : 'Loss', isNet: true },
         ].map((m, i) => (
           <div key={i} style={m.isNet ? S.metricCardHighlight(net >= 0) : S.metricCard}>
             <div style={S.metricIcon(m.bg)}>{m.icon}</div>
@@ -183,10 +183,10 @@ export default function Dashboard() {
       {/* Mobile metrics */}
       <div className="metric-grid-mobile">
         {[
-          { label: 'Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: '\u{1F4B0}', pct: 100, trend: 'Season total' },
-          { label: 'Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: '\u{1F4C9}', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of rev` },
-          { label: 'Wages', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: '\u{1F477}', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
-          { label: 'Net', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? '\u2714' : '\u2193', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profit' : 'Loss' },
+          { label: 'Revenue', value: fmt(revenue), color: '#1a6b3a', bg: '#e8f5ee', icon: '💰', pct: 100, trend: 'Season total' },
+          { label: 'Costs', value: fmt(costs), color: '#c0392b', bg: '#fdecea', icon: '📉', pct: revenue > 0 ? (costs/revenue)*100 : 0, trend: `${revenue > 0 ? Math.round((costs/revenue)*100) : 0}% of rev` },
+          { label: 'Wages', value: fmt(wages), color: '#c97d1a', bg: '#fef3e2', icon: '👷', pct: revenue > 0 ? (wages/revenue)*100 : 0, trend: `${workers.length} workers` },
+          { label: 'Net', value: fmt(net), color: net >= 0 ? '#1a6b3a' : '#c0392b', bg: net >= 0 ? '#e8f5ee' : '#fdecea', icon: net >= 0 ? '✔' : '↓', pct: revenue > 0 ? Math.min(Math.abs(net)/revenue*100, 100) : 0, trend: net >= 0 ? 'Profit' : 'Loss' },
         ].map((m, i) => (
           <div key={i} className="metric-card-mobile">
             <div className="mc-lbl"><div className="mc-ico" style={{ background: m.bg }}>{m.icon}</div> {m.label}</div>
@@ -240,7 +240,7 @@ export default function Dashboard() {
         {/* AI Morning Briefing */}
         <div style={{ ...card, display: 'flex', flexDirection: 'column' }}>
           <div style={{ ...sectionLabel, marginBottom: 8 }}>
-            {'\u{1F4A1}'} Today's Briefing
+            💡 Today's Briefing
             {briefing?.total_alerts > 0 && (
               <span style={{ background: '#fef3e2', color: '#92400e', fontSize: 8, fontWeight: 700, padding: '1px 6px', borderRadius: 8, marginLeft: 4 }}>
                 {briefing.total_alerts}
@@ -253,10 +253,10 @@ export default function Dashboard() {
                 {briefing.insights.slice(0, 4).map((insight, i) => {
                   const colors = { danger: '#c0392b', warning: '#c97d1a', success: '#1a6b3a', info: '#0369a1' };
                   const bgs = { danger: '#fdecea', warning: '#fef3e2', success: '#e8f5ee', info: '#eff6ff' };
-                  const icons = { loan: '\u{1F3E6}', overdue: '\u26A0\uFE0F', water: '\u{1F4A7}', budget: '\u{1F4CB}', price: '\u{1F4C8}', wages: '\u{1F477}', stock: '\u{1F4E6}', health: '\u{1F489}' };
+                  const icons = { loan: '🏢', overdue: '⚠️', water: '💧', budget: '📋', price: '📈', wages: '👷', stock: '📦', health: '💉' };
                   return (
                     <div key={i} style={{ display: 'flex', gap: 8, padding: '6px 8px', background: bgs[insight.type] || '#f9fafb', borderRadius: 6, borderLeft: `3px solid ${colors[insight.type] || '#6b7280'}` }}>
-                      <span style={{ fontSize: 14, flexShrink: 0 }}>{icons[insight.icon] || '\u{1F4CC}'}</span>
+                      <span style={{ fontSize: 14, flexShrink: 0 }}>{icons[insight.icon] || '📌'}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: '#111827' }}>{insight.title}</div>
                         <div style={{ fontSize: 9, color: '#6b7280', marginTop: 1 }}>{insight.detail}</div>
@@ -267,7 +267,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '16px 0', color: '#9ca3af', fontSize: 11 }}>
-                {'\u2705'} All clear — no urgent items today
+                ✅ All clear — no urgent items today
               </div>
             )}
           </div>
@@ -276,16 +276,16 @@ export default function Dashboard() {
         {/* Achievements + Quick Stats */}
         <div style={{ ...card, display: 'flex', flexDirection: 'column' }}>
           <div style={sectionLabel}>
-            {'\u{1F3C6}'} Achievements{achievementsData?.total_earned > 0 && ` (${achievementsData.total_earned})`}
+            🏆 Achievements{achievementsData?.total_earned > 0 && ` (${achievementsData.total_earned})`}
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             {achievementsData?.achievements?.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
                 {achievementsData.achievements.slice(0, 6).map(a => {
-                  const badgeIcons = { revenue: '\u{1F4B0}', profit: '\u2705', harvest: '\u{1F33E}', debt: '\u{1F513}', diverse: '\u{1F331}', livestock: '\u{1F404}', active: '\u{1F525}', water: '\u{1F4A7}', field: '\u{1F3DE}\uFE0F' };
+                  const badgeIcons = { revenue: '💰', profit: '✅', harvest: '🌾', debt: '🔓', diverse: '🌱', livestock: '🐄', active: '🔥', water: '💧', field: '🏞️' };
                   return (
                     <div key={a.key} style={{ background: '#f9fafb', borderRadius: 8, padding: '8px 4px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-                      <div style={{ fontSize: 18, marginBottom: 2 }}>{badgeIcons[a.icon] || '\u{1F3C6}'}</div>
+                      <div style={{ fontSize: 18, marginBottom: 2 }}>{badgeIcons[a.icon] || '🏆'}</div>
                       <div style={{ fontSize: 8, fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>{a.title}</div>
                     </div>
                   );
@@ -304,7 +304,7 @@ export default function Dashboard() {
       {seasonal?.metrics && (
         <div style={{ ...card, marginBottom: 16, padding: '14px 16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div style={sectionLabel}>{'\u{1F4C5}'} Season vs Season</div>
+            <div style={sectionLabel}>📅 Season vs Season</div>
             <div style={{ fontSize: 9, color: '#9ca3af' }}>
               {seasonal.current_period} vs {seasonal.previous_period}
             </div>
@@ -380,7 +380,7 @@ export default function Dashboard() {
       {/* ═══ ROW 5: MAIN CONTENT — Fields + Trips | Sidebar ═══ */}
       <div className="two-col-layout content-area" style={S.twoCol}>
         <div>
-          <div style={S.sectionTitle}>{'\u{1F33E}'} Active Fields</div>
+          <div style={S.sectionTitle}>🌾 Active Fields</div>
           <div className="field-cards-desktop" style={S.fieldGrid}>
             {activeFields.slice(0, 4).map(f => {
               const fRev = f.total_revenue || 0;
@@ -437,7 +437,7 @@ export default function Dashboard() {
           </div>
 
           {/* Market Trips */}
-          <div style={S.sectionTitle}>{'\u{1F69B}'} Recent Market Trips</div>
+          <div style={S.sectionTitle}>🚛 Recent Market Trips</div>
           <div style={{ position: 'relative', height: 65, borderRadius: 10, overflow: 'hidden', marginBottom: 12 }}>
             <img src={IMAGES.truck} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(180,40,0,0.78), rgba(0,0,0,0.2))' }} />
@@ -484,7 +484,7 @@ export default function Dashboard() {
 
           {/* Cost Breakdown */}
           <div style={S.rightCard}>
-            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>{'\u{1F4CA}'} Cost Breakdown</div>
+            <div style={{ ...S.sectionTitle, marginBottom: 10 }}>📊 Cost Breakdown</div>
             {Object.entries(breakdown).map(([cat, val], i) => (
               <div key={cat} style={S.barRow}>
                 <span style={S.barLabel}>{cat}</span>
@@ -523,15 +523,15 @@ export default function Dashboard() {
           {/* Livestock Summary */}
           {d.livestock && d.livestock.total_animals > 0 && (
             <div style={S.rightCard}>
-              <div style={{ ...S.sectionTitle, marginBottom: 8 }}>{'\u{1F404}'} Livestock</div>
+              <div style={{ ...S.sectionTitle, marginBottom: 8 }}>🐄 Livestock</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 8 }}>
                 {[
-                  { label: 'Cattle', val: d.livestock.cattle, emoji: '\u{1F404}' },
-                  { label: 'Goats', val: d.livestock.goats, emoji: '\u{1F410}' },
-                  { label: 'Sheep', val: d.livestock.sheep, emoji: '\u{1F411}' },
-                  { label: 'Pigs', val: d.livestock.pigs, emoji: '\u{1F437}' },
-                  { label: 'Broilers', val: d.livestock.broilers, emoji: '\u{1F414}' },
-                  { label: 'Layers', val: d.livestock.layers, emoji: '\u{1F95A}' },
+                  { label: 'Cattle', val: d.livestock.cattle, emoji: '🐄' },
+                  { label: 'Goats', val: d.livestock.goats, emoji: '🐐' },
+                  { label: 'Sheep', val: d.livestock.sheep, emoji: '🐑' },
+                  { label: 'Pigs', val: d.livestock.pigs, emoji: '🐗' },
+                  { label: 'Broilers', val: d.livestock.broilers, emoji: '🐔' },
+                  { label: 'Layers', val: d.livestock.layers, emoji: '🥚' },
                 ].filter(a => a.val > 0).map((a, i) => (
                   <div key={i} style={{ textAlign: 'center', background: '#f9fafb', borderRadius: 6, padding: '4px 2px' }}>
                     <div style={{ fontSize: 14 }}>{a.emoji}</div>
@@ -559,7 +559,7 @@ export default function Dashboard() {
 
           {/* Wages Owed */}
           <div style={S.rightCard}>
-            <div style={{ ...S.sectionTitle, marginBottom: 8 }}>{'\u{1F4B0}'} Wages Owed</div>
+            <div style={{ ...S.sectionTitle, marginBottom: 8 }}>💰 Wages Owed</div>
             {workers.filter(w => (w.wages_owed || w.owed || 0) > 0).slice(0, 4).map((w, i) => {
               const ac = avatarColor(w.name || '');
               return (

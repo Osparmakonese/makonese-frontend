@@ -163,13 +163,13 @@ export default function Billing({ onTabChange }) {
 
         <div style={S.btnGroup}>
           <button style={S.btn} onClick={() => setActiveModal('plan')}>
-            \u{1F4CB} Change Plan
+            {'\u{1F4CB}'} Change Plan
           </button>
           <button style={S.btnSecondary} onClick={() => setActiveModal('payment')}>
-            \u{1F4B3} Payment Method
+            {'\u{1F4B3}'} Payment Method
           </button>
           <button style={S.btnSecondary} onClick={() => setActiveModal('team')}>
-            \u{1F465} Team &amp; Users
+            {'\u{1F465}'} Team &amp; Users
           </button>
         </div>
       </div>
@@ -259,7 +259,7 @@ export default function Billing({ onTabChange }) {
                         rel="noopener noreferrer"
                         style={{ color: '#1a6b3a', fontWeight: 600, textDecoration: 'none', cursor: 'pointer' }}
                       >
-                        Download \u{1F4C4}
+                        Download {'\u{1F4C4}'}
                       </a>
                     ) : (
                       <span style={{ color: '#9ca3af' }}>—</span>
@@ -271,7 +271,7 @@ export default function Billing({ onTabChange }) {
           </table>
         ) : (
           <div style={S.emptyState}>
-            <div style={S.emptyIcon}>\u{1F4CA}</div>
+            <div style={S.emptyIcon}>{'\u{1F4CA}'}</div>
             <p>No invoices yet. Your first invoice will appear here.</p>
           </div>
         )}
@@ -279,7 +279,7 @@ export default function Billing({ onTabChange }) {
 
       {/* FOOTER NOTE */}
       <div style={S.footerNote}>
-        <strong>\u{1F512} Secure Payments:</strong> All payments are processed securely through Paystack. Your payment information is never stored on our servers. For assistance with billing, contact support@pewil.app
+        <strong>{'\u{1F512}'} Secure Payments:</strong> All payments are processed securely through Paystack. Your payment information is never stored on our servers. For assistance with billing, contact support@pewil.app
       </div>
 
       {/* MODALS - Placeholder for future implementation */}

@@ -621,7 +621,7 @@ export default function Products() {
         ) : (
           <div style={S.emptyState}>
             <div style={{ fontSize: 48, marginBottom: 10 }}>
-              {'\u{1F50D'}
+              {'🔍'}
             </div>
             <p>No products found</p>
             <p style={{ fontSize: 11, marginTop: 6 }}>

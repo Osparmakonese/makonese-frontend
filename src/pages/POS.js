@@ -44,7 +44,7 @@ function ReceiptModal({ isOpen, onClose, receipt }) {
           }}
         >
           <div style={{ fontSize: 32, marginBottom: 10 }}>
-            {'\u{2713'}
+            {'✔'}
           </div>
           <h2
             style={{
@@ -774,7 +774,7 @@ export default function POS() {
           ) : (
             <div style={S.emptyCart}>
               <div style={{ fontSize: 32, marginBottom: 10 }}>
-                {'\u{1F6D2'}
+                {'🛒'}
               </div>
               <p>Cart is empty</p>
               <p style={{ fontSize: 10, marginTop: 6 }}>
