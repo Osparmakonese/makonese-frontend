@@ -13,9 +13,19 @@ export const getInvoices = () => api.get('/billing/billing/invoices/').then(r =>
 // Usage
 export const getUsage = () => api.get('/billing/billing/usage/').then(r => r.data);
 
-// Paystack payment
-export const initializePayment = (planSlug) =>
-  api.post('/billing/billing/initialize_payment/', { plan_slug: planSlug }).then(r => r.data);
+// Payment methods — which providers are configured
+export const getPaymentMethods = () => api.get('/billing/billing/payment_methods/').then(r => r.data);
 
+// Initialize payment (multi-provider)
+// body: { plan_slug, payment_method: 'card'|'ecocash'|'onemoney'|'mobile_money', phone_number? }
+export const initializePayment = (data) =>
+  api.post('/billing/billing/initialize_payment/', data).then(r => r.data);
+
+// Verify payment status (for mobile money polling)
+// body: { reference, provider: 'paynow'|'pesepay' }
+export const verifyPayment = (data) =>
+  api.post('/billing/billing/verify_payment/', data).then(r => r.data);
+
+// Legacy: Paystack subscription
 export const createSubscription = (data) =>
   api.post('/billing/billing/create_subscription/', data).then(r => r.data);
