@@ -1,4 +1,4 @@
-// Production: https://makonese-farm-production.up.railway.app
+// Production: https://pewil-production.up.railway.app
 import axios from 'axios';
 
 const api = axios.create({
