@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './context/AuthContext';
 import { getDashboard, getLowStock } from './api/farmApi';
 import Layout from './components/Layout';
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Fields from './pages/Fields';
@@ -32,6 +33,7 @@ import Loans from './pages/Loans';
 import MarketPrices from './pages/MarketPrices';
 import Economics from './pages/Economics';
 import Billing from './pages/Billing';
+import TeamManagement from './pages/TeamManagement';
 import Register from './pages/Register';
 import RetailDashboard from './pages/RetailDashboard';
 import Products from './pages/Products';
@@ -70,6 +72,7 @@ const PAGES = {
   'POS': POS,
   // Billing & Account
   'Billing': Billing,
+  'Team': TeamManagement,
 };
 
 /* --- */
@@ -104,6 +107,7 @@ const PAGE_META = {
   'POS': { title: 'Point of Sale', sub: 'Process sales and manage cart' },
   // Billing
   'Billing': { title: 'Billing', sub: 'Pewil subscription, invoices, and usage' },
+  'Team': { title: 'Team & Users', sub: 'Manage team members and permissions' },
 };
 
 /* --- */
@@ -133,6 +137,7 @@ const PRIMARY_ACTIONS = {
   'Products': '+ Add product',
   'POS': null,
   'Billing': 'Change Plan',
+  'Team': '+ Invite User',
 };
 
 /* --- */
@@ -188,10 +193,11 @@ function FarmApp() {
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route
-        path="/"
+        path="/app"
         element={
           <ProtectedRoute>
             <FarmApp />

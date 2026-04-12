@@ -132,6 +132,7 @@ const NAV_ITEMS = [
   ]},
   { section: 'OWNER ONLY', ownerOnly: true, collapsible: false, items: [
     { key: 'Report', emoji: '\u{1F4C8}', label: 'Report' },
+    { key: 'Team', emoji: '\u{1F465}', label: 'Team' },
     { key: 'Billing', emoji: '\u{1F4B3}', label: 'Billing' },
     { key: 'Settings', emoji: '\u2699\uFE0F', label: 'Settings' },
     { key: 'Import', emoji: '\u{1F4E5}', label: 'Import' },
