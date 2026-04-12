@@ -370,7 +370,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features Grid */}
-      <section id="features" style={{ padding: '4rem 2rem', background: 'white', marginTop: '4rem' }}>
+      <section id="features" style={{ padding: '4rem 2rem', background: 'white' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h2 style={{
             fontSize: '2.5rem',
@@ -379,7 +379,7 @@ const LandingPage = () => {
             marginBottom: '3rem',
             color: COLORS.ink,
           }}>
-            Powerful Features
+            Everything You Need
           </h2>
           <div style={{
             display: 'grid',
@@ -414,11 +414,10 @@ const LandingPage = () => {
 
       {/* CTA Section */}
       <section style={{
-        background: `linear-gradient(135deg, ${COLORS.green}, ${COLORS.green2})`,
+        background: `linear-gradient(135deg, ${COLORS.greenDark}, ${COLORS.green}, ${COLORS.green2})`,
         color: 'white',
         padding: '4rem 2rem',
         textAlign: 'center',
-        marginTop: '4rem',
       }}>
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
           <h2 style={{

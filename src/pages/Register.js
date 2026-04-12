@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Logo from '../components/Logo';
 
 const S = {
   wrapper: {
@@ -11,10 +10,9 @@ const S = {
     flex: 1,
     backgroundImage: 'url(https://cdn.pixabay.com/photo/2016/11/22/21/57/apparel-1850804_1280.jpg)',
     backgroundSize: 'cover', backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
     display: 'flex', flexDirection: 'column', alignItems: 'center',
     justifyContent: 'center', padding: '40px 20px', position: 'relative',
-    '@media (max-width: 900px)': { display: 'none' },
+    minHeight: '100vh',
   },
   leftOverlay: {
     position: 'absolute', inset: 0,
@@ -32,16 +30,20 @@ const S = {
     fontSize: 16, lineHeight: 1.6, marginBottom: 40, opacity: 0.95,
   },
   pillsContainer: {
-    display: 'flex', flexDirection: 'column', gap: 12,
+    display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center',
   },
   pill: {
     background: 'rgba(255,255,255,.15)', backdropFilter: 'blur(10px)',
-    borderRadius: '20px', padding: '12px 20px', fontSize: 13, fontWeight: 600,
-    color: '#fff', textAlign: 'center',
+    borderRadius: '20px', padding: '8px 18px', fontSize: 13, fontWeight: 600,
+    color: '#fff', textAlign: 'center', whiteSpace: 'nowrap',
   },
   rightSide: {
-    width: 480, background: '#fff', display: 'flex', flexDirection: 'column',
-    padding: 48, overflowY: 'auto', '@media (max-width: 900px)': { flex: 1, width: 'auto', padding: 24 },
+    width: 480, minWidth: 360, background: '#fff', display: 'flex', flexDirection: 'column',
+    padding: 48, overflowY: 'auto',
+  },
+  rightSideMobile: {
+    flex: 1, background: '#fff', display: 'flex', flexDirection: 'column',
+    padding: 24, overflowY: 'auto',
   },
   logo: {
     marginBottom: 24,
@@ -135,6 +137,13 @@ const S = {
 export default function Register() {
   const navigate = useNavigate();
   const { register, loading, error } = useAuth();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 900);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const [form, setForm] = useState({
     business_name: '',
@@ -190,7 +199,7 @@ export default function Register() {
   return (
     <div style={S.wrapper}>
       {/* Left Side - Hidden on mobile */}
-      <div style={{ ...S.leftSide, display: window.innerWidth <= 900 ? 'none' : 'flex' }}>
+      {!isMobile && <div style={S.leftSide}>
         <div style={S.leftOverlay} />
         <div style={S.leftContent}>
           <h1 style={S.leftTitle}>Start Your Free Month</h1>
@@ -198,17 +207,19 @@ export default function Register() {
             No credit card required. Full access for 30 days. Choose your module and start managing your business today.
           </p>
           <div style={S.pillsContainer}>
-            <div style={S.pill}>⏱️ 30 Days Free</div>
-            <div style={S.pill}>💳 No Card Needed</div>
-            <div style={S.pill}>✋ Cancel Anytime</div>
+            <div style={S.pill}>30 Days Free</div>
+            <div style={S.pill}>No Card Needed</div>
+            <div style={S.pill}>Cancel Anytime</div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Right Side */}
-      <div style={S.rightSide}>
+      <div style={isMobile ? S.rightSideMobile : S.rightSide}>
         <div style={S.logo}>
-          <Logo size={40} showText={false} />
+          <div style={{ background: '#0D4A22', borderRadius: 8, padding: '6px 14px', display: 'inline-block' }}>
+            <span style={{ color: '#c97d1a', fontWeight: 800, fontSize: 18, fontFamily: "'Playfair Display', serif", letterSpacing: 1 }}>PEWIL</span>
+          </div>
         </div>
 
         <h2 style={S.title}>Create Account</h2>
