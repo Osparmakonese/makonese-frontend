@@ -51,6 +51,7 @@ export default function Layout({
   activeTab, onTabChange, user, onLogout,
   pageTitle, pageSub, primaryAction, onPrimaryAction,
   dashboardData, lowStockCount, children,
+  activeModule, onModuleChange,
 }) {
   const [showMobileMore, setShowMobileMore] = useState(false);
   const role = user?.role || 'worker';
@@ -70,6 +71,8 @@ export default function Layout({
           user={user}
           onLogout={onLogout}
           lowStockCount={lowStockCount}
+          activeModule={activeModule}
+          onModuleChange={onModuleChange}
         />
       </div>
       <div className="main-content" style={{ marginLeft: 220, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

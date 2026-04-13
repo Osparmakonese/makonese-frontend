@@ -165,6 +165,7 @@ function ProtectedRoute({ children }) {
 /* --- */
 function FarmApp() {
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeModule, setActiveModule] = useState('farm');
   const { user, logout } = useAuth();
 
   const { data: dashboardData } = useQuery({
@@ -178,6 +179,16 @@ function FarmApp() {
     queryFn: getLowStock,
     staleTime: 60000,
   });
+
+  const handleModuleChange = (mod) => {
+    setActiveModule(mod);
+    // Navigate to the appropriate dashboard when switching modules
+    if (mod === 'retail') {
+      setActiveTab('Retail');
+    } else {
+      setActiveTab('Dashboard');
+    }
+  };
 
   const Page = PAGES[activeTab] || Dashboard;
   const meta = PAGE_META[activeTab] || PAGE_META['Dashboard'];
@@ -198,6 +209,8 @@ function FarmApp() {
       }}
       dashboardData={dashboardData}
       lowStockCount={lowStockData.length}
+      activeModule={activeModule}
+      onModuleChange={handleModuleChange}
     >
       <Page onTabChange={setActiveTab} />
       <PWAInstallPrompt />

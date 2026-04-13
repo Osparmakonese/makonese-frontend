@@ -144,7 +144,7 @@ const NAV_ITEMS = [
   ]},
 ];
 
-export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowStockCount = 0 }) {
+export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowStockCount = 0, activeModule = 'farm', onModuleChange }) {
   const role = user?.role || 'worker';
   const ac = avatarColor(user?.username || '');
   const [expanded, setExpanded] = useState({});
@@ -156,18 +156,24 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
   const tenantPlan = user?.plan || 'free';
   const planLabel = tenantPlan.charAt(0).toUpperCase() + tenantPlan.slice(1) + ' Plan';
   const modules = user?.modules || ['farm'];
+  const hasFarm = modules.includes('farm');
+  const hasRetail = modules.includes('retail');
 
   // Module-based section filtering:
-  // MAIN, LIVESTOCK, ECONOMICS, PEOPLE = require 'farm' module
-  // RETAIL = requires 'retail' module
-  // OWNER ONLY = always shown for owners
+  // When activeModule is 'farm' → show MAIN, LIVESTOCK, ECONOMICS, PEOPLE
+  // When activeModule is 'retail' → show RETAIL (non-collapsible)
+  // OWNER ONLY → always shown for owners in both modes
   const FARM_SECTIONS = ['MAIN', 'LIVESTOCK', 'ECONOMICS', 'PEOPLE'];
   const RETAIL_SECTIONS = ['RETAIL'];
   const shouldShowSection = (sectionName) => {
-    if (FARM_SECTIONS.includes(sectionName)) return modules.includes('farm');
-    if (RETAIL_SECTIONS.includes(sectionName)) return modules.includes('retail');
+    if (FARM_SECTIONS.includes(sectionName)) return activeModule === 'farm' && hasFarm;
+    if (RETAIL_SECTIONS.includes(sectionName)) return activeModule === 'retail' && hasRetail;
     return true; // OWNER ONLY always shows
   };
+
+  // Display name for the switcher
+  const switcherName = activeModule === 'retail' ? (tenantName.replace(' Farm', '') + ' Retail') : tenantName;
+  const switcherType = activeModule === 'retail' ? 'Retail POS' : 'Agriculture';
 
   useEffect(() => {
     NAV_ITEMS.forEach(section => {
@@ -198,7 +204,7 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
         <Logo size={36} showText={true} />
       </div>
 
-      {/* Tenant Switcher */}
+      {/* Module Switcher */}
       <div ref={ddRef} style={{ position: 'relative' }}>
         <div
           style={S.tsw}
@@ -206,18 +212,35 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
           onMouseEnter={e => { e.currentTarget.style.borderColor = '#1a6b3a'; e.currentTarget.style.background = '#e8f5ee'; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.background = 'transparent'; }}
         >
-          <div style={S.tswName}>{tenantName}</div>
-          <div style={S.tswPlan}>{planLabel}</div>
-          <div style={S.tswLabel}>{'\u25BE'} Switch tenant</div>
+          <div style={S.tswName}>{switcherName}</div>
+          <div style={S.tswPlan}>{switcherType} {'\u2022'} {planLabel}</div>
+          {hasFarm && hasRetail && (
+            <div style={S.tswLabel}>{'\u25BE'} Switch module</div>
+          )}
         </div>
         <div style={S.tdd(ddOpen)}>
-          <div style={S.tdo(true)}>
-            <div style={S.tdoName}>{tenantName}</div>
-            <div style={S.tdoType}>Agriculture {'\u2022'} {planLabel}</div>
-          </div>
-          <div style={{...S.tdo(false), padding: '10px 14px', textAlign: 'center', fontSize: 10, color: '#6b7280'}}>
-            More tenants coming soon
-          </div>
+          {hasFarm && (
+            <div
+              style={S.tdo(activeModule === 'farm')}
+              onClick={() => { if (onModuleChange) onModuleChange('farm'); setDdOpen(false); }}
+              onMouseEnter={e => { if (activeModule !== 'farm') e.currentTarget.style.background = '#f9fafb'; }}
+              onMouseLeave={e => { if (activeModule !== 'farm') e.currentTarget.style.background = 'transparent'; }}
+            >
+              <div style={S.tdoName}>{'\u{1F33E}'} {tenantName}</div>
+              <div style={S.tdoType}>Agriculture {'\u2022'} {planLabel}</div>
+            </div>
+          )}
+          {hasRetail && (
+            <div
+              style={S.tdo(activeModule === 'retail')}
+              onClick={() => { if (onModuleChange) onModuleChange('retail'); setDdOpen(false); }}
+              onMouseEnter={e => { if (activeModule !== 'retail') e.currentTarget.style.background = '#f9fafb'; }}
+              onMouseLeave={e => { if (activeModule !== 'retail') e.currentTarget.style.background = 'transparent'; }}
+            >
+              <div style={S.tdoName}>{'\u{1F6D2}'} {tenantName.replace(' Farm', '')} Retail</div>
+              <div style={S.tdoType}>Retail POS {'\u2022'} {planLabel}</div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -226,7 +249,8 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
         {NAV_ITEMS.map((section, idx) => {
           if (section.ownerOnly && role !== 'owner') return null;
           if (!shouldShowSection(section.section)) return null;
-          const isCollapsible = section.collapsible;
+          // When retail is the active module, show RETAIL items flat (non-collapsible)
+          const isCollapsible = section.collapsible && !(activeModule === 'retail' && section.section === 'RETAIL');
           const isExpanded = isCollapsible ? !!expanded[section.section] : true;
           const hasActive = sectionHasActive(section);
 
