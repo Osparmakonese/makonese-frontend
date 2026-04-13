@@ -64,7 +64,7 @@ function ReceiptModal({ isOpen, onClose, receipt }) {
               color: '#6b7280',
             }}
           >
-            Transaction #{receipt.transaction_id}
+            Receipt #{receipt.receipt_number}
           </p>
         </div>
 
@@ -154,22 +154,64 @@ function ReceiptModal({ isOpen, onClose, receipt }) {
           )}
         </div>
 
-        <button
-          onClick={onClose}
-          style={{
-            width: '100%',
-            padding: '10px',
-            background: '#1a6b3a',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 7,
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          New Sale
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => {
+              const printWin = window.open('', '_blank', 'width=400,height=600');
+              const items = receipt.items_data || [];
+              const rows = items.map(i =>
+                `<tr><td style="padding:4px 0;font-size:11px">${i.product_name || 'Item'} x${i.qty || 0}</td><td style="text-align:right;padding:4px 0;font-size:11px">$${(i.total || 0).toFixed(2)}</td></tr>`
+              ).join('');
+              printWin.document.write(`<html><head><title>Receipt</title></head><body style="font-family:monospace;max-width:300px;margin:0 auto;padding:20px">
+                <h2 style="text-align:center;margin:0 0 4px">PEWIL</h2>
+                <p style="text-align:center;font-size:10px;color:#666;margin:0 0 16px">Receipt #${receipt.receipt_number}</p>
+                <hr style="border:none;border-top:1px dashed #ccc"/>
+                <table style="width:100%;border-collapse:collapse">${rows}</table>
+                <hr style="border:none;border-top:1px dashed #ccc"/>
+                <table style="width:100%;font-size:11px">
+                  <tr><td>Subtotal</td><td style="text-align:right">$${parseFloat(receipt.subtotal || 0).toFixed(2)}</td></tr>
+                  ${receipt.discount > 0 ? `<tr><td>Discount</td><td style="text-align:right">-$${parseFloat(receipt.discount).toFixed(2)}</td></tr>` : ''}
+                  <tr><td>Tax</td><td style="text-align:right">$${parseFloat(receipt.tax || 0).toFixed(2)}</td></tr>
+                  <tr style="font-weight:bold;font-size:14px"><td>TOTAL</td><td style="text-align:right">$${parseFloat(receipt.total || 0).toFixed(2)}</td></tr>
+                </table>
+                <hr style="border:none;border-top:1px dashed #ccc"/>
+                <p style="text-align:center;font-size:10px;color:#666">Payment: ${receipt.payment_method === 'mobile_money' ? 'Mobile Money' : receipt.payment_method}</p>
+                <p style="text-align:center;font-size:10px;color:#666">Thank you for shopping with us!</p>
+              </body></html>`);
+              printWin.document.close();
+              printWin.print();
+            }}
+            style={{
+              flex: 1,
+              padding: '10px',
+              background: '#fff',
+              color: '#1a6b3a',
+              border: '1px solid #1a6b3a',
+              borderRadius: 7,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            {'\u{1F5A8}'} Print Receipt
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              flex: 1,
+              padding: '10px',
+              background: '#1a6b3a',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 7,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            New Sale
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -549,18 +591,21 @@ export default function POS() {
     }
 
     const saleData = {
-      cashier_session: activeSessions[0].id,
-      items: cart.map((item) => ({
-        product: item.product_id,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
+      session: activeSessions[0].id,
+      items_data: cart.map((item) => ({
+        product_id: item.product_id,
+        product_name: item.name,
+        qty: item.quantity,
+        unit_price: parseFloat(item.unit_price),
+        total: parseFloat(item.unit_price) * item.quantity,
       })),
       subtotal: subtotal,
       discount: discountAmount,
       tax: taxAmount,
-      total_amount: grandTotal,
+      total: grandTotal,
       payment_method: paymentMethod,
       amount_tendered: parseFloat(amountTendered) || grandTotal,
+      change_given: Math.max(0, (parseFloat(amountTendered) || grandTotal) - grandTotal),
     };
 
     createSaleMut.mutate(saleData);

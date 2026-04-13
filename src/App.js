@@ -38,6 +38,10 @@ import Register from './pages/Register';
 import RetailDashboard from './pages/RetailDashboard';
 import Products from './pages/Products';
 import POS from './pages/POS';
+import SalesHistory from './pages/SalesHistory';
+import CashierSessions from './pages/CashierSessions';
+import StockAdjustments from './pages/StockAdjustments';
+import Categories from './pages/Categories';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 /* --- */
@@ -70,6 +74,10 @@ const PAGES = {
   'Retail': RetailDashboard,
   'Products': Products,
   'POS': POS,
+  'Sales History': SalesHistory,
+  'Cashier Sessions': CashierSessions,
+  'Stock Adjustments': StockAdjustments,
+  'Categories': Categories,
   // Billing & Account
   'Billing': Billing,
   'Team': TeamManagement,
@@ -105,6 +113,10 @@ const PAGE_META = {
   'Retail': { title: 'Retail Dashboard', sub: 'Store overview and daily metrics' },
   'Products': { title: 'Products', sub: 'Product catalog and inventory' },
   'POS': { title: 'Point of Sale', sub: 'Process sales and manage cart' },
+  'Sales History': { title: 'Sales History', sub: 'View all retail transactions and receipts' },
+  'Cashier Sessions': { title: 'Cashier Sessions', sub: 'Open, close, and manage cashier sessions' },
+  'Stock Adjustments': { title: 'Stock Adjustments', sub: 'Log damaged, stolen, or restocked items' },
+  'Categories': { title: 'Categories', sub: 'Organize products into categories' },
   // Billing
   'Billing': { title: 'Billing', sub: 'Pewil subscription, invoices, and usage' },
   'Team': { title: 'Team & Users', sub: 'Manage team members and permissions' },
@@ -136,6 +148,10 @@ const PRIMARY_ACTIONS = {
   'Retail': null,
   'Products': '+ Add product',
   'POS': null,
+  'Sales History': null,
+  'Cashier Sessions': '+ Open Session',
+  'Stock Adjustments': '+ Log Adjustment',
+  'Categories': '+ Add Category',
   'Billing': 'Change Plan',
   'Team': '+ Invite User',
 };

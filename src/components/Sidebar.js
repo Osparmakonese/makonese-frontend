@@ -129,6 +129,10 @@ const NAV_ITEMS = [
     { key: 'Retail', emoji: '\u{1F6D2}', label: 'Retail Dashboard' },
     { key: 'POS', emoji: '\u{1F4B3}', label: 'Point of Sale' },
     { key: 'Products', emoji: '\u{1F3F7}', label: 'Products' },
+    { key: 'Sales History', emoji: '\u{1F4CB}', label: 'Sales History' },
+    { key: 'Cashier Sessions', emoji: '\u{1F4B5}', label: 'Cashier Sessions' },
+    { key: 'Stock Adjustments', emoji: '\u{1F504}', label: 'Stock Adjustments' },
+    { key: 'Categories', emoji: '\u{1F5C2}', label: 'Categories' },
   ]},
   { section: 'OWNER ONLY', ownerOnly: true, collapsible: false, items: [
     { key: 'Report', emoji: '\u{1F4C8}', label: 'Report' },

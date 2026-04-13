@@ -5,6 +5,7 @@ import {
   getProducts,
   getLowStockProducts,
   getCashierSessions,
+  getSales,
 } from '../api/retailApi';
 import { fmt } from '../utils/format';
 
@@ -210,57 +211,32 @@ export default function RetailDashboard() {
     queryFn: getCashierSessions,
   });
 
+  const { data: sales = [] } = useQuery({
+    queryKey: ['retail-sales-recent'],
+    queryFn: getSales,
+  });
+
   const openSessions = sessions.filter((s) => !s.closed_at);
   const productCount = products.length;
+  const recentSales = sales.slice(0, 10);
 
-  // Mock recent sales data (would come from API)
-  const recentSales = [
-    {
-      id: 1,
-      transaction_id: 'TXN001',
-      total_amount: 4500,
-      payment_method: 'cash',
-      created_at: '2024-01-15 14:30',
-      items_count: 3,
-    },
-    {
-      id: 2,
-      transaction_id: 'TXN002',
-      total_amount: 8200,
-      payment_method: 'card',
-      created_at: '2024-01-15 13:45',
-      items_count: 5,
-    },
-    {
-      id: 3,
-      transaction_id: 'TXN003',
-      total_amount: 3200,
-      payment_method: 'mobile_money',
-      created_at: '2024-01-15 13:10',
-      items_count: 2,
-    },
-    {
-      id: 4,
-      transaction_id: 'TXN004',
-      total_amount: 5600,
-      payment_method: 'cash',
-      created_at: '2024-01-15 12:30',
-      items_count: 4,
-    },
-  ];
-
-  // Sample chart data
-  const chartData = [
-    { day: 'Mon', amount: 12000 },
-    { day: 'Tue', amount: 15000 },
-    { day: 'Wed', amount: 9500 },
-    { day: 'Thu', amount: 18000 },
-    { day: 'Fri', amount: 22000 },
-    { day: 'Sat', amount: 28000 },
-    { day: 'Sun', amount: 16000 },
-  ];
-
-  const maxAmount = Math.max(...chartData.map((d) => d.amount));
+  // Build weekly chart from actual sales data
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const chartData = (() => {
+    const now = new Date();
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayTotal = sales
+        .filter(s => s.created_at && s.created_at.startsWith(dateStr))
+        .reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+      days.push({ day: dayNames[d.getDay()], amount: dayTotal });
+    }
+    return days;
+  })();
+  const maxAmount = Math.max(...chartData.map((d) => d.amount), 1);
 
   if (sumLoading) {
     return (
@@ -294,10 +270,10 @@ export default function RetailDashboard() {
             {'\u{1F4B0}'} Today's Sales
           </div>
           <div style={S.metricValue}>
-            {fmt(summary?.total_amount || 0, 'zwd')}
+            {fmt(summary?.total_sales || 0, 'zwd')}
           </div>
           <div style={S.metricTrend}>
-            {summary?.transactions || 0} transactions
+            {summary?.transaction_count || 0} transactions
           </div>
         </div>
 
@@ -315,7 +291,7 @@ export default function RetailDashboard() {
           <div style={S.metricLabel}>
             {'\u{26A0}'} Low Stock Alerts
           </div>
-          <div style={S.metricValue} style={{ color: '#c0392b' }}>
+          <div style={{ ...S.metricValue, color: '#c0392b' }}>
             {lowStock.length}
           </div>
           <div style={S.metricTrend}>
@@ -410,14 +386,14 @@ export default function RetailDashboard() {
             </tr>
           </thead>
           <tbody>
-            {recentSales.slice(0, 10).map((sale) => (
+            {recentSales.map((sale) => (
               <tr key={sale.id}>
                 <td style={S.td}>
-                  <strong>{sale.transaction_id}</strong>
+                  <strong>{sale.receipt_number}</strong>
                 </td>
-                <td style={S.td}>{sale.items_count}</td>
+                <td style={S.td}>{(sale.items_data || []).length}</td>
                 <td style={S.td}>
-                  <strong>{fmt(sale.total_amount, 'zwd')}</strong>
+                  <strong>{fmt(sale.total, 'zwd')}</strong>
                 </td>
                 <td style={S.td}>
                   <span style={S.badge('amber')}>
@@ -425,10 +401,12 @@ export default function RetailDashboard() {
                       ? 'Cash'
                       : sale.payment_method === 'card'
                         ? 'Card'
-                        : 'Mobile'}
+                        : sale.payment_method === 'mobile_money'
+                          ? 'Mobile'
+                          : 'Mixed'}
                   </span>
                 </td>
-                <td style={S.td}>{sale.created_at}</td>
+                <td style={S.td}>{sale.created_at ? new Date(sale.created_at).toLocaleString() : ''}</td>
               </tr>
             ))}
           </tbody>
