@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getSales, getReceipt } from '../api/retailApi';
+import { getSales } from '../api/retailApi';
 import { fmt } from '../utils/format';
 
 /* --- Receipt Detail Modal --- */
@@ -116,8 +116,8 @@ const S = {
   td: { padding: '10px 12px', borderBottom: '1px solid #f3f4f6', color: '#374151' },
   badge: (color) => ({
     display: 'inline-block', fontSize: 8, fontWeight: 700, padding: '3px 8px', borderRadius: 10, textTransform: 'uppercase',
-    background: color === 'green' ? '#d1fae5' : color === 'amber' ? '#fef3c7' : '#dbeafe',
-    color: color === 'green' ? '#065f46' : color === 'amber' ? '#92400e' : '#1e40af',
+    background: color === 'green' ? '#e8f5ee' : color === 'amber' ? '#fef3e2' : '#eff6ff',
+    color: color === 'green' ? '#1a6b3a' : color === 'amber' ? '#92400e' : '#1e40af',
   }),
   viewBtn: { background: 'none', border: '1px solid #e5e7eb', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 600, color: '#1a6b3a', cursor: 'pointer' },
   emptyState: { textAlign: 'center', padding: '40px 20px', color: '#9ca3af' },
@@ -216,7 +216,7 @@ export default function SalesHistory() {
             <tbody>
               {filtered.map(sale => (
                 <tr key={sale.id}>
-                  <td style={S.td}><strong>{sale.receipt_number}</strong></td>
+                  <td style={{ ...S.td, fontFamily: 'monospace', color: '#1a6b3a', fontWeight: 600 }}>{sale.receipt_number}</td>
                   <td style={S.td}>{sale.created_at ? new Date(sale.created_at).toLocaleString() : ''}</td>
                   <td style={S.td}>{(sale.items_data || []).length}</td>
                   <td style={S.td}><strong style={{ color: '#1a6b3a' }}>{fmt(sale.total, 'zwd')}</strong></td>

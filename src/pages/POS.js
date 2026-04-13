@@ -217,69 +217,80 @@ function ReceiptModal({ isOpen, onClose, receipt }) {
   );
 }
 
+/* ─── Helper: Get emoji icon by category ─── */
+const getCategoryEmoji = (category) => {
+  const emojiMap = {
+    produce: '🥬',
+    dairy: '🥛',
+    meat: '🥩',
+    bakery: '🍞',
+    drinks: '🥤',
+    snacks: '🍿',
+    beverages: '🍷',
+    household: '🧹',
+    personal_care: '🧴',
+    frozen: '🧊',
+    canned: '🥫',
+    default: '📦',
+  };
+  return emojiMap[category?.toLowerCase()] || emojiMap.default;
+};
+
 /* ─── Styles ─── */
 const S = {
   page: {
-    display: 'flex',
-    height: '100vh',
+    display: 'grid',
+    gridTemplateColumns: '1fr 300px',
+    gap: '12px',
+    height: 'calc(100vh - 110px)',
     background: '#f9fafb',
+    padding: '12px',
+    boxSizing: 'border-box',
   },
   left: {
-    flex: '0 0 60%',
     display: 'flex',
     flexDirection: 'column',
-    borderRight: '1px solid #e5e7eb',
     background: '#fff',
+    borderRadius: '10px',
     overflow: 'hidden',
+    border: '1px solid #e5e7eb',
   },
   right: {
-    flex: '0 0 40%',
     display: 'flex',
     flexDirection: 'column',
-    background: '#f9fafb',
-    overflow: 'hidden',
-  },
-  header: {
-    padding: '12px 16px',
-    borderBottom: '1px solid #e5e7eb',
-    background: 'linear-gradient(135deg, rgba(26,107,58,0.8), rgba(45,158,88,0.6))',
-  },
-  title: {
-    margin: 0,
-    fontSize: 18,
-    fontWeight: 700,
-    color: '#fff',
-    fontFamily: "'Playfair Display', serif",
-  },
-  subtitle: {
-    margin: '4px 0 0 0',
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.8)',
-  },
-  barcodeInput: {
-    padding: '10px 14px',
-    border: 'none',
-    borderBottom: '2px solid #1a6b3a',
-    fontSize: 12,
-    outline: 'none',
     background: '#fff',
-    boxSizing: 'border-box',
-    width: '100%',
+    borderRadius: '10px',
+    overflow: 'hidden',
+    border: '1px solid #e5e7eb',
+  },
+  leftHeader: {
+    padding: '12px 16px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1px solid #e5e7eb',
+    background: '#fff',
+  },
+  leftTitle: {
+    margin: 0,
+    fontSize: 16,
+    fontWeight: 700,
+    color: '#111827',
   },
   searchInput: {
     padding: '8px 12px',
     border: '1px solid #e5e7eb',
     borderRadius: 6,
-    fontSize: 12,
+    fontSize: 13,
     outline: 'none',
-    margin: '8px 12px',
+    background: '#f9fafb',
     boxSizing: 'border-box',
-    width: 'calc(100% - 24px)',
+    width: '100%',
   },
   productGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-    gap: 8,
+    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+    gap: '12px',
     padding: '12px',
     overflow: 'auto',
     flex: 1,
@@ -287,146 +298,225 @@ const S = {
   productCard: {
     background: '#fff',
     border: '1px solid #e5e7eb',
-    borderRadius: 8,
-    padding: '10px 8px',
+    borderRadius: '8px',
+    padding: '12px',
     textAlign: 'center',
     cursor: 'pointer',
-    transition: 'all 0.2s',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  productCardDisabled: {
+    opacity: '0.5',
+    cursor: 'not-allowed',
   },
   productCardHover: {
     boxShadow: '0 4px 12px rgba(26,107,58,0.15)',
     borderColor: '#1a6b3a',
+    transform: 'translateY(-2px)',
+  },
+  productEmoji: {
+    fontSize: '32px',
   },
   productName: {
-    fontSize: 11,
-    fontWeight: 600,
+    fontSize: '12px',
+    fontWeight: '600',
     color: '#111827',
-    marginBottom: 4,
-    minHeight: 22,
+    marginBottom: '4px',
+    minHeight: '24px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
   },
   productPrice: {
-    fontSize: 10,
-    fontWeight: 700,
+    fontSize: '13px',
+    fontWeight: '700',
     color: '#1a6b3a',
-    marginBottom: 6,
+    marginBottom: '4px',
   },
   productStock: {
-    fontSize: 9,
+    fontSize: '11px',
     color: '#9ca3af',
-    marginBottom: 8,
+    marginBottom: '8px',
   },
   addBtn: {
     width: '100%',
-    padding: '6px',
+    padding: '8px',
     background: '#1a6b3a',
     color: '#fff',
     border: 'none',
-    borderRadius: 4,
-    fontSize: 10,
-    fontWeight: 600,
+    borderRadius: '6px',
+    fontSize: '11px',
+    fontWeight: '600',
     cursor: 'pointer',
+    transition: 'background 0.2s',
   },
-  cart: {
+  addBtnHover: {
+    background: '#2d9e58',
+  },
+  rightHeader: {
+    padding: '12px 16px',
+    borderBottom: '1px solid #e5e7eb',
     background: '#fff',
-    borderRadius: 10,
-    margin: '12px',
-    padding: '12px',
-    border: '1px solid #e5e7eb',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+  },
+  rightTitle: {
+    margin: 0,
+    fontSize: '16px',
+    fontWeight: '700',
+    color: '#111827',
+  },
+  cartContainer: {
     display: 'flex',
     flexDirection: 'column',
-    height: 'calc(100% - 24px)',
+    flex: 1,
     overflow: 'hidden',
-  },
-  cartTitle: {
-    fontSize: 12,
-    fontWeight: 700,
-    color: '#111827',
-    marginBottom: 10,
-    paddingBottom: 8,
-    borderBottom: '1px solid #e5e7eb',
+    padding: '12px',
+    gap: '12px',
   },
   cartItems: {
     flex: 1,
     overflow: 'auto',
-    marginBottom: 10,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
   },
   cartItem: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    padding: '8px 0',
-    borderBottom: '1px solid #f3f4f6',
-    fontSize: 10,
+    padding: '8px',
+    background: '#f9fafb',
+    borderRadius: '6px',
+    fontSize: '11px',
+    border: '1px solid #e5e7eb',
+  },
+  cartItemLeft: {
+    flex: 1,
   },
   cartItemName: {
-    fontWeight: 600,
+    fontWeight: '600',
     color: '#111827',
-    marginBottom: 2,
+    marginBottom: '4px',
   },
   cartItemPrice: {
     color: '#6b7280',
-    marginBottom: 4,
+    marginBottom: '4px',
+    fontSize: '10px',
+  },
+  cartItemRight: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '4px',
+  },
+  cartItemTotal: {
+    fontWeight: '700',
+    color: '#1a6b3a',
   },
   qtyControl: {
     display: 'flex',
-    gap: 4,
+    gap: '4px',
     alignItems: 'center',
   },
   qtyBtn: {
-    width: 20,
-    height: 20,
+    width: '20px',
+    height: '20px',
     padding: 0,
     border: '1px solid #e5e7eb',
-    borderRadius: 4,
+    borderRadius: '4px',
     background: '#f9fafb',
     cursor: 'pointer',
-    fontSize: 10,
-    fontWeight: 700,
+    fontSize: '10px',
+    fontWeight: '700',
+    transition: 'background 0.2s',
   },
-  summary: {
+  totalRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '12px 8px',
     background: '#f9fafb',
+    borderRadius: '6px',
     border: '1px solid #e5e7eb',
-    borderRadius: 8,
-    padding: '8px 10px',
-    marginBottom: 10,
   },
-  summaryRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: 10,
-    marginBottom: 4,
-    color: '#374151',
+  totalLabel: {
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#111827',
   },
-  summaryTotal: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: 12,
-    fontWeight: 700,
+  totalAmount: {
+    fontSize: '18px',
+    fontWeight: '700',
     color: '#1a6b3a',
-    paddingTop: 6,
-    borderTop: '1px solid #e5e7eb',
+  },
+  paymentBtns: {
+    display: 'flex',
+    gap: '8px',
+    fontSize: '11px',
+    fontWeight: '600',
+  },
+  paymentBtn: {
+    flex: 1,
+    padding: '8px',
+    border: '1px solid #e5e7eb',
+    borderRadius: '6px',
+    background: '#fff',
+    color: '#111827',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  paymentBtnActive: {
+    background: '#1a6b3a',
+    color: '#fff',
+    borderColor: '#1a6b3a',
+  },
+  completeSaleBtn: {
+    width: '100%',
+    padding: '12px',
+    background: '#1a6b3a',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'background 0.2s',
+  },
+  completeSaleBtnHover: {
+    background: '#2d9e58',
+  },
+  emptyCart: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#9ca3af',
+    fontSize: '12px',
+    gap: '8px',
+  },
+  emptyCartIcon: {
+    fontSize: '40px',
   },
   section: {
-    marginBottom: 10,
+    marginBottom: '8px',
   },
   sectionLabel: {
-    fontSize: 9,
-    fontWeight: 700,
+    fontSize: '10px',
+    fontWeight: '700',
     color: '#6b7280',
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: '4px',
     letterSpacing: '0.05em',
   },
   input: {
     width: '100%',
     padding: '6px 8px',
     border: '1px solid #e5e7eb',
-    borderRadius: 6,
-    fontSize: 11,
+    borderRadius: '6px',
+    fontSize: '11px',
     outline: 'none',
     boxSizing: 'border-box',
   },
@@ -434,27 +524,16 @@ const S = {
     width: '100%',
     padding: '6px 8px',
     border: '1px solid #e5e7eb',
-    borderRadius: 6,
-    fontSize: 11,
+    borderRadius: '6px',
+    fontSize: '11px',
     outline: 'none',
     boxSizing: 'border-box',
   },
-  completeBtn: {
-    width: '100%',
-    padding: '10px',
-    background: '#1a6b3a',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 7,
-    fontSize: 12,
-    fontWeight: 600,
-    cursor: 'pointer',
-  },
-  emptyCart: {
-    textAlign: 'center',
-    padding: '20px 10px',
-    color: '#9ca3af',
-    fontSize: 11,
+  changeDisplay: {
+    marginTop: '4px',
+    fontSize: '10px',
+    color: '#1a6b3a',
+    fontWeight: '600',
   },
 };
 
@@ -619,96 +698,135 @@ export default function POS() {
 
   return (
     <div style={S.page}>
-      {/* Left: Products */}
+      {/* LEFT PANEL: Products Grid */}
       <div style={S.left}>
-        <div style={S.header}>
-          <h1 style={S.title}>{'\u{1F3DC}'} Point of Sale</h1>
-          <p style={S.subtitle}>Scan barcode or select products</p>
+        {/* Header with title and search bar */}
+        <div style={S.leftHeader}>
+          <h1 style={S.leftTitle}>Products</h1>
         </div>
 
-        <input
-          ref={barcodeInputRef}
-          type="text"
-          placeholder="Scan barcode..."
-          value={barcode}
-          onChange={(e) => setBarcode(e.target.value)}
-          onKeyDown={handleBarcodeSubmit}
-          style={S.barcodeInput}
-        />
+        <div style={{ padding: '0 12px 8px 12px' }}>
+          <input
+            type="text"
+            placeholder="Search or scan barcode..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={S.searchInput}
+          />
+          <input
+            ref={barcodeInputRef}
+            type="text"
+            placeholder="Barcode (auto-scanned)"
+            value={barcode}
+            onChange={(e) => setBarcode(e.target.value)}
+            onKeyDown={handleBarcodeSubmit}
+            style={{ ...S.searchInput, marginTop: '4px', display: 'none' }}
+          />
+        </div>
 
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={S.searchInput}
-        />
-
+        {/* Product Grid */}
         <div style={S.productGrid}>
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              style={S.productCard}
-              onMouseEnter={(e) =>
-                Object.assign(e.currentTarget.style, S.productCardHover)
-              }
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '';
-                e.currentTarget.style.borderColor = '#e5e7eb';
-              }}
-            >
-              <div style={S.productName}>{product.name}</div>
-              <div style={S.productPrice}>{fmt(product.selling_price, 'zwd')}</div>
-              <div style={S.productStock}>
-                {product.quantity_in_stock} {product.unit}
-              </div>
-              <button
-                onClick={() => addToCart(product)}
-                style={S.addBtn}
-              >
-                Add
-              </button>
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map((product) => {
+              const isOutOfStock = product.quantity_in_stock === 0;
+              return (
+                <div
+                  key={product.id}
+                  style={{
+                    ...S.productCard,
+                    ...(isOutOfStock ? S.productCardDisabled : {}),
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isOutOfStock) {
+                      Object.assign(e.currentTarget.style, S.productCardHover);
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = '';
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                    e.currentTarget.style.transform = '';
+                  }}
+                >
+                  <div style={S.productEmoji}>
+                    {getCategoryEmoji(product.category)}
+                  </div>
+                  <div style={S.productName}>{product.name}</div>
+                  <div style={S.productPrice}>{fmt(product.selling_price, 'zwd')}</div>
+                  <div style={S.productStock}>
+                    {product.quantity_in_stock} in stock
+                  </div>
+                  <button
+                    onClick={() => !isOutOfStock && addToCart(product)}
+                    style={{
+                      ...S.addBtn,
+                      opacity: isOutOfStock ? 0.5 : 1,
+                      cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                    }}
+                    disabled={isOutOfStock}
+                    onMouseEnter={(e) => {
+                      if (!isOutOfStock) {
+                        Object.assign(e.currentTarget.style, S.addBtnHover);
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#1a6b3a';
+                    }}
+                  >
+                    {isOutOfStock ? 'Out of Stock' : 'Add'}
+                  </button>
+                </div>
+              );
+            })
+          ) : (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '20px', color: '#9ca3af' }}>
+              No products available
             </div>
-          ))}
+          )}
         </div>
       </div>
 
-      {/* Right: Cart & Checkout */}
+      {/* RIGHT PANEL: Current Sale / Cart */}
       <div style={S.right}>
-        <div style={S.header}>
-          <h2 style={S.title}>{'\u{1F6D2}'} Cart</h2>
-          <p style={S.subtitle}>{cart.length} items</p>
+        {/* Header */}
+        <div style={S.rightHeader}>
+          <h2 style={S.rightTitle}>Current Sale</h2>
         </div>
 
-        <div style={S.cart}>
+        {/* Cart Content */}
+        <div style={S.cartContainer}>
           {cart.length > 0 ? (
             <>
+              {/* Cart Items List */}
               <div style={S.cartItems}>
                 {cart.map((item) => (
                   <div key={item.product_id} style={S.cartItem}>
-                    <div style={{ flex: 1 }}>
+                    <div style={S.cartItemLeft}>
                       <div style={S.cartItemName}>{item.name}</div>
                       <div style={S.cartItemPrice}>
-                        {fmt(item.unit_price, 'zwd')} × {item.quantity}
+                        {fmt(item.unit_price, 'zwd')} each
                       </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                      <div style={{ fontWeight: 700, color: '#1a6b3a' }}>
+                    <div style={S.cartItemRight}>
+                      <div style={S.cartItemTotal}>
                         {fmt(item.unit_price * item.quantity, 'zwd')}
                       </div>
                       <div style={S.qtyControl}>
                         <button
                           onClick={() => updateCartQty(item.product_id, item.quantity - 1)}
                           style={S.qtyBtn}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = '#e5e7eb')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = '#f9fafb')}
                         >
                           −
                         </button>
-                        <span style={{ width: 20, textAlign: 'center' }}>
+                        <span style={{ width: 20, textAlign: 'center', fontSize: '11px', fontWeight: '600' }}>
                           {item.quantity}
                         </span>
                         <button
                           onClick={() => updateCartQty(item.product_id, item.quantity + 1)}
                           style={S.qtyBtn}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = '#e5e7eb')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = '#f9fafb')}
                         >
                           +
                         </button>
@@ -718,7 +836,10 @@ export default function POS() {
                             ...S.qtyBtn,
                             background: '#fee2e2',
                             color: '#c0392b',
+                            fontSize: '12px',
                           }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = '#fecaca')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = '#fee2e2')}
                         >
                           ×
                         </button>
@@ -728,25 +849,61 @@ export default function POS() {
                 ))}
               </div>
 
-              <div style={S.summary}>
-                <div style={S.summaryRow}>
-                  <span>Subtotal:</span>
-                  <strong>{fmt(subtotal, 'zwd')}</strong>
-                </div>
-                <div style={S.summaryRow}>
-                  <span>Discount:</span>
-                  <strong>-{fmt(discountAmount, 'zwd')}</strong>
-                </div>
-                <div style={S.summaryRow}>
-                  <span>Tax:</span>
-                  <strong>{fmt(taxAmount, 'zwd')}</strong>
-                </div>
-                <div style={S.summaryTotal}>
-                  <span>Total:</span>
-                  <span>{fmt(grandTotal, 'zwd')}</span>
-                </div>
+              {/* Total Row */}
+              <div style={S.totalRow}>
+                <span style={S.totalLabel}>Total</span>
+                <span style={S.totalAmount}>{fmt(grandTotal, 'zwd')}</span>
               </div>
 
+              {/* Payment Method Buttons */}
+              <div style={S.paymentBtns}>
+                <button
+                  onClick={() => setPaymentMethod('cash')}
+                  style={{
+                    ...S.paymentBtn,
+                    ...(paymentMethod === 'cash' ? S.paymentBtnActive : {}),
+                  }}
+                >
+                  💵 Cash
+                </button>
+                <button
+                  onClick={() => setPaymentMethod('mobile_money')}
+                  style={{
+                    ...S.paymentBtn,
+                    ...(paymentMethod === 'mobile_money' ? S.paymentBtnActive : {}),
+                  }}
+                >
+                  📱 EcoCash
+                </button>
+                <button
+                  onClick={() => setPaymentMethod('card')}
+                  style={{
+                    ...S.paymentBtn,
+                    ...(paymentMethod === 'card' ? S.paymentBtnActive : {}),
+                  }}
+                >
+                  💳 Card
+                </button>
+              </div>
+
+              {/* Amount Tendered */}
+              <div style={S.section}>
+                <div style={S.sectionLabel}>Amount Tendered</div>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={amountTendered}
+                  onChange={(e) => setAmountTendered(e.target.value)}
+                  style={S.input}
+                />
+                {change > 0 && (
+                  <div style={S.changeDisplay}>
+                    Change: {fmt(change, 'zwd')}
+                  </div>
+                )}
+              </div>
+
+              {/* Discount */}
               <div style={S.section}>
                 <div style={S.sectionLabel}>Discount</div>
                 <input
@@ -758,6 +915,7 @@ export default function POS() {
                 />
               </div>
 
+              {/* Tax */}
               <div style={S.section}>
                 <div style={S.sectionLabel}>Tax</div>
                 <input
@@ -769,48 +927,21 @@ export default function POS() {
                 />
               </div>
 
-              <div style={S.section}>
-                <div style={S.sectionLabel}>Payment Method</div>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  style={S.select}
-                >
-                  <option value="cash">Cash</option>
-                  <option value="card">Card</option>
-                  <option value="mobile_money">Mobile Money</option>
-                </select>
-              </div>
-
-              <div style={S.section}>
-                <div style={S.sectionLabel}>Amount Tendered</div>
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={amountTendered}
-                  onChange={(e) => setAmountTendered(e.target.value)}
-                  style={S.input}
-                />
-                {change > 0 && (
-                  <div
-                    style={{
-                      marginTop: 4,
-                      fontSize: 10,
-                      color: '#1a6b3a',
-                      fontWeight: 600,
-                    }}
-                  >
-                    Change: {fmt(change, 'zwd')}
-                  </div>
-                )}
-              </div>
-
+              {/* Complete Sale Button */}
               <button
                 onClick={handleCompleteSale}
                 disabled={createSaleMut.isPending}
                 style={{
-                  ...S.completeBtn,
+                  ...S.completeSaleBtn,
                   opacity: createSaleMut.isPending ? 0.6 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (!createSaleMut.isPending) {
+                    Object.assign(e.currentTarget.style, S.completeSaleBtnHover);
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#1a6b3a';
                 }}
               >
                 {createSaleMut.isPending ? 'Processing...' : 'Complete Sale'}
@@ -818,18 +949,17 @@ export default function POS() {
             </>
           ) : (
             <div style={S.emptyCart}>
-              <div style={{ fontSize: 32, marginBottom: 10 }}>
-                {'🛒'}
-              </div>
-              <p>Cart is empty</p>
-              <p style={{ fontSize: 10, marginTop: 6 }}>
-                Add items from the product list
+              <div style={S.emptyCartIcon}>🛒</div>
+              <p style={{ margin: 0 }}>Cart is empty</p>
+              <p style={{ margin: 0, fontSize: '10px' }}>
+                Add items from products
               </p>
             </div>
           )}
         </div>
       </div>
 
+      {/* Receipt Modal */}
       <ReceiptModal
         isOpen={showReceipt}
         onClose={() => {

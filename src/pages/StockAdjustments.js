@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getStockAdjustments, createStockAdjustment, getProducts } from '../api/retailApi';
-import { fmt } from '../utils/format';
 
 /* --- Add Adjustment Modal --- */
 function AddAdjustmentModal({ isOpen, onClose, onSubmit, products, loading }) {
@@ -88,12 +87,12 @@ const S = {
   td: { padding: '10px 12px', borderBottom: '1px solid #f3f4f6', color: '#374151' },
   badge: (type) => {
     const colors = {
-      stolen: { bg: '#fee2e2', fg: '#7f1d1d' },
-      damaged: { bg: '#fee2e2', fg: '#7f1d1d' },
-      expired: { bg: '#fef3c7', fg: '#92400e' },
-      broken: { bg: '#fee2e2', fg: '#7f1d1d' },
-      restock: { bg: '#d1fae5', fg: '#065f46' },
-      correction: { bg: '#dbeafe', fg: '#1e40af' },
+      stolen: { bg: '#fdecea', fg: '#c0392b' },
+      damaged: { bg: '#fef3e2', fg: '#92400e' },
+      expired: { bg: '#f3f4f6', fg: '#6b7280' },
+      broken: { bg: '#fdecea', fg: '#c0392b' },
+      restock: { bg: '#e8f5ee', fg: '#1a6b3a' },
+      correction: { bg: '#eff6ff', fg: '#1e40af' },
       other: { bg: '#f3f4f6', fg: '#374151' },
     };
     const c = colors[type] || colors.other;

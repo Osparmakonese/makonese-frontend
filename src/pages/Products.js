@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getProducts,
   createProduct,
-  updateProduct,
   getCategories,
   getLowStockProducts,
   getExpiringProducts,
+  getStockAdjustments,
 } from '../api/retailApi';
+import { useAuth } from '../context/AuthContext';
 import { fmt } from '../utils/format';
 
 /* ─── Modal Component ─── */
@@ -470,21 +471,49 @@ const S = {
     padding: '3px 8px',
     borderRadius: 10,
     textTransform: 'uppercase',
-    background: color === 'red' ? '#fee2e2' : color === 'amber' ? '#fef3c7' : '#d1fae5',
-    color: color === 'red' ? '#7f1d1d' : color === 'amber' ? '#92400e' : '#065f46',
+    background: color === 'red' ? '#fdecea' : color === 'amber' ? '#fef3e2' : '#e8f5ee',
+    color: color === 'red' ? '#c0392b' : color === 'amber' ? '#92400e' : '#1a6b3a',
   }),
   emptyState: {
     textAlign: 'center',
     padding: '40px 20px',
     color: '#9ca3af',
   },
+  lockBanner: {
+    background: '#fef3e2',
+    border: '1px solid #c97d1a',
+    borderRadius: 8,
+    padding: '12px 16px',
+    marginBottom: 20,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    color: '#92400e',
+    fontSize: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 700,
+    color: '#111827',
+    margin: '24px 0 4px 0',
+  },
+  sectionSubtitle: {
+    fontSize: 11,
+    color: '#9ca3af',
+    marginBottom: 16,
+    fontStyle: 'italic',
+  },
 };
 
 export default function Products() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+
+  const isOwnerOrManager = user?.role === 'owner' || user?.role === 'manager';
+  const isWorker = user?.role === 'worker';
 
   const { data: products = [] } = useQuery({
     queryKey: ['retail-products'],
@@ -504,6 +533,11 @@ export default function Products() {
   const { data: expiring = [] } = useQuery({
     queryKey: ['retail-expiring'],
     queryFn: getExpiringProducts,
+  });
+
+  const { data: stockAdjustments = [] } = useQuery({
+    queryKey: ['retail-stock-adjustments'],
+    queryFn: getStockAdjustments,
   });
 
   const createMut = useMutation({
@@ -533,14 +567,23 @@ export default function Products() {
 
   return (
     <div style={S.page}>
+      {isWorker && (
+        <div style={S.lockBanner}>
+          <span>🔒</span>
+          <span>You have view-only access. Contact a manager to edit products.</span>
+        </div>
+      )}
+
       <div style={S.header}>
-        <h1 style={S.title}>{'\u{1F4E6}'} Products</h1>
-        <button
-          onClick={() => setShowModal(true)}
-          style={S.addBtn}
-        >
-          {'\u{2795}'} Add Product
-        </button>
+        <h1 style={S.title}>Products</h1>
+        {!isWorker && (
+          <button
+            onClick={() => setShowModal(true)}
+            style={S.addBtn}
+          >
+            {'\u{2795}'} Add Product
+          </button>
+        )}
       </div>
 
       <div style={S.controls}>
@@ -570,12 +613,15 @@ export default function Products() {
           <table style={S.table}>
             <thead>
               <tr>
-                <th style={S.th}>Name</th>
                 <th style={S.th}>SKU</th>
+                <th style={S.th}>Product</th>
                 <th style={S.th}>Category</th>
-                <th style={S.th}>Price</th>
+                <th style={S.th}>Cost</th>
+                <th style={S.th}>Sell</th>
                 <th style={S.th}>Stock</th>
+                <th style={S.th}>VAT</th>
                 <th style={S.th}>Status</th>
+                {!isWorker && <th style={S.th}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -587,14 +633,26 @@ export default function Products() {
 
                 return (
                   <tr key={product.id}>
-                    <td style={S.td}>
-                      <strong>{product.name}</strong>
+                    <td style={{ ...S.td, fontFamily: 'monospace', color: '#1a6b3a', fontWeight: 600 }}>
+                      {product.sku}
                     </td>
-                    <td style={S.td}>{product.sku}</td>
-                    <td style={S.td}>{catName}</td>
-                    <td style={S.td}>{fmt(product.selling_price, 'zwd')}</td>
+                    <td style={{ ...S.td, fontWeight: 600 }}>
+                      {product.name}
+                    </td>
+                    <td style={{ ...S.td, fontSize: 11, color: '#6b7280' }}>
+                      {catName}
+                    </td>
+                    <td style={S.td}>
+                      {fmt(product.cost_price, 'zwd')}
+                    </td>
+                    <td style={S.td}>
+                      {fmt(product.selling_price, 'zwd')}
+                    </td>
                     <td style={S.td}>
                       {product.quantity_in_stock} {product.unit}
+                    </td>
+                    <td style={S.td}>
+                      {product.vat_percentage || '—'}
                     </td>
                     <td style={S.td}>
                       {isExpiring && (
@@ -603,16 +661,38 @@ export default function Products() {
                         </span>
                       )}
                       {isLowStock && (
-                        <span style={S.badge('red')}>
+                        <span style={S.badge('amber')}>
                           Low Stock
                         </span>
                       )}
                       {!isExpiring && !isLowStock && (
                         <span style={S.badge('green')}>
-                          Ok
+                          Active
                         </span>
                       )}
                     </td>
+                    {!isWorker && (
+                      <td style={S.td}>
+                        <button
+                          onClick={() => {
+                            // Edit action placeholder
+                            console.log('Edit product:', product.id);
+                          }}
+                          style={{
+                            padding: '4px 10px',
+                            border: '1px solid #1a6b3a',
+                            background: 'transparent',
+                            color: '#1a6b3a',
+                            borderRadius: 5,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -631,13 +711,97 @@ export default function Products() {
         )}
       </div>
 
-      <AddProductModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSubmit={handleAddProduct}
-        categories={categories}
-        loading={createMut.isPending}
-      />
+      {isOwnerOrManager && (
+        <div>
+          <h2 style={S.sectionTitle}>Stock Adjustments</h2>
+          <p style={S.sectionSubtitle}>(Owner/Manager only)</p>
+
+          <div style={S.card}>
+            {stockAdjustments.length > 0 ? (
+              <table style={S.table}>
+                <thead>
+                  <tr>
+                    <th style={S.th}>Date</th>
+                    <th style={S.th}>Product</th>
+                    <th style={S.th}>Qty</th>
+                    <th style={S.th}>Reason</th>
+                    <th style={S.th}>Adjusted By</th>
+                    <th style={S.th}>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stockAdjustments.map((adj) => {
+                    const product = products.find((p) => p.id === adj.product_id);
+                    const reasonColor =
+                      adj.reason === 'Stolen'
+                        ? 'red'
+                        : adj.reason === 'Damaged'
+                        ? 'amber'
+                        : adj.reason === 'Expired'
+                        ? 'gray'
+                        : 'green';
+
+                    return (
+                      <tr key={adj.id}>
+                        <td style={S.td}>
+                          {new Date(adj.adjusted_at).toLocaleDateString()}
+                        </td>
+                        <td style={{ ...S.td, fontWeight: 600 }}>
+                          {product?.name || 'N/A'}
+                        </td>
+                        <td style={{ ...S.td, color: adj.quantity < 0 ? '#c0392b' : '#374151', fontWeight: 700 }}>
+                          {adj.quantity < 0 ? '' : '+'}{adj.quantity}
+                        </td>
+                        <td style={S.td}>
+                          <span
+                            style={{
+                              ...S.badge(reasonColor === 'gray' ? 'amber' : reasonColor),
+                              background:
+                                reasonColor === 'red'
+                                  ? '#fdecea'
+                                  : reasonColor === 'amber'
+                                  ? '#fef3e2'
+                                  : '#e8f5ee',
+                            }}
+                          >
+                            {adj.reason}
+                          </span>
+                        </td>
+                        <td style={S.td}>
+                          {adj.adjusted_by_user?.name || 'N/A'}
+                        </td>
+                        <td style={{ ...S.td, fontSize: 10, color: '#9ca3af' }}>
+                          {adj.notes || '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <div style={S.emptyState}>
+                <div style={{ fontSize: 48, marginBottom: 10 }}>
+                  {'📋'}
+                </div>
+                <p>No stock adjustments</p>
+                <p style={{ fontSize: 11, marginTop: 6 }}>
+                  Stock adjustments will appear here
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!isWorker && (
+        <AddProductModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleAddProduct}
+          categories={categories}
+          loading={createMut.isPending}
+        />
+      )}
     </div>
   );
 }

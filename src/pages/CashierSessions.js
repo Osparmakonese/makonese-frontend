@@ -104,28 +104,30 @@ function CloseSessionModal({ isOpen, onClose, onSubmit, session, loading }) {
 /* --- Styles --- */
 const S = {
   page: { maxWidth: 1200, margin: '0 auto', padding: 20 },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  title: { fontSize: 24, fontWeight: 700, color: '#111827', fontFamily: "'Playfair Display', serif", margin: 0 },
-  addBtn: { padding: '10px 18px', background: '#1a6b3a', color: '#fff', border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer' },
-  summaryGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 },
-  summaryCard: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' },
-  summaryLabel: { fontSize: 9, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 },
-  summaryValue: { fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: '#1a6b3a' },
-  sectionTitle: { fontSize: 13, fontWeight: 700, color: '#111827', margin: '24px 0 12px' },
-  card: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', marginBottom: 20 },
-  sessionCard: (isOpen) => ({
-    background: '#fff', border: `1px solid ${isOpen ? '#1a6b3a' : '#e5e7eb'}`, borderRadius: 12, padding: '16px 18px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.04)', marginBottom: 12, borderLeft: `4px solid ${isOpen ? '#1a6b3a' : '#e5e7eb'}`,
-  }),
-  sessionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  sessionId: { fontSize: 13, fontWeight: 700, color: '#111827' },
-  badge: (isOpen) => ({
-    display: 'inline-block', fontSize: 8, fontWeight: 700, padding: '3px 8px', borderRadius: 10, textTransform: 'uppercase',
-    background: isOpen ? '#d1fae5' : '#f3f4f6', color: isOpen ? '#065f46' : '#6b7280',
-  }),
-  sessionDetails: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, fontSize: 11, color: '#374151' },
-  detailLabel: { fontSize: 9, color: '#9ca3af', textTransform: 'uppercase', fontWeight: 600, marginBottom: 2 },
-  closeBtn: { padding: '6px 14px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  title: { fontSize: 28, fontWeight: 700, color: '#111827', fontFamily: "'Playfair Display', serif", margin: 0 },
+  addBtn: { padding: '10px 18px', background: '#1a6b3a', color: '#fff', border: 'none', borderRadius: 7, fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  card: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', marginBottom: 20, overflow: 'hidden' },
+  table: { width: '100%', borderCollapse: 'collapse' },
+  tableHead: { background: '#f9fafb' },
+  tableHeaderCell: { padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', borderBottom: '1px solid #e5e7eb' },
+  tableBody: { fontSize: 13, color: '#374151' },
+  tableRow: { borderBottom: '1px solid #e5e7eb' },
+  tableRowHover: { background: '#f9fafb' },
+  tableCell: { padding: '14px 16px', textAlign: 'left' },
+  sessionIdCell: { fontFamily: 'monospace', fontWeight: 600, color: '#1a6b3a' },
+  cashierCell: { fontWeight: 600 },
+  emptyCell: { color: '#9ca3af' },
+  pill: (type) => {
+    const styles = {
+      open: { background: '#e8f5ee', color: '#1a6b3a' },
+      balanced: { background: '#e8f5ee', color: '#1a6b3a' },
+      variance: { background: '#fef3e2', color: '#92400e' },
+    };
+    return { display: 'inline-block', padding: '4px 12px', borderRadius: 12, fontSize: 11, fontWeight: 600, ...styles[type] };
+  },
+  varianceNegative: { color: '#c0392b', fontWeight: 700 },
+  varianceZero: { color: '#1a6b3a', fontWeight: 700 },
   emptyState: { textAlign: 'center', padding: '40px 20px', color: '#9ca3af' },
 };
 
@@ -156,125 +158,126 @@ export default function CashierSessions() {
     },
   });
 
-  const activeSessions = sessions.filter(s => s.status === 'open');
-  const closedSessions = sessions.filter(s => s.status === 'closed');
-
   const handleCloseSession = (id, data) => {
     closeMut.mutate({ id, data });
+  };
+
+  // Combine all sessions for table display
+  const allSessions = [...sessions].sort((a, b) => {
+    // Sort by status (open first), then by opened_at descending
+    if (a.status === 'open' && b.status !== 'open') return -1;
+    if (a.status !== 'open' && b.status === 'open') return 1;
+    return new Date(b.opened_at || 0) - new Date(a.opened_at || 0);
+  });
+
+  // Helper to determine status pill
+  const getStatusPill = (session) => {
+    if (session.status === 'open') {
+      return { type: 'open', label: 'Open' };
+    }
+    if (session.variance === 0) {
+      return { type: 'balanced', label: 'Balanced' };
+    }
+    return { type: 'variance', label: 'Variance' };
   };
 
   return (
     <div style={S.page}>
       <div style={S.header}>
-        <h1 style={S.title}>{'\u{1F4B3}'} Cashier Sessions</h1>
+        <h1 style={S.title}>Cashier Sessions</h1>
         <button onClick={() => setShowOpenModal(true)} style={S.addBtn}>
-          {'\u{2795}'} Open Session
+          + Open Session
         </button>
       </div>
 
-      {/* Summary */}
-      <div style={S.summaryGrid}>
-        <div style={S.summaryCard}>
-          <div style={S.summaryLabel}>{'\u{1F7E2}'} Active Sessions</div>
-          <div style={S.summaryValue}>{activeSessions.length}</div>
-        </div>
-        <div style={S.summaryCard}>
-          <div style={S.summaryLabel}>{'\u{1F534}'} Closed Today</div>
-          <div style={{ ...S.summaryValue, color: '#6b7280' }}>
-            {closedSessions.filter(s => s.closed_at && new Date(s.closed_at).toDateString() === new Date().toDateString()).length}
+      {/* Sessions Table */}
+      <div style={S.card}>
+        {isLoading ? (
+          <div style={S.emptyState}>Loading sessions...</div>
+        ) : allSessions.length > 0 ? (
+          <table style={S.table}>
+            <thead style={S.tableHead}>
+              <tr style={S.tableRow}>
+                <th style={S.tableHeaderCell}>Session</th>
+                <th style={S.tableHeaderCell}>Cashier</th>
+                <th style={S.tableHeaderCell}>Opened</th>
+                <th style={S.tableHeaderCell}>Closed</th>
+                <th style={S.tableHeaderCell}>Sales</th>
+                <th style={S.tableHeaderCell}>Opening Cash</th>
+                <th style={S.tableHeaderCell}>Expected</th>
+                <th style={S.tableHeaderCell}>Actual</th>
+                <th style={S.tableHeaderCell}>Variance</th>
+                <th style={S.tableHeaderCell}>Status</th>
+              </tr>
+            </thead>
+            <tbody style={S.tableBody}>
+              {allSessions.map(session => {
+                const statusPill = getStatusPill(session);
+                const isOpen = session.status === 'open';
+                const variance = session.variance;
+
+                return (
+                  <tr
+                    key={session.id}
+                    style={{ ...S.tableRow, cursor: 'pointer' }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <td style={{ ...S.tableCell, ...S.sessionIdCell }}>CS-{String(session.id).padStart(3, '0')}</td>
+                    <td style={{ ...S.tableCell, ...S.cashierCell }}>{session.cashier_username}</td>
+                    <td style={S.tableCell}>{session.opened_at ? new Date(session.opened_at).toLocaleString() : '—'}</td>
+                    <td style={S.tableCell}>{isOpen ? '—' : (session.closed_at ? new Date(session.closed_at).toLocaleString() : '—')}</td>
+                    <td style={S.tableCell}>0</td>
+                    <td style={S.tableCell}>{fmt(session.opening_float || 0, 'zwd')}</td>
+                    <td style={S.tableCell}>{isOpen ? '—' : fmt(session.expected_cash || 0, 'zwd')}</td>
+                    <td style={S.tableCell}>{isOpen ? '—' : fmt(session.closing_cash || 0, 'zwd')}</td>
+                    <td style={S.tableCell}>
+                      {isOpen ? (
+                        '—'
+                      ) : variance !== null ? (
+                        <span style={variance < 0 ? S.varianceNegative : variance === 0 ? S.varianceZero : {}}>
+                          {variance >= 0 ? '+' : ''}{fmt(variance, 'zwd')}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td style={S.tableCell}>
+                      <div style={S.pill(statusPill.type)}>
+                        {statusPill.label}
+                      </div>
+                      {isOpen && (
+                        <button
+                          onClick={() => setClosingSession(session)}
+                          style={{
+                            marginLeft: 8,
+                            padding: '4px 12px',
+                            background: '#c0392b',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: 6,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Close
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <div style={{ ...S.emptyState, padding: '60px 20px' }}>
+            <div style={{ fontSize: 48, marginBottom: 10 }}>💳</div>
+            <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>No sessions yet</p>
+            <p style={{ fontSize: 12, marginTop: 6 }}>Open a cashier session to start processing sales</p>
           </div>
-        </div>
-        <div style={S.summaryCard}>
-          <div style={S.summaryLabel}>{'\u{1F4CA}'} Total Sessions</div>
-          <div style={{ ...S.summaryValue, color: '#374151' }}>{sessions.length}</div>
-        </div>
+        )}
       </div>
-
-      {/* Active Sessions */}
-      {activeSessions.length > 0 && (
-        <>
-          <h3 style={S.sectionTitle}>{'\u{1F7E2}'} Active Sessions</h3>
-          {activeSessions.map(session => (
-            <div key={session.id} style={S.sessionCard(true)}>
-              <div style={S.sessionHeader}>
-                <div>
-                  <span style={S.sessionId}>Session #{session.id}</span>
-                  <span style={{ marginLeft: 8, ...S.badge(true) }}>Open</span>
-                </div>
-                <button onClick={() => setClosingSession(session)} style={S.closeBtn}>Close Session</button>
-              </div>
-              <div style={S.sessionDetails}>
-                <div>
-                  <div style={S.detailLabel}>Cashier</div>
-                  <strong>{session.cashier_username}</strong>
-                </div>
-                <div>
-                  <div style={S.detailLabel}>Opened</div>
-                  <span>{session.opened_at ? new Date(session.opened_at).toLocaleString() : ''}</span>
-                </div>
-                <div>
-                  <div style={S.detailLabel}>Opening Float</div>
-                  <strong style={{ color: '#1a6b3a' }}>{fmt(session.opening_float, 'zwd')}</strong>
-                </div>
-                <div>
-                  <div style={S.detailLabel}>Notes</div>
-                  <span style={{ color: '#6b7280' }}>{session.notes || '\u2014'}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </>
-      )}
-
-      {/* Closed Sessions */}
-      <h3 style={S.sectionTitle}>{'\u{1F4CB}'} Session History</h3>
-      {isLoading ? (
-        <div style={S.emptyState}>Loading sessions...</div>
-      ) : closedSessions.length > 0 ? (
-        closedSessions.map(session => {
-          const variance = session.variance;
-          const varianceColor = variance === null ? '#6b7280' : variance >= 0 ? '#1a6b3a' : '#c0392b';
-          return (
-            <div key={session.id} style={S.sessionCard(false)}>
-              <div style={S.sessionHeader}>
-                <div>
-                  <span style={S.sessionId}>Session #{session.id}</span>
-                  <span style={{ marginLeft: 8, ...S.badge(false) }}>Closed</span>
-                </div>
-              </div>
-              <div style={S.sessionDetails}>
-                <div>
-                  <div style={S.detailLabel}>Cashier</div>
-                  <strong>{session.cashier_username}</strong>
-                </div>
-                <div>
-                  <div style={S.detailLabel}>Duration</div>
-                  <span>
-                    {session.opened_at ? new Date(session.opened_at).toLocaleDateString() : ''}
-                    {session.closed_at ? ` \u2192 ${new Date(session.closed_at).toLocaleTimeString()}` : ''}
-                  </span>
-                </div>
-                <div>
-                  <div style={S.detailLabel}>Expected / Actual</div>
-                  <span>{fmt(session.expected_cash || 0, 'zwd')} / {fmt(session.closing_cash || 0, 'zwd')}</span>
-                </div>
-                <div>
-                  <div style={S.detailLabel}>Variance</div>
-                  <strong style={{ color: varianceColor }}>
-                    {variance !== null ? (variance >= 0 ? '+' : '') + fmt(variance, 'zwd') : '\u2014'}
-                  </strong>
-                </div>
-              </div>
-            </div>
-          );
-        })
-      ) : (
-        <div style={{ ...S.card, ...S.emptyState }}>
-          <div style={{ fontSize: 48, marginBottom: 10 }}>{'\u{1F4B3}'}</div>
-          <p>No session history yet</p>
-          <p style={{ fontSize: 11, marginTop: 6 }}>Open a cashier session to start processing sales</p>
-        </div>
-      )}
 
       <OpenSessionModal isOpen={showOpenModal} onClose={() => setShowOpenModal(false)} onSubmit={data => openMut.mutate(data)} loading={openMut.isPending} />
       <CloseSessionModal isOpen={!!closingSession} onClose={() => setClosingSession(null)} onSubmit={handleCloseSession} session={closingSession} loading={closeMut.isPending} />
