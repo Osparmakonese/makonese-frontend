@@ -42,6 +42,7 @@ import SalesHistory from './pages/SalesHistory';
 import CashierSessions from './pages/CashierSessions';
 import StockAdjustments from './pages/StockAdjustments';
 import Categories from './pages/Categories';
+import RetailReport from './pages/RetailReport';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 /* --- */
@@ -78,6 +79,7 @@ const PAGES = {
   'Cashier Sessions': CashierSessions,
   'Stock Adjustments': StockAdjustments,
   'Categories': Categories,
+  'Retail Report': RetailReport,
   // Billing & Account
   'Billing': Billing,
   'Team': TeamManagement,
@@ -117,6 +119,7 @@ const PAGE_META = {
   'Cashier Sessions': { title: 'Cashier Sessions', sub: 'Open, close, and manage cashier sessions' },
   'Stock Adjustments': { title: 'Stock Adjustments', sub: 'Log damaged, stolen, or restocked items' },
   'Categories': { title: 'Categories', sub: 'Organize products into categories' },
+  'Retail Report': { title: 'Retail Report', sub: 'Store P&L, inventory and performance' },
   // Billing
   'Billing': { title: 'Billing', sub: 'Pewil subscription, invoices, and usage' },
   'Team': { title: 'Team & Users', sub: 'Manage team members and permissions' },
@@ -152,6 +155,7 @@ const PRIMARY_ACTIONS = {
   'Cashier Sessions': '+ Open Session',
   'Stock Adjustments': '+ Log Adjustment',
   'Categories': '+ Add Category',
+  'Retail Report': null,
   'Billing': 'Change Plan',
   'Team': '+ Invite User',
 };

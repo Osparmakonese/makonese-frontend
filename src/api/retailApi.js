@@ -37,3 +37,6 @@ export const getDailySummary = () => api.get('/retail/sales/daily_summary/').the
 
 // Receipt
 export const getReceipt = (id) => api.get(`/retail/sales/${id}/receipt/`).then(r => r.data);
+
+// Retail Report
+export const getRetailReport = (params) => api.get('/retail/sales/retail_report/', { params }).then(r => r.data);

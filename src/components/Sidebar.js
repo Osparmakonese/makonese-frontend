@@ -133,6 +133,7 @@ const NAV_ITEMS = [
     { key: 'Cashier Sessions', emoji: '\u{1F4B5}', label: 'Cashier Sessions' },
     { key: 'Stock Adjustments', emoji: '\u{1F504}', label: 'Stock Adjustments' },
     { key: 'Categories', emoji: '\u{1F5C2}', label: 'Categories' },
+    { key: 'Retail Report', emoji: '\u{1F4CA}', label: 'Report', ownerOnly: true },
   ]},
   { section: 'OWNER ONLY', ownerOnly: true, collapsible: false, items: [
     { key: 'Report', emoji: '\u{1F4C8}', label: 'Report' },
@@ -278,7 +279,7 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
                   )}
                 </div>
                 <div style={S.sectionItems(isExpanded)}>
-                  {section.items.map(item => (
+                  {section.items.filter(item => !item.ownerOnly || role === 'owner').map(item => (
                     <button
                       key={item.key}
                       style={S.navItem(activeTab === item.key)}
