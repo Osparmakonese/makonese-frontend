@@ -156,6 +156,7 @@ const NAV_ITEMS = [
     { key: 'Cashier Performance', emoji: '\u{1F3C6}', label: 'Cashier Performance' },
   ]},
   { section: 'SYSTEM', module: 'retail', collapsible: false, items: [
+    { key: 'Device Config', emoji: '\u{1F50C}', label: 'Device Config' },
     { key: 'ZIMRA Fiscal', emoji: '\u{1F4CB}', label: 'ZIMRA Fiscal' },
     { key: 'Multi-Currency', emoji: '\u{1F4B1}', label: 'Multi-Currency' },
     { key: 'Receipt Setup', emoji: '\u{1F9FE}', label: 'Receipt Setup' },

@@ -95,12 +95,30 @@ export const getReceiptTemplates = () => api.get('/retail/receipt-templates/').t
 export const createReceiptTemplate = (data) => api.post('/retail/receipt-templates/', data).then(r => r.data);
 export const updateReceiptTemplate = (id, data) => api.patch(`/retail/receipt-templates/${id}/`, data).then(r => r.data);
 
+// ── Device Profiles ──
+export const getDeviceProfiles = (deviceType) => api.get('/retail/device-profiles/', { params: deviceType ? { device_type: deviceType } : {} }).then(r => r.data);
+export const createDeviceProfile = (data) => api.post('/retail/device-profiles/', data).then(r => r.data);
+export const updateDeviceProfile = (id, data) => api.patch(`/retail/device-profiles/${id}/`, data).then(r => r.data);
+export const deleteDeviceProfile = (id) => api.delete(`/retail/device-profiles/${id}/`);
+export const testDevice = (id) => api.post(`/retail/device-profiles/${id}/test_device/`).then(r => r.data);
+export const setDefaultDevice = (id) => api.post(`/retail/device-profiles/${id}/set_default/`).then(r => r.data);
+export const getDeviceSummary = () => api.get('/retail/device-profiles/summary/').then(r => r.data);
+
+// ── Print Bridge ──
+export const getPrintBridgeStatus = () => api.get('/retail/print-bridge/status/').then(r => r.data);
+export const sendPrintBridgeHeartbeat = (data) => api.post('/retail/print-bridge/heartbeat/', data).then(r => r.data);
+
 // ── ZIMRA Fiscal ──
 export const getZimraDevices = () => api.get('/retail/zimra-devices/').then(r => r.data);
 export const createZimraDevice = (data) => api.post('/retail/zimra-devices/', data).then(r => r.data);
 export const updateZimraDevice = (id, data) => api.patch(`/retail/zimra-devices/${id}/`, data).then(r => r.data);
 export const getZReports = () => api.get('/retail/z-reports/').then(r => r.data);
 export const generateZReport = () => api.post('/retail/z-reports/generate/').then(r => r.data);
+
+// ── Fiscal Queue ──
+export const getFiscalQueue = (queueStatus) => api.get('/retail/fiscal-queue/', { params: queueStatus ? { status: queueStatus } : {} }).then(r => r.data);
+export const retryFiscalItem = (id) => api.post(`/retail/fiscal-queue/${id}/retry/`).then(r => r.data);
+export const getFiscalQueueStats = () => api.get('/retail/fiscal-queue/stats/').then(r => r.data);
 
 // ── Analytics ──
 export const getRetailDashboard = () => api.get('/retail/analytics/dashboard/').then(r => r.data);

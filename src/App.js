@@ -60,6 +60,7 @@ import CustomerLoyalty from './pages/CustomerLoyalty';
 import BarcodeGenerator from './pages/BarcodeGenerator';
 import ReceiptCustomization from './pages/ReceiptCustomization';
 import ProfitMargins from './pages/ProfitMargins';
+import DeviceConfiguration from './pages/DeviceConfiguration';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 /* --- */
@@ -114,6 +115,7 @@ const PAGES = {
   'Barcode Labels': BarcodeGenerator,
   'Receipt Setup': ReceiptCustomization,
   'Profit Margins': ProfitMargins,
+  'Device Config': DeviceConfiguration,
   // Billing & Account
   'Billing': Billing,
   'Team': TeamManagement,
@@ -171,6 +173,7 @@ const PAGE_META = {
   'Barcode Labels': { title: 'Barcode & Labels', sub: 'Generate barcodes and print shelf labels' },
   'Receipt Setup': { title: 'Receipt Customization', sub: 'Receipt template and printer settings' },
   'Profit Margins': { title: 'Profit Margins', sub: 'Margin analysis and pricing insights' },
+  'Device Config': { title: 'Device Configuration', sub: 'Hardware setup, Print Bridge, and ZIMRA compliance' },
   // Billing
   'Billing': { title: 'Billing', sub: 'Pewil subscription, invoices, and usage' },
   'Team': { title: 'Team & Users', sub: 'Manage team members and permissions' },
@@ -224,6 +227,7 @@ const PRIMARY_ACTIONS = {
   'Barcode Labels': 'Print All Labels',
   'Receipt Setup': 'Save Template',
   'Profit Margins': 'Export CSV',
+  'Device Config': '+ Add Device',
   'Billing': 'Change Plan',
   'Team': '+ Invite User',
 };

@@ -74,6 +74,7 @@ const RETAIL_DRAWER_SECTIONS = [
     { key: 'Cashier Performance', emoji: '\u{1F3C6}', label: 'Performance', sub: 'Staff analytics' },
   ]},
   { label: 'System', items: [
+    { key: 'Device Config', emoji: '\u{1F50C}', label: 'Devices', sub: 'Hardware setup' },
     { key: 'ZIMRA Fiscal', emoji: '\u{1F4CB}', label: 'ZIMRA', sub: 'Fiscal compliance' },
     { key: 'Multi-Currency', emoji: '\u{1F4B1}', label: 'Currency', sub: 'Exchange rates' },
     { key: 'Receipt Setup', emoji: '\u{1F9FE}', label: 'Receipts', sub: 'Templates' },
