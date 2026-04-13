@@ -47,6 +47,19 @@ import JournalEntries from './pages/JournalEntries';
 import RetailPayroll from './pages/RetailPayroll';
 import RetailBilling from './pages/RetailBilling';
 import RetailSettings from './pages/RetailSettings';
+import Customers from './pages/Customers';
+import Returns from './pages/Returns';
+import Suppliers from './pages/Suppliers';
+import Discounts from './pages/Discounts';
+import LowStockAlerts from './pages/LowStockAlerts';
+import ZimraFiscal from './pages/ZimraFiscal';
+import MultiCurrency from './pages/MultiCurrency';
+import EndOfDayReport from './pages/EndOfDayReport';
+import CashierPerformance from './pages/CashierPerformance';
+import CustomerLoyalty from './pages/CustomerLoyalty';
+import BarcodeGenerator from './pages/BarcodeGenerator';
+import ReceiptCustomization from './pages/ReceiptCustomization';
+import ProfitMargins from './pages/ProfitMargins';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 /* --- */
@@ -88,6 +101,19 @@ const PAGES = {
   'Retail Payroll': RetailPayroll,
   'Retail Billing': RetailBilling,
   'Retail Settings': RetailSettings,
+  'Customers': Customers,
+  'Returns': Returns,
+  'Suppliers': Suppliers,
+  'Discounts': Discounts,
+  'Low Stock Alerts': LowStockAlerts,
+  'ZIMRA Fiscal': ZimraFiscal,
+  'Multi-Currency': MultiCurrency,
+  'End of Day': EndOfDayReport,
+  'Cashier Performance': CashierPerformance,
+  'Customer Loyalty': CustomerLoyalty,
+  'Barcode Labels': BarcodeGenerator,
+  'Receipt Setup': ReceiptCustomization,
+  'Profit Margins': ProfitMargins,
   // Billing & Account
   'Billing': Billing,
   'Team': TeamManagement,
@@ -132,6 +158,19 @@ const PAGE_META = {
   'Retail Payroll': { title: 'Payroll', sub: 'PAYE + NSSA — Zimbabwe payroll' },
   'Retail Billing': { title: 'Billing & Subscription', sub: 'Manage your Pewil plan and payments' },
   'Retail Settings': { title: 'Settings', sub: 'Tenant configuration and permissions' },
+  'Customers': { title: 'Customers', sub: 'Customer profiles and purchase history' },
+  'Returns': { title: 'Returns & Refunds', sub: 'Process returns and manage refunds' },
+  'Suppliers': { title: 'Suppliers & Purchase Orders', sub: 'Vendor directory and procurement' },
+  'Discounts': { title: 'Discounts & Promotions', sub: 'Manage sales and promotional offers' },
+  'Low Stock Alerts': { title: 'Low Stock Alerts', sub: 'Reorder points and stock monitoring' },
+  'ZIMRA Fiscal': { title: 'ZIMRA Fiscalisation', sub: 'Fiscal device and compliance management' },
+  'Multi-Currency': { title: 'Currency Management', sub: 'Exchange rates and multi-currency settings' },
+  'End of Day': { title: 'End of Day Report', sub: 'Daily closing summary and reconciliation' },
+  'Cashier Performance': { title: 'Cashier Performance', sub: 'Staff analytics and leaderboard' },
+  'Customer Loyalty': { title: 'Customer Loyalty', sub: 'Points, rewards, and retention program' },
+  'Barcode Labels': { title: 'Barcode & Labels', sub: 'Generate barcodes and print shelf labels' },
+  'Receipt Setup': { title: 'Receipt Customization', sub: 'Receipt template and printer settings' },
+  'Profit Margins': { title: 'Profit Margins', sub: 'Margin analysis and pricing insights' },
   // Billing
   'Billing': { title: 'Billing', sub: 'Pewil subscription, invoices, and usage' },
   'Team': { title: 'Team & Users', sub: 'Manage team members and permissions' },
@@ -172,6 +211,19 @@ const PRIMARY_ACTIONS = {
   'Retail Payroll': '+ New Run',
   'Retail Billing': null,
   'Retail Settings': 'Save Changes',
+  'Customers': '+ Add Customer',
+  'Returns': '+ Process Return',
+  'Suppliers': '+ New Purchase Order',
+  'Discounts': '+ Create Discount',
+  'Low Stock Alerts': null,
+  'ZIMRA Fiscal': null,
+  'Multi-Currency': 'Update Rates',
+  'End of Day': 'Generate Report',
+  'Cashier Performance': null,
+  'Customer Loyalty': null,
+  'Barcode Labels': 'Print All Labels',
+  'Receipt Setup': 'Save Template',
+  'Profit Margins': 'Export CSV',
   'Billing': 'Change Plan',
   'Team': '+ Invite User',
 };
