@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 const S = {
   wrapper: {
-    minHeight: '100vh', display: 'flex', background: '#fff',
+    height: '100vh', display: 'flex', background: '#fff', overflow: 'hidden',
   },
   leftSide: {
     flex: 1,
@@ -12,7 +12,6 @@ const S = {
     backgroundSize: 'cover', backgroundPosition: 'center',
     display: 'flex', flexDirection: 'column', alignItems: 'center',
     justifyContent: 'center', padding: '40px 20px', position: 'relative',
-    minHeight: '100vh',
   },
   leftOverlay: {
     position: 'absolute', inset: 0,

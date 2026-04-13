@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 
@@ -25,8 +25,7 @@ const LandingPage = () => {
 
   // Redirect to app if already logged in
   if (user) {
-    navigate('/app');
-    return null;
+    return <Navigate to="/app" replace />;
   }
 
   // Pricing plans data
