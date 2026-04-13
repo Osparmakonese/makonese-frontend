@@ -145,7 +145,7 @@ const NAV_ITEMS = [
     { key: 'Retail Billing', emoji: '\u{1F4B3}', label: 'Billing' },
     { key: 'Retail Settings', emoji: '\u2699\uFE0F', label: 'Settings' },
   ]},
-  { section: 'OWNER ONLY', ownerOnly: true, collapsible: false, items: [
+  { section: 'OWNER ONLY', module: 'farm', ownerOnly: true, collapsible: false, items: [
     { key: 'Report', emoji: '\u{1F4C8}', label: 'Report' },
     { key: 'Team', emoji: '\u{1F465}', label: 'Team' },
     { key: 'Billing', emoji: '\u{1F4B3}', label: 'Billing' },
@@ -171,12 +171,11 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
   const hasRetail = modules.includes('retail');
 
   // Module-based section filtering using the `module` property on each section
-  // Sections with module: 'retail' show only in retail mode
-  // Sections without a module property are farm sections (except OWNER ONLY)
+  // Each section declares which module it belongs to (farm or retail)
   const shouldShowSection = (section) => {
     if (section.module === 'retail') return activeModule === 'retail' && hasRetail;
-    if (section.section === 'OWNER ONLY') return true;
-    // Farm sections: MAIN, LIVESTOCK, ECONOMICS, PEOPLE
+    if (section.module === 'farm') return activeModule === 'farm' && hasFarm;
+    // Sections without a module tag default to farm
     return activeModule === 'farm' && hasFarm;
   };
 
