@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getRetailReport } from '../api/retailApi';
 import { useAuth } from '../context/AuthContext';
+import AIInsightCard from '../components/AIInsightCard';
 
 /* ── Helpers ── */
 const fmt = (v) => {
@@ -1034,6 +1035,11 @@ export default function RetailReport() {
           )}
         </>
       )}
+
+      {/* AI Retail Summary */}
+      <div style={{ marginTop: 16 }}>
+        <AIInsightCard feature="retail_dashboard_summary" title="AI Retail Analysis" />
+      </div>
     </div>
   );
 }

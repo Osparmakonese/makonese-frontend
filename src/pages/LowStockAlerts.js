@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { getLowStockProducts, getProducts } from '../api/retailApi';
+import AIInsightCard from '../components/AIInsightCard';
 
 const S = {
   page: { maxWidth: 1200, margin: '0 auto', padding: 20 },
@@ -196,6 +197,9 @@ export default function LowStockAlerts({ onTabChange }) {
           <input type="checkbox" defaultChecked style={{ width: 18, height: 18, cursor: 'pointer' }} />
         </div>
       </div>
+
+      {/* AI Stock Recommendations */}
+      <AIInsightCard feature="retail_stock_advisor" title="AI Stock Recommendations" />
     </div>
   );
 }

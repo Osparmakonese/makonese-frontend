@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCustomers, getTopCustomers, createCustomer, deleteCustomer } from '../api/retailApi';
 import { useAuth } from '../context/AuthContext';
 import { fmt } from '../utils/format';
+import AIInsightCard from '../components/AIInsightCard';
 
 export default function Customers({ onTabChange }) {
   const { user } = useAuth();
@@ -463,6 +464,9 @@ export default function Customers({ onTabChange }) {
             ))}
           </div>
         </div>
+
+        {/* AI Customer Insights */}
+        <AIInsightCard feature="retail_customer_insights" title="AI Customer Insights" compact />
       </div>
     </div>
   );

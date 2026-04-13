@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCashierSessions, createCashierSession, closeCashierSession } from '../api/retailApi';
 import { fmt } from '../utils/format';
+import AIInsightCard from '../components/AIInsightCard';
 
 /* --- Open Session Modal --- */
 function OpenSessionModal({ isOpen, onClose, onSubmit, loading }) {
@@ -277,6 +278,11 @@ export default function CashierSessions() {
             <p style={{ fontSize: 12, marginTop: 6 }}>Open a cashier session to start processing sales</p>
           </div>
         )}
+      </div>
+
+      {/* AI Cashier Monitor */}
+      <div style={{ marginTop: 16 }}>
+        <AIInsightCard feature="retail_cashier_monitor" title="AI Cashier Analysis" />
       </div>
 
       <OpenSessionModal isOpen={showOpenModal} onClose={() => setShowOpenModal(false)} onSubmit={data => openMut.mutate(data)} loading={openMut.isPending} />

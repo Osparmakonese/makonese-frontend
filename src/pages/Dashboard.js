@@ -4,6 +4,7 @@ import { getDashboard, getLowStock, getHealthScore, getBriefing, getAchievements
 import { fmt, qty, cropEmoji, cropGradient, initials, avatarColor, IMAGES, cropImage } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 import FieldModal from '../components/FieldModal';
+import AIInsightCard from '../components/AIInsightCard';
 
 function Skeleton({ w, h, r, mb }) {
   return <div className="skeleton" style={{ width: w || '100%', height: h || 16, borderRadius: r || 6, marginBottom: mb || 0 }} />;
@@ -578,6 +579,11 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* AI Farm Summary */}
+      <div style={{ marginTop: 16 }}>
+        <AIInsightCard feature="farm_seasonal_planner" title="AI Seasonal Planner" />
       </div>
 
       <FieldModal field={selectedField} isOpen={!!selectedField} onClose={() => setSelectedField(null)} />

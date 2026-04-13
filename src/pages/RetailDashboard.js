@@ -5,6 +5,7 @@ import {
 } from '../api/retailApi';
 import { fmt } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
+import AIInsightCard from '../components/AIInsightCard';
 
 /* ─── Skeleton Loader ─── */
 function Skeleton({ w, h, r, mb }) {
@@ -541,6 +542,11 @@ export default function RetailDashboard() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* AI Dashboard Summary */}
+      <div style={{ marginTop: 16 }}>
+        <AIInsightCard feature="retail_dashboard_summary" title="AI Daily Summary" />
       </div>
     </div>
   );

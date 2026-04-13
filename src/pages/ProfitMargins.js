@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { getProfitMargins } from '../api/retailApi';
+import AIInsightCard from '../components/AIInsightCard';
 
 export default function ProfitMargins({ onTabChange }) {
   const { user } = useAuth();
@@ -316,34 +317,8 @@ export default function ProfitMargins({ onTabChange }) {
           </div>
         </div>
 
-        {/* Pricing Recommendations */}
-        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
-          <h3 style={{ fontSize: 12, fontWeight: 700, margin: '0 0 16px 0', color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
-            AI Pricing Insights
-            <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 20, textTransform: 'uppercase', background: '#f3e8ff', color: '#7c3aed' }}>
-              AI
-            </span>
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {insights.map((insight, idx) => (
-              <div key={idx} style={{ display: 'flex', gap: 10 }}>
-                <div
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    background: insight.color,
-                    marginTop: 4,
-                    flexShrink: 0
-                  }}
-                />
-                <div style={{ fontSize: 10, color: '#374151', lineHeight: 1.5 }}>
-                  {insight.text}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* AI Pricing Recommendations */}
+        <AIInsightCard feature="retail_profit_advisor" title="AI Pricing Insights" />
       </div>
     </div>
   );

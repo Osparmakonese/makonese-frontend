@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { getEndOfDayReport } from '../api/retailApi';
+import AIInsightCard from '../components/AIInsightCard';
 
 /* ─── Styles ─── */
 const S = {
@@ -447,6 +448,11 @@ export default function EndOfDayReport({ onTabChange }) {
           </div>
         </>
       )}
+
+      {/* AI End-of-Day Analysis */}
+      <div style={{ marginTop: 16 }}>
+        <AIInsightCard feature="retail_eod_analysis" params={{ date: reportDate }} title="AI End-of-Day Analysis" />
+      </div>
     </div>
   );
 }
