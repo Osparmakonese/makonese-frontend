@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { getLowStockProducts, getProducts } from '../api/retailApi';
 
 const S = {
   page: { maxWidth: 1200, margin: '0 auto', padding: 20 },
@@ -33,16 +35,39 @@ const S = {
 export default function LowStockAlerts({ onTabChange }) {
   useAuth();
 
-  const stockData = [
-    { sku: 'CHAR-USB', name: 'USB-C Charger', current: 3, reorder: 20, status: 'Critical', order: 25, supplier: 'TechZim Distributors' },
-    { sku: 'SPK-BT', name: 'BT Speaker Mini', current: 5, reorder: 15, status: 'Critical', order: 15, supplier: 'AudioTech SA' },
-    { sku: 'PWR-10K', name: 'Power Bank 10000mAh', current: 8, reorder: 20, status: 'Critical', order: 20, supplier: 'PowerPlus Imports' },
-    { sku: 'CASE-IP15', name: 'iPhone 15 Case', current: 12, reorder: 30, status: 'Low', order: 25, supplier: 'AccessoryHub' },
-    { sku: 'EAR-BT', name: 'BT Earbuds', current: 15, reorder: 25, status: 'Low', order: 15, supplier: 'AudioTech SA' },
-    { sku: 'CABLE-LN', name: 'Lightning Cable', current: 18, reorder: 30, status: 'Low', order: 20, supplier: 'CableCo Zimbabwe' },
-    { sku: 'SCR-PRO', name: 'Screen Protector', current: 22, reorder: 40, status: 'Low', order: 25, supplier: 'AccessoryHub' },
-    { sku: 'CAR-CHR', name: 'Car Charger', current: 20, reorder: 30, status: 'Low', order: 15, supplier: 'TechZim Distributors' },
-  ];
+  const { data: lowStockProducts = [], isLoading: lowStockLoading } = useQuery({
+    queryKey: ['retail-low-stock'],
+    queryFn: getLowStockProducts,
+    staleTime: 30000
+  });
+
+  const { data: allProducts = [], isLoading: productsLoading } = useQuery({
+    queryKey: ['retail-products'],
+    queryFn: getProducts,
+    staleTime: 30000
+  });
+
+  const stockData = useMemo(() => {
+    return lowStockProducts.map(product => {
+      const percentage = product.quantity_in_stock / product.reorder_level;
+      let status = 'Low';
+      if (percentage < 0.25) {
+        status = 'Critical';
+      }
+
+      return {
+        id: product.id,
+        sku: product.sku || `SKU-${product.id}`,
+        name: product.name,
+        current: product.quantity_in_stock,
+        reorder: product.reorder_level,
+        status,
+        order: Math.ceil(product.reorder_level * 1.2),
+        supplier: product.supplier || 'N/A',
+        category: product.category || 'N/A'
+      };
+    });
+  }, [lowStockProducts]);
 
   const getStockPercentage = (current, reorder) => Math.min((current / reorder) * 100, 100);
   const getProgressColor = (status) => {
@@ -53,7 +78,11 @@ export default function LowStockAlerts({ onTabChange }) {
 
   const criticalCount = stockData.filter(s => s.status === 'Critical').length;
   const lowCount = stockData.filter(s => s.status === 'Low').length;
-  const healthyCount = 34; // hardcoded as per requirement
+  const healthyCount = useMemo(() => {
+    if (allProducts.length === 0) return 0;
+    const lowStockIds = new Set(lowStockProducts.map(p => p.id));
+    return allProducts.filter(p => !lowStockIds.has(p.id)).length;
+  }, [allProducts, lowStockProducts]);
 
   return (
     <div style={S.page}>
@@ -107,47 +136,49 @@ export default function LowStockAlerts({ onTabChange }) {
       {/* Products Below Reorder Point */}
       <div style={S.card}>
         <h2 style={S.cardTitle}>Products Below Reorder Point</h2>
-        <table style={S.table}>
-          <thead>
-            <tr>
-              <th style={S.th}>SKU</th>
-              <th style={S.th}>Product</th>
-              <th style={S.th}>Current Stock</th>
-              <th style={S.th}>Reorder Point</th>
-              <th style={S.th}>Status</th>
-              <th style={S.th}>Suggested Order</th>
-              <th style={S.th}>Supplier</th>
-              <th style={S.th}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stockData.map((item, idx) => {
-              const percentage = getStockPercentage(item.current, item.reorder);
-              const badgeClass = item.status === 'Critical' ? S.badgeRed : S.badgeAmber;
-              return (
-                <tr key={idx}>
-                  <td style={{ ...S.td, ...S.skuId }}>{item.sku}</td>
-                  <td style={S.td}>{item.name}</td>
-                  <td style={S.td}>{item.current} units</td>
-                  <td style={S.td}>{item.reorder} units</td>
-                  <td style={S.td}>
-                    <span style={{ ...S.badge, ...badgeClass, fontWeight: 700 }}>
-                      {item.status}
-                    </span>
-                    <div style={S.progressBar}>
-                      <div style={{ ...S.progressFill, background: getProgressColor(item.status), width: `${percentage}%` }}></div>
-                    </div>
-                  </td>
-                  <td style={S.td}>{item.order} units</td>
-                  <td style={S.td}>{item.supplier}</td>
-                  <td style={S.td}>
-                    <button style={S.createPoBtn}>Create PO</button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        {lowStockLoading ? (
+          <div style={{ padding: 20, textAlign: 'center', color: '#6b7280' }}>Loading low stock products...</div>
+        ) : stockData.length === 0 ? (
+          <div style={{ padding: 20, textAlign: 'center', color: '#6b7280' }}>No low stock products</div>
+        ) : (
+          <table style={S.table}>
+            <thead>
+              <tr>
+                <th style={S.th}>SKU</th>
+                <th style={S.th}>Product</th>
+                <th style={S.th}>Current Stock</th>
+                <th style={S.th}>Reorder Point</th>
+                <th style={S.th}>Status</th>
+                <th style={S.th}>Suggested Order</th>
+                <th style={S.th}>Supplier</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stockData.map((item) => {
+                const percentage = getStockPercentage(item.current, item.reorder);
+                const badgeClass = item.status === 'Critical' ? S.badgeRed : S.badgeAmber;
+                return (
+                  <tr key={item.id}>
+                    <td style={{ ...S.td, ...S.skuId }}>{item.sku}</td>
+                    <td style={S.td}>{item.name}</td>
+                    <td style={S.td}>{item.current} units</td>
+                    <td style={S.td}>{item.reorder} units</td>
+                    <td style={S.td}>
+                      <span style={{ ...S.badge, ...badgeClass, fontWeight: 700 }}>
+                        {item.status}
+                      </span>
+                      <div style={S.progressBar}>
+                        <div style={{ ...S.progressFill, background: getProgressColor(item.status), width: `${percentage}%` }}></div>
+                      </div>
+                    </td>
+                    <td style={S.td}>{item.order} units</td>
+                    <td style={S.td}>{item.supplier}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Reorder Settings */}

@@ -1,78 +1,63 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getReturns, getReturnsSummary, createReturn, completeReturn } from '../api/retailApi';
 import { useAuth } from '../context/AuthContext';
+import { fmt } from '../utils/format';
 
 export default function Returns({ onTabChange }) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [formData, setFormData] = useState({ original_sale: '', customer_name: '', reason: '', refund_amount: '' });
 
   const isOwnerOrManager = user?.role === 'owner' || user?.role === 'manager';
 
-  const returns = [
-    {
-      id: 'RET-008',
-      date: '12 Apr',
-      originalSale: 'SAL-0108',
-      customer: 'Mary Banda',
-      items: 1,
-      amount: '$15.00',
-      method: 'Cash',
-      reason: 'Defective',
-      status: 'Completed'
+  // Fetch returns
+  const { data: returns = [], isLoading: returnsLoading, error: returnsError } = useQuery({
+    queryKey: ['retail-returns'],
+    queryFn: getReturns,
+    staleTime: 30000,
+  });
+
+  // Fetch returns summary
+  const { data: summary = {} } = useQuery({
+    queryKey: ['retail-returns-summary'],
+    queryFn: getReturnsSummary,
+    staleTime: 30000,
+  });
+
+  // Create return mutation
+  const createMutation = useMutation({
+    mutationFn: createReturn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retail-returns'] });
+      queryClient.invalidateQueries({ queryKey: ['retail-returns-summary'] });
+      setShowAddForm(false);
+      setFormData({ original_sale: '', customer_name: '', reason: '', refund_amount: '' });
     },
-    {
-      id: 'RET-007',
-      date: '10 Apr',
-      originalSale: 'SAL-0095',
-      customer: 'Peter Ncube',
-      items: 2,
-      amount: '$40.00',
-      method: 'EcoCash',
-      reason: 'Wrong item',
-      status: 'Completed'
+  });
+
+  // Complete return mutation
+  const completeMutation = useMutation({
+    mutationFn: completeReturn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retail-returns'] });
+      queryClient.invalidateQueries({ queryKey: ['retail-returns-summary'] });
     },
-    {
-      id: 'RET-006',
-      date: '8 Apr',
-      originalSale: 'SAL-0089',
-      customer: '-',
-      items: 1,
-      amount: '$8.00',
-      method: 'Store Credit',
-      reason: 'Changed mind',
-      status: 'Completed'
-    },
-    {
-      id: 'RET-005',
-      date: '5 Apr',
-      originalSale: 'SAL-0076',
-      customer: 'James Moyo',
-      items: 1,
-      amount: '$25.00',
-      method: 'Cash',
-      reason: 'Defective',
-      status: 'Completed'
-    },
-    {
-      id: 'RET-004',
-      date: '3 Apr',
-      originalSale: 'SAL-0062',
-      customer: 'Sarah Dube',
-      items: 3,
-      amount: '$42.00',
-      method: 'EcoCash',
-      reason: 'Damaged',
-      status: 'Completed'
-    },
-    {
-      id: 'RET-003',
-      date: '1 Apr',
-      originalSale: 'SAL-0051',
-      customer: 'Grace Mutasa',
-      items: 1,
-      amount: '$5.00',
-      method: 'Cash',
-      reason: 'Wrong item',
-      status: 'Pending'
+  });
+
+  const handleAddReturn = (e) => {
+    e.preventDefault();
+    if (formData.original_sale && formData.refund_amount) {
+      createMutation.mutate(formData);
     }
-  ];
+  };
+
+  const handleCompleteReturn = (id) => {
+    if (window.confirm('Mark this return as completed?')) {
+      completeMutation.mutate(id);
+    }
+  };
 
   const getReasonColor = (reason) => {
     switch (reason) {
@@ -107,13 +92,34 @@ export default function Returns({ onTabChange }) {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Completed':
+      case 'completed':
         return { bg: '#e8f5ee', color: '#1a6b3a' };
       case 'Pending':
+      case 'pending':
         return { bg: '#fef3e2', color: '#c97d1a' };
+      case 'Approved':
+      case 'approved':
+        return { bg: '#EFF6FF', color: '#1d4ed8' };
       default:
         return { bg: '#f3f4f6', color: '#6b7280' };
     }
   };
+
+  if (returnsLoading) {
+    return (
+      <div style={{ padding: 24, fontFamily: "'Inter', sans-serif", backgroundColor: '#f9fafb', minHeight: '100vh' }}>
+        <div style={{ textAlign: 'center', color: '#6b7280' }}>Loading...</div>
+      </div>
+    );
+  }
+
+  if (returnsError) {
+    return (
+      <div style={{ padding: 24, fontFamily: "'Inter', sans-serif", backgroundColor: '#f9fafb', minHeight: '100vh' }}>
+        <div style={{ textAlign: 'center', color: '#c0392b' }}>Failed to load returns. Please try again later.</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: 24, fontFamily: "'Inter', sans-serif", backgroundColor: '#f9fafb', minHeight: '100vh' }}>
@@ -124,6 +130,7 @@ export default function Returns({ onTabChange }) {
         </h1>
         {isOwnerOrManager && (
           <button
+            onClick={() => setShowAddForm(!showAddForm)}
             style={{
               background: '#1a6b3a',
               color: '#fff',
@@ -139,6 +146,107 @@ export default function Returns({ onTabChange }) {
           </button>
         )}
       </div>
+
+      {/* Add Return Form */}
+      {showAddForm && (
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16, marginBottom: 24 }}>
+          <form onSubmit={handleAddReturn}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12 }}>
+              <input
+                type="text"
+                placeholder="Original Sale Receipt *"
+                value={formData.original_sale}
+                onChange={(e) => setFormData({ ...formData, original_sale: e.target.value })}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontFamily: "'Inter', sans-serif",
+                }}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Customer Name"
+                value={formData.customer_name}
+                onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontFamily: "'Inter', sans-serif",
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Reason (e.g., Defective) *"
+                value={formData.reason}
+                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontFamily: "'Inter', sans-serif",
+                }}
+                required
+              />
+              <input
+                type="number"
+                placeholder="Refund Amount *"
+                value={formData.refund_amount}
+                onChange={(e) => setFormData({ ...formData, refund_amount: e.target.value })}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontFamily: "'Inter', sans-serif",
+                }}
+                step="0.01"
+                required
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="submit"
+                disabled={createMutation.isPending}
+                style={{
+                  background: '#1a6b3a',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: createMutation.isPending ? 'not-allowed' : 'pointer',
+                  opacity: createMutation.isPending ? 0.6 : 1,
+                }}
+              >
+                {createMutation.isPending ? 'Processing...' : 'Process Return'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddForm(false)}
+                style={{
+                  background: '#e5e7eb',
+                  color: '#374151',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Metric Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 24 }}>
@@ -161,12 +269,12 @@ export default function Returns({ onTabChange }) {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 9, color: '#6b7280', fontWeight: 500, marginBottom: 4 }}>
-                RETURNS THIS MONTH
+                TOTAL RETURNS
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#c0392b', marginBottom: 2 }}>
-                8
+                {summary?.total_returns || 0}
               </div>
-              <div style={{ fontSize: 9, color: '#9ca3af' }}>Last 30 days</div>
+              <div style={{ fontSize: 9, color: '#9ca3af' }}>All time</div>
             </div>
           </div>
         </div>
@@ -193,9 +301,9 @@ export default function Returns({ onTabChange }) {
                 TOTAL REFUNDED
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#c0392b', marginBottom: 2 }}>
-                $245.00
+                {fmt(summary?.total_refunded || 0, 'zwd')}
               </div>
-              <div style={{ fontSize: 9, color: '#9ca3af' }}>This month</div>
+              <div style={{ fontSize: 9, color: '#9ca3af' }}>Total amount</div>
             </div>
           </div>
         </div>
@@ -222,7 +330,7 @@ export default function Returns({ onTabChange }) {
                 RETURN RATE
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#c97d1a', marginBottom: 2 }}>
-                2.3%
+                {(summary?.return_rate || 0).toFixed(1)}%
               </div>
               <div style={{ fontSize: 9, color: '#9ca3af' }}>Of all sales</div>
             </div>
@@ -244,32 +352,62 @@ export default function Returns({ onTabChange }) {
               <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Method</th>
               <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Reason</th>
               <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Status</th>
+              {isOwnerOrManager && <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>Action</th>}
             </tr>
           </thead>
           <tbody>
-            {returns.map((ret, idx) => {
+            {returns.map((ret) => {
               const reasonColors = getReasonColor(ret.reason);
-              const methodColor = getMethodColor(ret.method);
+              const methodColor = getMethodColor(ret.refund_method);
               const statusColors = getStatusColor(ret.status);
               return (
-                <tr key={idx}>
+                <tr key={ret.id}>
                   <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#1a6b3a', fontFamily: 'monospace', fontWeight: 600 }}>{ret.id}</td>
-                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151' }}>{ret.date}</td>
-                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#1a6b3a', fontFamily: 'monospace', fontWeight: 600 }}>{ret.originalSale}</td>
-                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151' }}>{ret.customer}</td>
-                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', textAlign: 'right' }}>{ret.items}</td>
-                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 600, textAlign: 'right' }}>{ret.amount}</td>
-                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: methodColor, fontWeight: 500 }}>{ret.method}</td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151' }}>
+                    {ret.created_at ? new Date(ret.created_at).toLocaleDateString() : '-'}
+                  </td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#1a6b3a', fontFamily: 'monospace', fontWeight: 600 }}>{ret.original_sale_receipt || ret.original_sale || '-'}</td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151' }}>{ret.customer_name || ret.customer || '-'}</td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', textAlign: 'right' }}>
+                    {(ret.items_data || []).length || '-'}
+                  </td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 600, textAlign: 'right' }}>
+                    {fmt(ret.refund_amount || 0, 'zwd')}
+                  </td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: methodColor, fontWeight: 500 }}>{ret.refund_method || '-'}</td>
                   <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6' }}>
                     <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 20, textTransform: 'uppercase', background: reasonColors.bg, color: reasonColors.color }}>
-                      {ret.reason}
+                      {ret.reason || 'Unknown'}
                     </span>
                   </td>
                   <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6' }}>
                     <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 20, textTransform: 'uppercase', background: statusColors.bg, color: statusColors.color }}>
-                      {ret.status}
+                      {ret.status || 'Pending'}
                     </span>
                   </td>
+                  {isOwnerOrManager && (
+                    <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', textAlign: 'center' }}>
+                      {ret.status !== 'completed' && (
+                        <button
+                          onClick={() => handleCompleteReturn(ret.id)}
+                          disabled={completeMutation.isPending}
+                          style={{
+                            background: '#EFF6FF',
+                            color: '#1d4ed8',
+                            border: 'none',
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                            fontSize: 8,
+                            fontWeight: 600,
+                            cursor: completeMutation.isPending ? 'not-allowed' : 'pointer',
+                            opacity: completeMutation.isPending ? 0.6 : 1,
+                          }}
+                        >
+                          Complete
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               );
             })}

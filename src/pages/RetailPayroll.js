@@ -1,11 +1,7 @@
 import React from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-
-const SAMPLE_RUNS = [
-  { runNum: 'PR-003', period: '1-15 Apr 2026', employees: '3', gross: '$420.00', paye: '$42.00', nssa: '$14.70', net: '$363.30', status: 'Paid' },
-  { runNum: 'PR-002', period: '16-31 Mar 2026', employees: '3', gross: '$420.00', paye: '$42.00', nssa: '$14.70', net: '$363.30', status: 'Paid' },
-  { runNum: 'PR-001', period: '1-15 Mar 2026', employees: '2', gross: '$280.00', paye: '$28.00', nssa: '$9.80', net: '$242.20', status: 'Paid' },
-];
+import { getPayrollRuns, createPayrollRun, approvePayrollRun, markPayrollPaid } from '../api/retailApi';
 
 const styles = {
   page: { maxWidth: 1200, margin: '0 auto', padding: 20 },
@@ -38,6 +34,25 @@ const styles = {
 
 export default function RetailPayroll({ onTabChange }) {
   useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: payrollData, isLoading } = useQuery({
+    queryKey: ['retail-payroll-runs'],
+    queryFn: getPayrollRuns,
+    staleTime: 30000
+  });
+
+  const payrollRuns = payrollData?.map(run => ({
+    runNum: run.id,
+    period: `${new Date(run.period_start).toLocaleDateString()} - ${new Date(run.period_end).toLocaleDateString()}`,
+    employees: (run.lines?.length || 0).toString(),
+    gross: `$${run.total_gross.toFixed(2)}`,
+    paye: `$${run.total_paye.toFixed(2)}`,
+    nssa: `$${run.total_nssa.toFixed(2)}`,
+    net: `$${run.total_net.toFixed(2)}`,
+    status: run.status,
+    id: run.id
+  })) || [];
 
   return (
     <div style={styles.page}>
@@ -62,43 +77,47 @@ export default function RetailPayroll({ onTabChange }) {
 
       {/* Payroll Runs Table */}
       <div style={styles.card}>
-        <table style={styles.table}>
-          <thead>
-            <tr style={{ background: '#f9fafb' }}>
-              <th style={styles.th}>Run #</th>
-              <th style={styles.th}>Period</th>
-              <th style={styles.th}>Employees</th>
-              <th style={styles.th}>Gross</th>
-              <th style={styles.th}>PAYE</th>
-              <th style={styles.th}>NSSA</th>
-              <th style={styles.th}>Net</th>
-              <th style={styles.th}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {SAMPLE_RUNS.map((run, idx) => (
-              <tr
-                key={idx}
-                style={{
-                  borderBottom: idx < SAMPLE_RUNS.length - 1 ? '1px solid #e5e7eb' : 'none',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-              >
-                <td style={styles.td}>{run.runNum}</td>
-                <td style={styles.td}>{run.period}</td>
-                <td style={styles.td}>{run.employees}</td>
-                <td style={{ ...styles.td, ...styles.monospaceCell }}>{run.gross}</td>
-                <td style={{ ...styles.td, ...styles.monospaceCell }}>{run.paye}</td>
-                <td style={{ ...styles.td, ...styles.monospaceCell }}>{run.nssa}</td>
-                <td style={{ ...styles.td, ...styles.monospaceCell }}>{run.net}</td>
-                <td style={styles.td}>
-                  <span style={styles.statusPill(run.status)}>{run.status}</span>
-                </td>
+        {isLoading ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: '#9ca3af' }}>Loading payroll runs...</div>
+        ) : (
+          <table style={styles.table}>
+            <thead>
+              <tr style={{ background: '#f9fafb' }}>
+                <th style={styles.th}>Run #</th>
+                <th style={styles.th}>Period</th>
+                <th style={styles.th}>Employees</th>
+                <th style={styles.th}>Gross</th>
+                <th style={styles.th}>PAYE</th>
+                <th style={styles.th}>NSSA</th>
+                <th style={styles.th}>Net</th>
+                <th style={styles.th}>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {payrollRuns.map((run, idx) => (
+                <tr
+                  key={idx}
+                  style={{
+                    borderBottom: idx < payrollRuns.length - 1 ? '1px solid #e5e7eb' : 'none',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <td style={styles.td}>{run.runNum}</td>
+                  <td style={styles.td}>{run.period}</td>
+                  <td style={styles.td}>{run.employees}</td>
+                  <td style={{ ...styles.td, ...styles.monospaceCell }}>{run.gross}</td>
+                  <td style={{ ...styles.td, ...styles.monospaceCell }}>{run.paye}</td>
+                  <td style={{ ...styles.td, ...styles.monospaceCell }}>{run.nssa}</td>
+                  <td style={{ ...styles.td, ...styles.monospaceCell }}>{run.net}</td>
+                  <td style={styles.td}>
+                    <span style={styles.statusPill(run.status)}>{run.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

@@ -1,123 +1,104 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getCustomers, getTopCustomers, createCustomer, deleteCustomer } from '../api/retailApi';
 import { useAuth } from '../context/AuthContext';
+import { fmt } from '../utils/format';
 
 export default function Customers({ onTabChange }) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '' });
 
   const isOwnerOrManager = user?.role === 'owner' || user?.role === 'manager';
 
-  const customers = [
-    {
-      id: 'CUS-001',
-      name: 'Mary Banda',
-      phone: '+263 77 123 4567',
-      email: 'mary@email.com',
-      purchases: 24,
-      spent: '$1,240.00',
-      lastVisit: '12 Apr',
-      status: 'Active'
-    },
-    {
-      id: 'CUS-002',
-      name: 'Peter Ncube',
-      phone: '+263 71 234 5678',
-      email: 'peter@email.com',
-      purchases: 18,
-      spent: '$890.00',
-      lastVisit: '11 Apr',
-      status: 'Active'
-    },
-    {
-      id: 'CUS-003',
-      name: 'James Moyo',
-      phone: '+263 78 345 6789',
-      email: 'james@email.com',
-      purchases: 15,
-      spent: '$720.50',
-      lastVisit: '10 Apr',
-      status: 'Active'
-    },
-    {
-      id: 'CUS-004',
-      name: 'Sarah Dube',
-      phone: '+263 77 456 7890',
-      email: 'sarah@email.com',
-      purchases: 12,
-      spent: '$560.00',
-      lastVisit: '8 Apr',
-      status: 'Active'
-    },
-    {
-      id: 'CUS-005',
-      name: 'Grace Mutasa',
-      phone: '+263 71 567 8901',
-      email: 'grace@email.com',
-      purchases: 8,
-      spent: '$340.00',
-      lastVisit: '5 Apr',
-      status: 'Active'
-    },
-    {
-      id: 'CUS-006',
-      name: 'Thomas Nyathi',
-      phone: '+263 78 678 9012',
-      email: 'thomas@email.com',
-      purchases: 5,
-      spent: '$180.00',
-      lastVisit: '1 Apr',
-      status: 'Inactive'
-    },
-    {
-      id: 'CUS-007',
-      name: 'Ruth Sibanda',
-      phone: '+263 77 789 0123',
-      email: 'ruth@email.com',
-      purchases: 3,
-      spent: '$95.00',
-      lastVisit: '25 Mar',
-      status: 'Inactive'
-    },
-    {
-      id: 'CUS-008',
-      name: 'David Chirwa',
-      phone: '+263 71 890 1234',
-      email: '-',
-      purchases: 2,
-      spent: '$45.00',
-      lastVisit: '20 Mar',
-      status: 'New'
-    }
-  ];
+  // Fetch customers
+  const { data: customers = [], isLoading: customersLoading } = useQuery({
+    queryKey: ['retail-customers', searchTerm],
+    queryFn: () => getCustomers(searchTerm || undefined),
+    staleTime: 30000,
+  });
 
-  const topCustomers = [
-    { name: 'Mary Banda', amount: '$320', percentage: 100 },
-    { name: 'Peter Ncube', amount: '$280', percentage: 87 },
-    { name: 'James Moyo', amount: '$195', percentage: 60 },
-    { name: 'Sarah Dube', amount: '$160', percentage: 50 },
-    { name: 'Grace Mutasa', amount: '$120', percentage: 37 }
-  ];
+  // Fetch top customers
+  const { data: topCustomersData = [] } = useQuery({
+    queryKey: ['retail-top-customers'],
+    queryFn: getTopCustomers,
+    staleTime: 30000,
+  });
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active':
-        return { bg: '#e8f5ee', color: '#1a6b3a', text: 'Active' };
-      case 'Inactive':
-        return { bg: '#f3f4f6', color: '#6b7280', text: 'Inactive' };
-      case 'New':
-        return { bg: '#EFF6FF', color: '#1e3a5f', text: 'New' };
-      default:
-        return { bg: '#fff', color: '#111827', text: status };
+  // Create customer mutation
+  const createMutation = useMutation({
+    mutationFn: createCustomer,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retail-customers'] });
+      queryClient.invalidateQueries({ queryKey: ['retail-top-customers'] });
+      setShowAddForm(false);
+      setFormData({ name: '', phone: '', email: '' });
+    },
+  });
+
+  // Delete customer mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteCustomer,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retail-customers'] });
+      queryClient.invalidateQueries({ queryKey: ['retail-top-customers'] });
+    },
+  });
+
+  const handleAddCustomer = (e) => {
+    e.preventDefault();
+    if (formData.name && formData.phone) {
+      createMutation.mutate(formData);
     }
   };
 
+  const handleDeleteCustomer = (id) => {
+    if (window.confirm('Are you sure you want to delete this customer?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  // Calculate metrics from customers data
+  const totalCustomers = customers.length;
+  const activeCustomers = customers.filter((c) => c.is_active).length;
+  const totalRevenue = customers.reduce((sum, c) => sum + (parseFloat(c.total_spent) || 0), 0);
+  const avgSpend = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
+
+  // Format top customers for display
+  const maxSpent = Math.max(...topCustomersData.map((c) => parseFloat(c.total_spent) || 0), 1);
+  const topCustomers = topCustomersData.slice(0, 5).map((c) => ({
+    name: c.name,
+    amount: fmt(c.total_spent || 0, 'zwd'),
+    percentage: ((parseFloat(c.total_spent) || 0) / maxSpent) * 100,
+  }));
+
   const filteredCustomers = customers.filter(c =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.phone.includes(searchTerm) ||
-    c.id.toLowerCase().includes(searchTerm.toLowerCase())
+    (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.phone || '').includes(searchTerm) ||
+    (c.id || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getStatusColor = (customer) => {
+    if (!customer.is_active) {
+      return { bg: '#f3f4f6', color: '#6b7280', text: 'Inactive' };
+    }
+    if (!customer.created_at || new Date(customer.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
+      return { bg: '#EFF6FF', color: '#1e3a5f', text: 'New' };
+    }
+    return { bg: '#e8f5ee', color: '#1a6b3a', text: 'Active' };
+  };
+
   const colors = ['#1e3a5f', '#1a6b3a', '#c97d1a', '#7c3aed', '#c0392b'];
+
+  if (customersLoading) {
+    return (
+      <div style={{ padding: 24, fontFamily: "'Inter', sans-serif", backgroundColor: '#f9fafb', minHeight: '100vh' }}>
+        <div style={{ textAlign: 'center', color: '#6b7280' }}>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: 24, fontFamily: "'Inter', sans-serif", backgroundColor: '#f9fafb', minHeight: '100vh' }}>
@@ -128,6 +109,7 @@ export default function Customers({ onTabChange }) {
         </h1>
         {isOwnerOrManager && (
           <button
+            onClick={() => setShowAddForm(!showAddForm)}
             style={{
               background: '#1a6b3a',
               color: '#fff',
@@ -143,6 +125,92 @@ export default function Customers({ onTabChange }) {
           </button>
         )}
       </div>
+
+      {/* Add Customer Form */}
+      {showAddForm && (
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16, marginBottom: 24 }}>
+          <form onSubmit={handleAddCustomer}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 12 }}>
+              <input
+                type="text"
+                placeholder="Customer Name *"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontFamily: "'Inter', sans-serif",
+                }}
+                required
+              />
+              <input
+                type="tel"
+                placeholder="Phone *"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontFamily: "'Inter', sans-serif",
+                }}
+                required
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontFamily: "'Inter', sans-serif",
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="submit"
+                disabled={createMutation.isPending}
+                style={{
+                  background: '#1a6b3a',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: createMutation.isPending ? 'not-allowed' : 'pointer',
+                  opacity: createMutation.isPending ? 0.6 : 1,
+                }}
+              >
+                {createMutation.isPending ? 'Saving...' : 'Save Customer'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddForm(false)}
+                style={{
+                  background: '#e5e7eb',
+                  color: '#374151',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Metric Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 24 }}>
@@ -168,7 +236,7 @@ export default function Customers({ onTabChange }) {
                 TOTAL CUSTOMERS
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#1e3a5f', marginBottom: 2 }}>
-                156
+                {totalCustomers}
               </div>
               <div style={{ fontSize: 9, color: '#9ca3af' }}>All time</div>
             </div>
@@ -194,12 +262,12 @@ export default function Customers({ onTabChange }) {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 9, color: '#6b7280', fontWeight: 500, marginBottom: 4 }}>
-                ACTIVE THIS MONTH
+                ACTIVE CUSTOMERS
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#1a6b3a', marginBottom: 2 }}>
-                42
+                {activeCustomers}
               </div>
-              <div style={{ fontSize: 9, color: '#9ca3af' }}>Last 30 days</div>
+              <div style={{ fontSize: 9, color: '#9ca3af' }}>Currently active</div>
             </div>
           </div>
         </div>
@@ -226,7 +294,7 @@ export default function Customers({ onTabChange }) {
                 TOTAL REVENUE
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#1a6b3a', marginBottom: 2 }}>
-                $8,420
+                {fmt(totalRevenue, 'zwd')}
               </div>
               <div style={{ fontSize: 9, color: '#9ca3af' }}>All sales</div>
             </div>
@@ -255,7 +323,7 @@ export default function Customers({ onTabChange }) {
                 AVG. SPEND
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#c97d1a', marginBottom: 2 }}>
-                $54.00
+                {fmt(avgSpend, 'zwd')}
               </div>
               <div style={{ fontSize: 9, color: '#9ca3af' }}>Per customer</div>
             </div>
@@ -293,27 +361,47 @@ export default function Customers({ onTabChange }) {
                 <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Email</th>
                 <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Purchases</th>
                 <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Total Spent</th>
-                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Last Visit</th>
                 <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Status</th>
+                {isOwnerOrManager && <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>Action</th>}
               </tr>
             </thead>
             <tbody>
-              {filteredCustomers.map((customer, idx) => {
-                const statusColors = getStatusColor(customer.status);
+              {filteredCustomers.map((customer) => {
+                const statusColors = getStatusColor(customer);
                 return (
-                  <tr key={idx}>
+                  <tr key={customer.id}>
                     <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#1a6b3a', fontFamily: 'monospace', fontWeight: 600 }}>{customer.id}</td>
                     <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 600 }}>{customer.name}</td>
                     <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151' }}>{customer.phone}</td>
-                    <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', fontSize: 10 }}>{customer.email}</td>
-                    <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', textAlign: 'right' }}>{customer.purchases}</td>
-                    <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 600, textAlign: 'right' }}>{customer.spent}</td>
-                    <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151' }}>{customer.lastVisit}</td>
+                    <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', fontSize: 10 }}>{customer.email || '-'}</td>
+                    <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', textAlign: 'right' }}>{customer.total_purchases || 0}</td>
+                    <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 600, textAlign: 'right' }}>{fmt(customer.total_spent || 0, 'zwd')}</td>
                     <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6' }}>
                       <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 20, textTransform: 'uppercase', background: statusColors.bg, color: statusColors.color }}>
                         {statusColors.text}
                       </span>
                     </td>
+                    {isOwnerOrManager && (
+                      <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleDeleteCustomer(customer.id)}
+                          disabled={deleteMutation.isPending}
+                          style={{
+                            background: '#fee2e2',
+                            color: '#c0392b',
+                            border: 'none',
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                            fontSize: 8,
+                            fontWeight: 600,
+                            cursor: deleteMutation.isPending ? 'not-allowed' : 'pointer',
+                            opacity: deleteMutation.isPending ? 0.6 : 1,
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -324,7 +412,7 @@ export default function Customers({ onTabChange }) {
         {/* Top Customers Card */}
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
           <h3 style={{ fontSize: 12, fontWeight: 700, fontFamily: "'Inter', sans-serif", margin: '0 0 16px 0', color: '#111827' }}>
-            Top Customers This Month
+            Top Customers
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {topCustomers.map((customer, idx) => (

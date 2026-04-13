@@ -1,32 +1,45 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { getProducts } from '../api/retailApi';
 
 export default function BarcodeGenerator({ onTabChange }) {
   const { user } = useAuth();
-  const [selectedProduct, setSelectedProduct] = useState('CHAR-USB');
+  const [selectedProduct, setSelectedProduct] = useState('');
   const [barcodeFormat, setBarcodeFormat] = useState('EAN-13');
   const [quantity, setQuantity] = useState(1);
   const [labelSize, setLabelSize] = useState('Medium (50x30mm)');
 
   const isOwnerOrManager = user?.role === 'owner' || user?.role === 'manager';
 
-  const products = [
-    { sku: 'CHAR-USB', name: 'USB-C Charger', price: '$15.00' },
-    { sku: 'CASE-IP15', name: 'iPhone 15 Case', price: '$8.00' },
-    { sku: 'LOOSE-01', name: 'Assorted Cables (loose)', price: '$3.00' },
-    { sku: 'LOOSE-02', name: 'Phone Screen Protectors', price: '$2.50' },
-    { sku: 'BULK-01', name: 'USB Adapters (bulk)', price: '$4.00' }
-  ];
+  const { data: allProducts, isLoading } = useQuery({
+    queryKey: ['retail-products'],
+    queryFn: getProducts,
+    staleTime: 30000
+  });
 
-  const productsWithoutBarcodes = [
-    { sku: 'CHAR-USB', name: 'USB-C Charger', category: 'Electronics', price: '$15.00', status: 'Generated' },
-    { sku: 'CASE-IP15', name: 'iPhone 15 Case', category: 'Accessories', price: '$8.00', status: 'Generated' },
-    { sku: 'LOOSE-01', name: 'Assorted Cables (loose)', category: 'Cables', price: '$3.00', status: 'None' },
-    { sku: 'LOOSE-02', name: 'Phone Screen Protectors', category: 'Accessories', price: '$2.50', status: 'None' },
-    { sku: 'BULK-01', name: 'USB Adapters (bulk)', category: 'Electronics', price: '$4.00', status: 'None' }
-  ];
+  const products = allProducts?.map(p => ({
+    sku: p.sku,
+    name: p.name,
+    price: `$${p.selling_price.toFixed(2)}`
+  })) || [];
 
-  const currentProduct = products.find(p => p.sku === selectedProduct) || products[0];
+  const productsWithoutBarcodes = allProducts?.filter(p => !p.barcode)?.map(p => ({
+    sku: p.sku,
+    name: p.name,
+    category: p.category || 'Uncategorized',
+    price: `$${p.selling_price.toFixed(2)}`,
+    status: p.barcode ? 'Generated' : 'None'
+  })) || [];
+
+  const firstProduct = products[0];
+  const defaultSku = selectedProduct || firstProduct?.sku || '';
+
+  const currentProduct = products.find(p => p.sku === (selectedProduct || defaultSku)) || firstProduct || { sku: '', name: '', price: '$0.00' };
+
+  if (selectedProduct === '' && defaultSku) {
+    setSelectedProduct(defaultSku);
+  }
 
   const BarcodeVisualization = () => (
     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '2px', height: 50 }}>
@@ -100,8 +113,9 @@ export default function BarcodeGenerator({ onTabChange }) {
                 PRODUCT
               </label>
               <select
-                value={selectedProduct}
+                value={selectedProduct || defaultSku}
                 onChange={(e) => setSelectedProduct(e.target.value)}
+                disabled={isLoading}
                 style={{
                   width: '100%',
                   padding: '8px 12px',
@@ -110,14 +124,19 @@ export default function BarcodeGenerator({ onTabChange }) {
                   fontSize: 11,
                   fontFamily: "'Inter', sans-serif",
                   boxSizing: 'border-box',
-                  cursor: 'pointer'
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  opacity: isLoading ? 0.6 : 1
                 }}
               >
-                {products.map((p) => (
-                  <option key={p.sku} value={p.sku}>
-                    {p.name} ({p.sku})
-                  </option>
-                ))}
+                {isLoading ? (
+                  <option>Loading products...</option>
+                ) : (
+                  products.map((p) => (
+                    <option key={p.sku} value={p.sku}>
+                      {p.name} ({p.sku})
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
@@ -271,67 +290,71 @@ export default function BarcodeGenerator({ onTabChange }) {
         <h3 style={{ fontSize: 12, fontWeight: 700, margin: '0 0 16px 0', color: '#111827' }}>
           Products Without Barcodes
         </h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-          <thead>
-            <tr style={{ background: '#f9fafb' }}>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>SKU</th>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Product</th>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Category</th>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Price</th>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Status</th>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productsWithoutBarcodes.map((product, idx) => (
-              <tr key={idx}>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#1a6b3a', fontFamily: 'monospace', fontWeight: 600, fontSize: 10 }}>
-                  {product.sku}
-                </td>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 600 }}>
-                  {product.name}
-                </td>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', fontSize: 10 }}>
-                  {product.category}
-                </td>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', textAlign: 'right', fontWeight: 600 }}>
-                  {product.price}
-                </td>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6' }}>
-                  <span
-                    style={{
-                      fontSize: 8,
-                      fontWeight: 700,
-                      padding: '2px 7px',
-                      borderRadius: 20,
-                      textTransform: 'uppercase',
-                      background: product.status === 'Generated' ? '#e8f5ee' : '#fdecea',
-                      color: product.status === 'Generated' ? '#1a6b3a' : '#c0392b'
-                    }}
-                  >
-                    {product.status}
-                  </span>
-                </td>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', textAlign: 'center' }}>
-                  <button
-                    style={{
-                      background: product.status === 'Generated' ? '#e8f5ee' : '#1a6b3a',
-                      color: product.status === 'Generated' ? '#1a6b3a' : '#fff',
-                      border: 'none',
-                      padding: '4px 10px',
-                      borderRadius: 4,
-                      fontSize: 9,
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {product.status === 'Generated' ? 'Print' : 'Generate'}
-                  </button>
-                </td>
+        {isLoading ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af' }}>Loading products...</div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+            <thead>
+              <tr style={{ background: '#f9fafb' }}>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>SKU</th>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Product</th>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Category</th>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Price</th>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Status</th>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {productsWithoutBarcodes.map((product, idx) => (
+                <tr key={idx}>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#1a6b3a', fontFamily: 'monospace', fontWeight: 600, fontSize: 10 }}>
+                    {product.sku}
+                  </td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 600 }}>
+                    {product.name}
+                  </td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', fontSize: 10 }}>
+                    {product.category}
+                  </td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', textAlign: 'right', fontWeight: 600 }}>
+                    {product.price}
+                  </td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6' }}>
+                    <span
+                      style={{
+                        fontSize: 8,
+                        fontWeight: 700,
+                        padding: '2px 7px',
+                        borderRadius: 20,
+                        textTransform: 'uppercase',
+                        background: product.status === 'Generated' ? '#e8f5ee' : '#fdecea',
+                        color: product.status === 'Generated' ? '#1a6b3a' : '#c0392b'
+                      }}
+                    >
+                      {product.status}
+                    </span>
+                  </td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', textAlign: 'center' }}>
+                    <button
+                      style={{
+                        background: product.status === 'Generated' ? '#e8f5ee' : '#1a6b3a',
+                        color: product.status === 'Generated' ? '#1a6b3a' : '#fff',
+                        border: 'none',
+                        padding: '4px 10px',
+                        borderRadius: 4,
+                        fontSize: 9,
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {product.status === 'Generated' ? 'Print' : 'Generate'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

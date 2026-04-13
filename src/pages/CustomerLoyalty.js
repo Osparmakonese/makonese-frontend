@@ -1,28 +1,48 @@
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { getLoyaltyStats, getLoyaltyTransactions } from '../api/retailApi';
 
 export default function CustomerLoyalty({ onTabChange }) {
   useAuth();
 
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['retail-loyalty-stats'],
+    queryFn: getLoyaltyStats,
+    staleTime: 30000
+  });
+
+  const { data: transactionsData, isLoading: transactionsLoading } = useQuery({
+    queryKey: ['retail-loyalty-transactions'],
+    queryFn: () => getLoyaltyTransactions({}),
+    staleTime: 30000
+  });
+
+  const tierColors = {
+    gold: '#c97d1a',
+    silver: '#2563eb',
+    bronze: '#1a6b3a'
+  };
+
   const tiers = [
     {
       name: 'Gold',
-      borderColor: '#c97d1a',
+      borderColor: tierColors.gold,
       range: '500+ points',
-      members: 12,
+      members: stats?.tier_breakdown?.gold || 0,
       benefits: '15% discount, free delivery, birthday reward'
     },
     {
       name: 'Silver',
-      borderColor: '#2563eb',
+      borderColor: tierColors.silver,
       range: '200-499 points',
-      members: 28,
+      members: stats?.tier_breakdown?.silver || 0,
       benefits: '10% discount, early access to sales'
     },
     {
       name: 'Bronze',
-      borderColor: '#1a6b3a',
+      borderColor: tierColors.bronze,
       range: '0-199 points',
-      members: 49,
+      members: stats?.tier_breakdown?.bronze || 0,
       benefits: '5% discount on next purchase'
     }
   ];
@@ -35,14 +55,26 @@ export default function CustomerLoyalty({ onTabChange }) {
     { rule: 'Buy 10 items', points: '25 bonus points' }
   ];
 
-  const recentActivity = [
-    { date: '12 Apr', customer: 'Mary Banda', action: 'Purchase ($24.50)', points: '+25', balance: 520, tier: 'Gold', tierColor: '#c97d1a' },
-    { date: '12 Apr', customer: 'Peter Ncube', action: 'Redeemed reward', points: '-100', balance: 380, tier: 'Silver', tierColor: '#2563eb' },
-    { date: '11 Apr', customer: 'James Moyo', action: 'Purchase ($18.00)', points: '+18', balance: 245, tier: 'Silver', tierColor: '#2563eb' },
-    { date: '11 Apr', customer: 'Sarah Dube', action: 'Referral bonus', points: '+100', balance: 185, tier: 'Bronze', tierColor: '#1a6b3a' },
-    { date: '10 Apr', customer: 'Grace Mutasa', action: 'Purchase ($32.00)', points: '+32', balance: 142, tier: 'Bronze', tierColor: '#1a6b3a' },
-    { date: '10 Apr', customer: 'Mary Banda', action: 'Birthday bonus', points: '+50', balance: 495, tier: 'Silver → Gold', tierColor: '#c97d1a' }
-  ];
+  const getTierColor = (tier) => {
+    if (tier === 'gold' || tier?.includes('Gold')) return tierColors.gold;
+    if (tier === 'silver' || tier?.includes('Silver')) return tierColors.silver;
+    return tierColors.bronze;
+  };
+
+  const formatTransactionRow = (txn) => {
+    const date = new Date(txn.created_at);
+    return {
+      date: date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+      customer: txn.member_name || txn.member,
+      action: txn.description,
+      points: txn.points >= 0 ? `+${txn.points}` : `${txn.points}`,
+      balance: txn.points,
+      tier: txn.transaction_type,
+      tierColor: getTierColor(txn.transaction_type)
+    };
+  };
+
+  const recentActivity = transactionsData ? transactionsData.map(formatTransactionRow) : [];
 
   return (
     <div style={{ padding: 24, fontFamily: "'Inter', sans-serif", backgroundColor: '#f9fafb', minHeight: '100vh' }}>
@@ -102,7 +134,7 @@ export default function CustomerLoyalty({ onTabChange }) {
                 MEMBERS ENROLLED
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#7c3aed', marginBottom: 2 }}>
-                89
+                {statsLoading ? '—' : stats?.total_members || 0}
               </div>
               <div style={{ fontSize: 9, color: '#9ca3af' }}>Active members</div>
             </div>
@@ -131,7 +163,7 @@ export default function CustomerLoyalty({ onTabChange }) {
                 POINTS ISSUED (MTD)
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#1a6b3a', marginBottom: 2 }}>
-                4,280
+                {statsLoading ? '—' : stats?.points_issued_mtd || 0}
               </div>
               <div style={{ fontSize: 9, color: '#9ca3af' }}>This month</div>
             </div>
@@ -160,7 +192,7 @@ export default function CustomerLoyalty({ onTabChange }) {
                 POINTS REDEEMED (MTD)
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#c97d1a', marginBottom: 2 }}>
-                1,120
+                {statsLoading ? '—' : stats?.points_redeemed_mtd || 0}
               </div>
               <div style={{ fontSize: 9, color: '#9ca3af' }}>This month</div>
             </div>
@@ -189,7 +221,7 @@ export default function CustomerLoyalty({ onTabChange }) {
                 REDEMPTION RATE
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#2563eb', marginBottom: 2 }}>
-                26%
+                {statsLoading ? '—' : `${(stats?.redemption_rate || 0).toFixed(0)}%`}
               </div>
               <div style={{ fontSize: 9, color: '#9ca3af' }}>Conversion rate</div>
             </div>
@@ -277,34 +309,38 @@ export default function CustomerLoyalty({ onTabChange }) {
         <h3 style={{ fontSize: 12, fontWeight: 700, margin: '0 0 16px 0', color: '#111827' }}>
           Recent Loyalty Activity
         </h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-          <thead>
-            <tr style={{ background: '#f9fafb' }}>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Date</th>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Customer</th>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Action</th>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Points</th>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Balance</th>
-              <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Tier</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recentActivity.map((activity, idx) => (
-              <tr key={idx}>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', fontSize: 10 }}>{activity.date}</td>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 600 }}>{activity.customer}</td>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', fontSize: 10 }}>{activity.action}</td>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#1a6b3a', fontWeight: 600, textAlign: 'right' }}>{activity.points}</td>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 600, textAlign: 'right' }}>{activity.balance}</td>
-                <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6' }}>
-                  <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 20, textTransform: 'uppercase', background: activity.tierColor + '20', color: activity.tierColor }}>
-                    {activity.tier}
-                  </span>
-                </td>
+        {transactionsLoading ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af' }}>Loading transactions...</div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+            <thead>
+              <tr style={{ background: '#f9fafb' }}>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Date</th>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Customer</th>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Action</th>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Points</th>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Balance</th>
+                <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Tier</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {recentActivity.map((activity, idx) => (
+                <tr key={idx}>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', fontSize: 10 }}>{activity.date}</td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 600 }}>{activity.customer}</td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', fontSize: 10 }}>{activity.action}</td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#1a6b3a', fontWeight: 600, textAlign: 'right' }}>{activity.points}</td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 600, textAlign: 'right' }}>{activity.balance}</td>
+                  <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6' }}>
+                    <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 20, textTransform: 'uppercase', background: activity.tierColor + '20', color: activity.tierColor }}>
+                      {activity.tier}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

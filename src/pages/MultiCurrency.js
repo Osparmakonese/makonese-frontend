@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { getCurrencyRates, createCurrencyRate, getLatestRates } from '../api/retailApi';
 
 /* ─── Styles ─── */
 const S = {
@@ -201,6 +203,7 @@ const S = {
 
 export default function MultiCurrency({ onTabChange }) {
   const { user } = useAuth() || {};
+  const queryClient = useQueryClient();
   const [defaultCurrency, setDefaultCurrency] = useState('USD');
   const [acceptZiG, setAcceptZiG] = useState(true);
   const [acceptBondNotes, setAcceptBondNotes] = useState(true);
@@ -210,6 +213,29 @@ export default function MultiCurrency({ onTabChange }) {
   const [tolerance, setTolerance] = useState('2');
 
   const isOwner = user?.role === 'owner';
+
+  // Fetch latest currency rates
+  const { data: latestRates = [], isLoading: latestLoading } = useQuery({
+    queryKey: ['retail-latest-rates'],
+    queryFn: getLatestRates,
+    staleTime: 30000,
+  });
+
+  // Fetch full currency rate history
+  const { data: currencyHistory = [], isLoading: historyLoading } = useQuery({
+    queryKey: ['retail-currency-rates'],
+    queryFn: getCurrencyRates,
+    staleTime: 30000,
+  });
+
+  // Create currency rate mutation
+  const createRateMutation = useMutation({
+    mutationFn: createCurrencyRate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retail-latest-rates'] });
+      queryClient.invalidateQueries({ queryKey: ['retail-currency-rates'] });
+    },
+  });
 
   const ToggleSwitch = ({ value, onChange }) => (
     <button
@@ -238,114 +264,74 @@ export default function MultiCurrency({ onTabChange }) {
 
       {/* Active Currencies */}
       <h3 style={S.sectionTitle}>Active Currencies</h3>
-      <div style={S.currencyGrid}>
-        {/* USD Card */}
-        <div style={S.currencyCard('#1a6b3a')}>
-          <div style={S.currencyHeader}>
-            <span style={S.currencyFlag}>🇺🇸</span>
-            <div>
-              <div style={S.currencyName}>USD</div>
-              <div style={S.currencyLabel}>United States Dollar</div>
-            </div>
-            <div style={S.pill('#e8f5ee', '#1a6b3a')}>Base Currency</div>
-          </div>
-          <div style={S.currencyRow}>
-            <span>Rate:</span>
-            <span style={S.currencyValue}>1.00</span>
-          </div>
-          <div style={S.currencyRow}>
-            <span>Today's Sales:</span>
-            <span style={S.currencyValue}>$1,240.00</span>
-          </div>
+      {latestLoading ? (
+        <div style={{ ...S.card, textAlign: 'center', color: '#6b7280' }}>Loading currency rates...</div>
+      ) : (
+        <div style={S.currencyGrid}>
+          {latestRates.map((rate, idx) => {
+            const colors = [
+              { flag: '🇺🇸', border: '#1a6b3a', label: 'Base' },
+              { flag: '🇿🇼', border: '#c97d1a', label: 'Active' },
+              { flag: '📄', border: '#9ca3af', label: 'Limited' },
+            ];
+            const color = colors[idx % colors.length];
+            return (
+              <div key={rate.id || idx} style={S.currencyCard(color.border)}>
+                <div style={S.currencyHeader}>
+                  <span style={S.currencyFlag}>{color.flag}</span>
+                  <div>
+                    <div style={S.currencyName}>{rate.from_currency}</div>
+                    <div style={S.currencyLabel}>{rate.from_currency} Exchange Rate</div>
+                  </div>
+                  <div style={S.pill(idx === 0 ? '#e8f5ee' : '#fef3e2', idx === 0 ? '#1a6b3a' : '#b45309')}>
+                    {color.label}
+                  </div>
+                </div>
+                <div style={S.currencyRow}>
+                  <span>Rate to {rate.to_currency}:</span>
+                  <span style={S.currencyValue}>{rate.rate.toFixed(2)}</span>
+                </div>
+                <div style={S.currencyRow}>
+                  <span>Effective:</span>
+                  <span style={{ fontSize: 10, color: '#6b7280' }}>
+                    {new Date(rate.effective_date).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
-
-        {/* ZiG Card */}
-        <div style={S.currencyCard('#c97d1a')}>
-          <div style={S.currencyHeader}>
-            <span style={S.currencyFlag}>🇿🇼</span>
-            <div>
-              <div style={S.currencyName}>ZiG</div>
-              <div style={S.currencyLabel}>Zimbabwe Gold</div>
-            </div>
-            <div style={S.pill('#e8f5ee', '#1a6b3a')}>Active</div>
-          </div>
-          <div style={S.currencyRow}>
-            <span>Rate:</span>
-            <span style={S.currencyValue}>13.56</span>
-          </div>
-          <div style={S.currencyRow}>
-            <span>Today's Sales:</span>
-            <span style={S.currencyValue}>ZiG 4,820.00</span>
-          </div>
-          <div style={{ fontSize: 10, color: '#6b7280' }}>($355.46 USD)</div>
-        </div>
-
-        {/* Bond Notes Card */}
-        <div style={S.currencyCard('#9ca3af')}>
-          <div style={S.currencyHeader}>
-            <span style={S.currencyFlag}>📄</span>
-            <div>
-              <div style={S.currencyName}>Bond Notes</div>
-              <div style={S.currencyLabel}>Legacy Currency</div>
-            </div>
-            <div style={S.pill('#fef3e2', '#b45309')}>Limited</div>
-          </div>
-          <div style={S.currencyRow}>
-            <span>Rate:</span>
-            <span style={S.currencyValue}>1.00</span>
-          </div>
-          <div style={S.currencyRow}>
-            <span>Today's Sales:</span>
-            <span style={S.currencyValue}>$0.00</span>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Exchange Rate History */}
       <h3 style={S.sectionTitle}>Exchange Rate History</h3>
       <div style={S.card}>
-        <table style={S.table}>
-          <thead>
-            <tr>
-              <th style={S.th}>Date</th>
-              <th style={S.th}>USD/ZiG Rate</th>
-              <th style={S.th}>Source</th>
-              <th style={S.th}>Updated By</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={S.td}>12 Apr 2026</td>
-              <td style={S.td}>13.56</td>
-              <td style={S.td}>RBZ Official</td>
-              <td style={S.td}>System</td>
-            </tr>
-            <tr>
-              <td style={S.td}>11 Apr 2026</td>
-              <td style={S.td}>13.52</td>
-              <td style={S.td}>RBZ Official</td>
-              <td style={S.td}>System</td>
-            </tr>
-            <tr>
-              <td style={S.td}>10 Apr 2026</td>
-              <td style={S.td}>13.48</td>
-              <td style={S.td}>RBZ Official</td>
-              <td style={S.td}>System</td>
-            </tr>
-            <tr>
-              <td style={S.td}>9 Apr 2026</td>
-              <td style={S.td}>13.45</td>
-              <td style={S.td}>Manual</td>
-              <td style={S.td}>James (Owner)</td>
-            </tr>
-            <tr>
-              <td style={S.td}>8 Apr 2026</td>
-              <td style={S.td}>13.42</td>
-              <td style={S.td}>RBZ Official</td>
-              <td style={S.td}>System</td>
-            </tr>
-          </tbody>
-        </table>
+        {historyLoading ? (
+          <div style={{ padding: 16, textAlign: 'center', color: '#6b7280' }}>Loading history...</div>
+        ) : (
+          <table style={S.table}>
+            <thead>
+              <tr>
+                <th style={S.th}>Date</th>
+                <th style={S.th}>From Currency</th>
+                <th style={S.th}>To Currency</th>
+                <th style={S.th}>Rate</th>
+                <th style={S.th}>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currencyHistory.map((rate) => (
+                <tr key={rate.id}>
+                  <td style={S.td}>{new Date(rate.effective_date).toLocaleDateString()}</td>
+                  <td style={S.td}>{rate.from_currency}</td>
+                  <td style={S.td}>{rate.to_currency}</td>
+                  <td style={S.td}>{rate.rate.toFixed(2)}</td>
+                  <td style={S.td}>{rate.source || 'System'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Two-column Settings */}

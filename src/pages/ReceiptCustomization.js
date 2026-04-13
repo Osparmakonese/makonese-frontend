@@ -1,23 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { getReceiptTemplates, createReceiptTemplate, updateReceiptTemplate } from '../api/retailApi';
 
 export default function ReceiptCustomization({ onTabChange }) {
   const { user } = useAuth();
-  const [businessName, setBusinessName] = useState('Acme Trading');
-  const [address, setAddress] = useState('123 Main Street, Harare');
-  const [phone, setPhone] = useState('+263 77 123 4567');
-  const [vatNumber, setVatNumber] = useState('10012345');
+  const queryClient = useQueryClient();
+  const isOwner = user?.role === 'owner';
+
+  const { data: templates, isLoading } = useQuery({
+    queryKey: ['retail-receipt-templates'],
+    queryFn: getReceiptTemplates,
+    staleTime: 30000
+  });
+
+  const template = templates?.[0];
+
+  const [businessName, setBusinessName] = useState('');
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+  const [vatNumber, setVatNumber] = useState('');
   const [showLogo, setShowLogo] = useState(true);
-  const [footerMessage, setFooterMessage] = useState('Thank you for shopping with us! Returns accepted within 7 days.');
+  const [footerMessage, setFooterMessage] = useState('');
   const [showSocialMedia, setShowSocialMedia] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState('+263 77 123 4567');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
   const [paperWidth, setPaperWidth] = useState('80mm');
   const [fontSize, setFontSize] = useState('Medium');
   const [showBarcodeOnReceipt, setShowBarcodeOnReceipt] = useState(true);
   const [showQRCode, setShowQRCode] = useState(true);
   const [currencyDisplay, setCurrencyDisplay] = useState('Dual (USD + ZiG)');
 
-  const isOwner = user?.role === 'owner';
+  useEffect(() => {
+    if (template) {
+      setBusinessName(template.store_name || '');
+      setAddress(`${template.address_line1 || ''}${template.address_line2 ? '\n' + template.address_line2 : ''}`);
+      setPhone(template.phone || '');
+      setVatNumber(template.vat_number || '');
+      setShowLogo(template.show_logo ?? true);
+      setFooterMessage(template.footer_message || '');
+      setShowBarcodeOnReceipt(template.show_barcode ?? true);
+      setPaperWidth(template.paper_width || '80mm');
+    }
+  }, [template]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (data) => {
+      if (template) {
+        return updateReceiptTemplate(template.id, data);
+      } else {
+        return createReceiptTemplate(data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retail-receipt-templates'] });
+    }
+  });
 
   const Toggle = ({ checked, onChange }) => (
     <button
@@ -59,6 +96,20 @@ export default function ReceiptCustomization({ onTabChange }) {
         </h1>
         {isOwner && (
           <button
+            onClick={() => saveMutation.mutate({
+              store_name: businessName,
+              address_line1: address.split('\n')[0],
+              address_line2: address.split('\n')[1],
+              phone: phone,
+              vat_number: vatNumber,
+              header_message: '',
+              footer_message: footerMessage,
+              show_logo: showLogo,
+              show_barcode: showBarcodeOnReceipt,
+              paper_width: paperWidth,
+              font_size: fontSize
+            })}
+            disabled={saveMutation.isPending}
             style={{
               background: '#1a6b3a',
               color: '#fff',
@@ -67,10 +118,11 @@ export default function ReceiptCustomization({ onTabChange }) {
               borderRadius: 7,
               fontSize: 12,
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: saveMutation.isPending ? 'not-allowed' : 'pointer',
+              opacity: saveMutation.isPending ? 0.7 : 1
             }}
           >
-            Save Template
+            {saveMutation.isPending ? 'Saving...' : 'Save Template'}
           </button>
         )}
       </div>

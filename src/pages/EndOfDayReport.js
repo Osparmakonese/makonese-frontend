@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { getEndOfDayReport } from '../api/retailApi';
 
 /* ─── Styles ─── */
 const S = {
@@ -227,35 +229,46 @@ export default function EndOfDayReport({ onTabChange }) {
   useAuth();
   const [reportDate, setReportDate] = useState('2026-04-12');
 
-  // Static data for the report
-  const data = {
-    grossSales: 1240.00,
-    returns: 55.00,
-    discounts: 32.50,
-    netRevenue: 1152.50,
-    transactions: 38,
-    avgTransaction: 32.63,
-    paymentMethods: [
-      { name: 'Cash', amount: 520.00, percent: 42 },
-      { name: 'EcoCash', amount: 480.00, percent: 39 },
-      { name: 'Card', amount: 185.00, percent: 15 },
-      { name: 'Store Credit', amount: 55.00, percent: 4 },
-    ],
-    cashDrawer: {
-      opening: 100.00,
-      sales: 520.00,
-      returns: 15.00,
-      payouts: 0.00,
-      expected: 605.00,
-      actual: 601.00,
-      variance: -4.00,
+  // Fetch end of day report
+  const { data: reportData, isLoading, refetch } = useQuery({
+    queryKey: ['retail-end-of-day', reportDate],
+    queryFn: () => getEndOfDayReport(reportDate),
+    staleTime: 30000,
+  });
+
+  // Default data structure if not loaded
+  const data = reportData || {
+    summary: {
+      gross_sales: 0,
+      returns_refunds: 0,
+      discounts_given: 0,
+      net_revenue: 0,
+      transaction_count: 0,
+      avg_transaction: 0,
+      returns_count: 0,
     },
-    hourlySales: [
-      0, 0, 0, 0, 0, 0, 0, 0, 45, 65, 120, 185, 95, 80, 70, 60, 45, 35, 20, 15, 5, 0, 0, 0,
-    ],
+    payment_breakdown: [],
+    cash_drawer: {
+      opening_float: 0,
+      cash_sales: 0,
+      cash_returns: 0,
+      expected_in_drawer: 0,
+    },
+    hourly_trend: [],
   };
 
-  const maxHourly = Math.max(...data.hourlySales);
+  // Build payment methods from breakdown
+  const paymentMethods = data.payment_breakdown || [];
+
+  // Build hourly sales array (24 hours)
+  const hourlySales = Array(24).fill(0);
+  if (data.hourly_trend) {
+    data.hourly_trend.forEach((item) => {
+      hourlySales[item.hour] = item.total;
+    });
+  }
+
+  const maxHourly = Math.max(...hourlySales, 1);
 
   return (
     <div style={S.page}>
@@ -266,171 +279,174 @@ export default function EndOfDayReport({ onTabChange }) {
           <input
             type="date"
             value={reportDate}
-            onChange={(e) => setReportDate(e.target.value)}
+            onChange={(e) => {
+              setReportDate(e.target.value);
+              refetch();
+            }}
             style={S.dateInput}
           />
-          <button style={S.button}>Generate Report</button>
+          <button style={S.button} onClick={() => refetch()}>Generate Report</button>
         </div>
       </div>
 
-      {/* Green Hero Bar */}
-      <div style={S.heroBar}>
-        <div style={S.heroTitle}>Daily Summary — 12 April 2026</div>
-        <div style={S.heroStats}>
-          <div style={S.heroStat}>
-            <div style={S.heroStatLabel}>Total Sales</div>
-            <div style={S.heroStatValue}>${data.grossSales.toFixed(2)}</div>
-          </div>
-          <div style={S.heroStat}>
-            <div style={S.heroStatLabel}>Transactions</div>
-            <div style={S.heroStatValue}>{data.transactions}</div>
-          </div>
-          <div style={S.heroStat}>
-            <div style={S.heroStatLabel}>Avg. Transaction</div>
-            <div style={S.heroStatValue}>${data.avgTransaction.toFixed(2)}</div>
-          </div>
-          <div style={S.heroStat}>
-            <div style={S.heroStatLabel}>Returns</div>
-            <div style={S.heroStatValue}>{data.transactions - 36}</div>
-          </div>
+      {isLoading ? (
+        <div style={{ ...S.card, textAlign: 'center', color: '#6b7280', padding: 40 }}>
+          Loading report...
         </div>
-      </div>
-
-      {/* Metrics Cards */}
-      <div style={S.metricsGrid}>
-        <div style={S.metricCard}>
-          <div style={S.metricLabel}>Gross Sales</div>
-          <div style={{ ...S.metricValue, ...S.greenValue }}>
-            ${data.grossSales.toFixed(2)}
-          </div>
-        </div>
-        <div style={S.metricCard}>
-          <div style={S.metricLabel}>Returns/Refunds</div>
-          <div style={{ ...S.metricValue, ...S.redValue }}>
-            -${data.returns.toFixed(2)}
-          </div>
-        </div>
-        <div style={S.metricCard}>
-          <div style={S.metricLabel}>Discounts Given</div>
-          <div style={{ ...S.metricValue, ...S.amberValue }}>
-            -${data.discounts.toFixed(2)}
-          </div>
-        </div>
-        <div style={S.metricCard}>
-          <div style={S.metricLabel}>Net Revenue</div>
-          <div style={{ ...S.metricValue, ...S.greenValue }}>
-            ${data.netRevenue.toFixed(2)}
-          </div>
-        </div>
-      </div>
-
-      {/* Two-column Layout */}
-      <div style={S.twoCol}>
-        {/* Payment Method Breakdown */}
-        <div style={S.card}>
-          <h3 style={S.sectionTitle}>Payment Method Breakdown</h3>
-          {data.paymentMethods.map((method, idx) => (
-            <div key={idx}>
-              <div style={S.paymentMethodRow}>
-                <span style={S.paymentMethodLabel}>{method.name}</span>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span style={S.paymentMethodAmount}>
-                    ${method.amount.toFixed(2)}
-                  </span>
-                  <span style={S.paymentMethodPercent}>({method.percent}%)</span>
-                </div>
+      ) : (
+        <>
+          {/* Green Hero Bar */}
+          <div style={S.heroBar}>
+            <div style={S.heroTitle}>Daily Summary — {new Date(reportDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            <div style={S.heroStats}>
+              <div style={S.heroStat}>
+                <div style={S.heroStatLabel}>Total Sales</div>
+                <div style={S.heroStatValue}>${data.summary.gross_sales.toFixed(2)}</div>
               </div>
-              <div style={S.progressBar}>
-                <div
-                  style={S.progressFill(
-                    method.percent,
-                    method.name === 'Cash'
-                      ? '#1a6b3a'
-                      : method.name === 'EcoCash'
-                        ? '#2563eb'
-                        : method.name === 'Card'
-                          ? '#7c3aed'
-                          : '#9ca3af'
-                  )}
-                />
+              <div style={S.heroStat}>
+                <div style={S.heroStatLabel}>Transactions</div>
+                <div style={S.heroStatValue}>{data.summary.transaction_count}</div>
+              </div>
+              <div style={S.heroStat}>
+                <div style={S.heroStatLabel}>Avg. Transaction</div>
+                <div style={S.heroStatValue}>${data.summary.avg_transaction.toFixed(2)}</div>
+              </div>
+              <div style={S.heroStat}>
+                <div style={S.heroStatLabel}>Returns</div>
+                <div style={S.heroStatValue}>{data.summary.returns_count}</div>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Cash Drawer Reconciliation */}
-        <div style={S.card}>
-          <h3 style={S.sectionTitle}>Cash Drawer</h3>
-          <div style={S.cashDrawerRow}>
-            <span style={S.cashDrawerLabel}>Opening Float</span>
-            <span style={S.cashDrawerValue}>${data.cashDrawer.opening.toFixed(2)}</span>
+          {/* Metrics Cards */}
+          <div style={S.metricsGrid}>
+            <div style={S.metricCard}>
+              <div style={S.metricLabel}>Gross Sales</div>
+              <div style={{ ...S.metricValue, ...S.greenValue }}>
+                ${data.summary.gross_sales.toFixed(2)}
+              </div>
+            </div>
+            <div style={S.metricCard}>
+              <div style={S.metricLabel}>Returns/Refunds</div>
+              <div style={{ ...S.metricValue, ...S.redValue }}>
+                -${data.summary.returns_refunds.toFixed(2)}
+              </div>
+            </div>
+            <div style={S.metricCard}>
+              <div style={S.metricLabel}>Discounts Given</div>
+              <div style={{ ...S.metricValue, ...S.amberValue }}>
+                -${data.summary.discounts_given.toFixed(2)}
+              </div>
+            </div>
+            <div style={S.metricCard}>
+              <div style={S.metricLabel}>Net Revenue</div>
+              <div style={{ ...S.metricValue, ...S.greenValue }}>
+                ${data.summary.net_revenue.toFixed(2)}
+              </div>
+            </div>
           </div>
-          <div style={S.cashDrawerRow}>
-            <span style={S.cashDrawerLabel}>+ Cash Sales</span>
-            <span style={S.cashDrawerValue}>${data.cashDrawer.sales.toFixed(2)}</span>
+        </>
+      )}
+
+      {!isLoading && (
+        <>
+          {/* Two-column Layout */}
+          <div style={S.twoCol}>
+            {/* Payment Method Breakdown */}
+            <div style={S.card}>
+              <h3 style={S.sectionTitle}>Payment Method Breakdown</h3>
+              {paymentMethods && paymentMethods.length > 0 ? (
+                paymentMethods.map((method, idx) => {
+                  const colors = ['#1a6b3a', '#2563eb', '#7c3aed', '#9ca3af'];
+                  const totalAmount = paymentMethods.reduce((sum, m) => sum + (m.total || 0), 0);
+                  const percent = totalAmount > 0 ? ((method.total || 0) / totalAmount) * 100 : 0;
+                  return (
+                    <div key={idx}>
+                      <div style={S.paymentMethodRow}>
+                        <span style={S.paymentMethodLabel}>{method.method}</span>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <span style={S.paymentMethodAmount}>
+                            ${(method.total || 0).toFixed(2)}
+                          </span>
+                          <span style={S.paymentMethodPercent}>({Math.round(percent)}%)</span>
+                        </div>
+                      </div>
+                      <div style={S.progressBar}>
+                        <div style={S.progressFill(percent, colors[idx % colors.length])} />
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ color: '#6b7280', fontSize: 11 }}>No payment data available</div>
+              )}
+            </div>
+
+            {/* Cash Drawer Reconciliation */}
+            <div style={S.card}>
+              <h3 style={S.sectionTitle}>Cash Drawer</h3>
+              <div style={S.cashDrawerRow}>
+                <span style={S.cashDrawerLabel}>Opening Float</span>
+                <span style={S.cashDrawerValue}>${data.cash_drawer.opening_float.toFixed(2)}</span>
+              </div>
+              <div style={S.cashDrawerRow}>
+                <span style={S.cashDrawerLabel}>+ Cash Sales</span>
+                <span style={S.cashDrawerValue}>${data.cash_drawer.cash_sales.toFixed(2)}</span>
+              </div>
+              <div style={S.cashDrawerRow}>
+                <span style={S.cashDrawerLabel}>- Cash Returns</span>
+                <span style={S.cashDrawerValue}>-${data.cash_drawer.cash_returns.toFixed(2)}</span>
+              </div>
+              <div style={S.varianceRow}>
+                <span>= Expected</span>
+                <span>${data.cash_drawer.expected_in_drawer.toFixed(2)}</span>
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <span style={S.pill('#e8f5ee', '#1a6b3a')}>Balanced</span>
+              </div>
+            </div>
           </div>
-          <div style={S.cashDrawerRow}>
-            <span style={S.cashDrawerLabel}>- Cash Returns</span>
-            <span style={S.cashDrawerValue}>-${data.cashDrawer.returns.toFixed(2)}</span>
-          </div>
-          <div style={S.cashDrawerRow}>
-            <span style={S.cashDrawerLabel}>- Cash Payouts</span>
-            <span style={S.cashDrawerValue}>-${data.cashDrawer.payouts.toFixed(2)}</span>
-          </div>
-          <div style={S.varianceRow}>
-            <span>= Expected</span>
-            <span>${data.cashDrawer.expected.toFixed(2)}</span>
-          </div>
-          <div style={S.cashDrawerRow}>
-            <span style={S.cashDrawerLabel}>Actual Count</span>
-            <span style={S.cashDrawerValue}>${data.cashDrawer.actual.toFixed(2)}</span>
-          </div>
-          <div style={S.varianceRow}>
-            <span>Variance</span>
-            <span style={data.cashDrawer.variance < 0 ? S.varianceNegative : S.variancePositive}>
-              ${data.cashDrawer.variance.toFixed(2)}
-            </span>
-          </div>
-          <div style={{ marginTop: 8 }}>
-            {data.cashDrawer.variance !== 0 ? (
-              <span style={S.pill('#fef3e2', '#b45309')}>Variance</span>
-            ) : (
-              <span style={S.pill('#e8f5ee', '#1a6b3a')}>Balanced</span>
+        </>
+      )}
+
+      {!isLoading && (
+        <>
+          {/* Hourly Sales Breakdown */}
+          <div style={S.card}>
+            <h3 style={S.sectionTitle}>Hourly Sales Breakdown</h3>
+            <div style={S.hourlyChart}>
+              {hourlySales.map((amount, idx) => {
+                const height = amount > 0 ? (amount / maxHourly) * 140 : 0;
+                const active = idx >= 8 && idx <= 18;
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      height: 160,
+                      gap: 4,
+                    }}
+                  >
+                    <div style={{ ...S.hourlyBar(height), opacity: active ? 1 : 0.4 }} />
+                    <span style={{ fontSize: 8, color: '#6b7280' }}>
+                      {idx.toString().padStart(2, '0')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {data.hourly_trend && data.hourly_trend.length > 0 && (
+              <div style={S.peakInfo}>
+                Peak: {Math.max(...data.hourly_trend.map(h => h.total)).toLocaleString()} - Highest sales during peak hours
+              </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Hourly Sales Breakdown */}
-      <div style={S.card}>
-        <h3 style={S.sectionTitle}>Hourly Sales Breakdown</h3>
-        <div style={S.hourlyChart}>
-          {data.hourlySales.map((amount, idx) => {
-            const height = amount > 0 ? (amount / maxHourly) * 140 : 0;
-            const active = idx >= 8 && idx <= 18;
-            return (
-              <div
-                key={idx}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-                  height: 160,
-                  gap: 4,
-                }}
-              >
-                <div style={{ ...S.hourlyBar(height), opacity: active ? 1 : 0.4 }} />
-                <span style={{ fontSize: 8, color: '#6b7280' }}>
-                  {idx.toString().padStart(2, '0')}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-        <div style={S.peakInfo}>Peak: 12:00-13:00 ($185.00)</div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

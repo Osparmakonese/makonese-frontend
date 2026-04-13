@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { getZimraDevices, createZimraDevice, updateZimraDevice, getZReports, generateZReport } from '../api/retailApi';
 
 const S = {
   page: { maxWidth: 1200, margin: '0 auto', padding: 20 },
@@ -62,15 +64,48 @@ const S = {
 
 export default function ZimraFiscal({ onTabChange }) {
   useAuth();
-  const [isConnected] = useState(true); // Mock state
+  const queryClient = useQueryClient();
+  const [newDevice, setNewDevice] = useState({
+    vat_number: '',
+    device_type: 'vfd',
+    fdms_url: 'https://fdms.zimra.co.zw/api/v1',
+    device_serial: '',
+  });
 
-  const zReports = [
-    { date: '12 Apr', transactions: 38, grossSales: '$1,240.00', vat: '$186.00', netSales: '$1,054.00', status: 'Submitted' },
-    { date: '11 Apr', transactions: 42, grossSales: '$1,380.00', vat: '$207.00', netSales: '$1,173.00', status: 'Submitted' },
-    { date: '10 Apr', transactions: 35, grossSales: '$1,120.00', vat: '$168.00', netSales: '$952.00', status: 'Submitted' },
-    { date: '9 Apr', transactions: 29, grossSales: '$980.00', vat: '$147.00', netSales: '$833.00', status: 'Submitted' },
-    { date: '8 Apr', transactions: 31, grossSales: '$1,050.00', vat: '$157.50', netSales: '$892.50', status: 'Submitted' },
-  ];
+  // Fetch ZIMRA devices
+  const { data: devices = [], isLoading: devicesLoading } = useQuery({
+    queryKey: ['retail-zimra-devices'],
+    queryFn: getZimraDevices,
+    staleTime: 30000,
+  });
+
+  // Fetch Z-Reports
+  const { data: zReportsData = [], isLoading: reportsLoading } = useQuery({
+    queryKey: ['retail-z-reports'],
+    queryFn: getZReports,
+    staleTime: 30000,
+  });
+
+  // Create ZIMRA Device mutation
+  const createDeviceMutation = useMutation({
+    mutationFn: createZimraDevice,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retail-zimra-devices'] });
+      setNewDevice({ vat_number: '', device_type: 'vfd', fdms_url: 'https://fdms.zimra.co.zw/api/v1', device_serial: '' });
+    },
+  });
+
+  // Generate Z-Report mutation
+  const generateReportMutation = useMutation({
+    mutationFn: generateZReport,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retail-z-reports'] });
+    },
+  });
+
+  // Get the first device for status display
+  const activeDevice = devices && devices.length > 0 ? devices[0] : null;
+  const isConnected = activeDevice?.status === 'active';
 
   return (
     <div style={S.page}>
@@ -84,19 +119,33 @@ export default function ZimraFiscal({ onTabChange }) {
       </div>
 
       {/* Compliance Status Card */}
-      <div style={{ ...S.statusCard, ...(isConnected ? S.statusCardGreen : S.statusCardAmber) }}>
-        <div style={S.statusTitle}>
-          <span style={isConnected ? S.statusGreen : S.statusAmber}>
-            {isConnected ? '✓' : '○'} FDMS Status: {isConnected ? 'Connected' : 'Not Configured'}
-          </span>
-          <span style={{ ...S.badge, ...S.badgeGreen, marginLeft: 8 }}>
-            {isConnected ? 'Active' : 'Inactive'}
-          </span>
+      {devicesLoading ? (
+        <div style={S.statusCard}>Loading ZIMRA device status...</div>
+      ) : activeDevice ? (
+        <div style={{ ...S.statusCard, ...(isConnected ? S.statusCardGreen : S.statusCardAmber) }}>
+          <div style={S.statusTitle}>
+            <span style={isConnected ? S.statusGreen : S.statusAmber}>
+              {isConnected ? '✓' : '○'} FDMS Status: {isConnected ? 'Connected' : 'Not Configured'}
+            </span>
+            <span style={{ ...S.badge, ...S.badgeGreen, marginLeft: 8 }}>
+              {isConnected ? 'Active' : 'Inactive'}
+            </span>
+          </div>
+          <div style={S.metaRow}>VAT Number: <span style={S.statusBold}>{activeDevice.vat_number}</span></div>
+          <div style={S.metaRow}>Device: <span style={S.statusBold}>{activeDevice.device_serial}</span></div>
+          <div style={S.metaRow}>Last Sync: <span style={S.statusBold}>{activeDevice.last_sync || 'Not synced'}</span></div>
         </div>
-        <div style={S.metaRow}>VAT Number: <span style={S.statusBold}>10012345</span></div>
-        <div style={S.metaRow}>Device: <span style={S.statusBold}>VFD-2026-00142</span></div>
-        <div style={S.metaRow}>Last Sync: <span style={S.statusBold}>12 Apr 2026, 17:45</span></div>
-      </div>
+      ) : (
+        <div style={{ ...S.statusCard, ...S.statusCardAmber }}>
+          <div style={S.statusTitle}>
+            <span style={S.statusAmber}>○ FDMS Status: Not Configured</span>
+            <span style={{ ...S.badge, marginLeft: 8, background: '#fef3e2', color: '#b45309' }}>
+              Inactive
+            </span>
+          </div>
+          <div style={S.metaRow}>No ZIMRA device configured yet.</div>
+        </div>
+      )}
 
       {/* Two-Column Grid */}
       <div style={S.twoColumnGrid}>
@@ -106,12 +155,21 @@ export default function ZimraFiscal({ onTabChange }) {
 
           <div style={S.formGroup}>
             <label style={S.label}>VAT Registration Number</label>
-            <input type="text" defaultValue="10012345" readOnly style={S.input} />
+            <input
+              type="text"
+              value={newDevice.vat_number}
+              onChange={(e) => setNewDevice({ ...newDevice, vat_number: e.target.value })}
+              style={S.input}
+            />
           </div>
 
           <div style={S.formGroup}>
             <label style={S.label}>Device Type</label>
-            <select style={S.select} defaultValue="vfd">
+            <select
+              style={S.select}
+              value={newDevice.device_type}
+              onChange={(e) => setNewDevice({ ...newDevice, device_type: e.target.value })}
+            >
               <option value="esd">Hardware ESD</option>
               <option value="vfd">Virtual Fiscal Device (VFD)</option>
             </select>
@@ -119,22 +177,33 @@ export default function ZimraFiscal({ onTabChange }) {
 
           <div style={S.formGroup}>
             <label style={S.label}>FDMS Server URL</label>
-            <input type="text" defaultValue="https://fdms.zimra.co.zw/api/v1" readOnly style={S.input} />
+            <input
+              type="text"
+              value={newDevice.fdms_url}
+              onChange={(e) => setNewDevice({ ...newDevice, fdms_url: e.target.value })}
+              style={S.input}
+            />
           </div>
 
           <div style={S.formGroup}>
             <label style={S.label}>Device Serial</label>
-            <input type="text" defaultValue="VFD-2026-00142" readOnly style={S.input} />
-          </div>
-
-          <div style={S.formGroup}>
-            <label style={S.label}>Activation Date</label>
-            <input type="text" defaultValue="1 Feb 2026" readOnly style={S.input} />
+            <input
+              type="text"
+              value={newDevice.device_serial}
+              onChange={(e) => setNewDevice({ ...newDevice, device_serial: e.target.value })}
+              style={S.input}
+            />
           </div>
 
           <div style={S.buttonRow}>
-            <button style={S.btnOutline}>Test Connection</button>
-            <button style={S.btnSolid}>Save Configuration</button>
+            <button style={S.btnOutline} disabled={createDeviceMutation.isPending}>Test Connection</button>
+            <button
+              style={S.btnSolid}
+              onClick={() => createDeviceMutation.mutate(newDevice)}
+              disabled={createDeviceMutation.isPending}
+            >
+              {createDeviceMutation.isPending ? 'Saving...' : 'Save Configuration'}
+            </button>
           </div>
 
           <div style={S.infoBox}>
@@ -145,34 +214,38 @@ export default function ZimraFiscal({ onTabChange }) {
         {/* Right: Daily Z-Reports */}
         <div style={S.card}>
           <h2 style={S.cardTitle}>Fiscal Z-Reports</h2>
-          <table style={S.table}>
-            <thead>
-              <tr>
-                <th style={S.th}>Date</th>
-                <th style={S.th}>Transactions</th>
-                <th style={S.th}>Gross Sales</th>
-                <th style={S.th}>VAT Collected</th>
-                <th style={S.th}>Net Sales</th>
-                <th style={S.th}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {zReports.map((report, idx) => (
-                <tr key={idx}>
-                  <td style={S.td}>{report.date}</td>
-                  <td style={S.td}>{report.transactions}</td>
-                  <td style={S.td}>{report.grossSales}</td>
-                  <td style={S.td}>{report.vat}</td>
-                  <td style={S.td}>{report.netSales}</td>
-                  <td style={S.td}>
-                    <span style={{ ...S.badge, ...S.badgeGreen }}>
-                      {report.status}
-                    </span>
-                  </td>
+          {reportsLoading ? (
+            <div style={{ padding: 16, textAlign: 'center', color: '#6b7280' }}>Loading Z-Reports...</div>
+          ) : (
+            <table style={S.table}>
+              <thead>
+                <tr>
+                  <th style={S.th}>Date</th>
+                  <th style={S.th}>Transactions</th>
+                  <th style={S.th}>Gross Sales</th>
+                  <th style={S.th}>VAT Collected</th>
+                  <th style={S.th}>Net Sales</th>
+                  <th style={S.th}>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {zReportsData.map((report) => (
+                  <tr key={report.id}>
+                    <td style={S.td}>{new Date(report.report_date).toLocaleDateString()}</td>
+                    <td style={S.td}>{report.transaction_count}</td>
+                    <td style={S.td}>${report.gross_sales.toFixed(2)}</td>
+                    <td style={S.td}>${report.vat_collected.toFixed(2)}</td>
+                    <td style={S.td}>${report.net_sales.toFixed(2)}</td>
+                    <td style={S.td}>
+                      <span style={{ ...S.badge, ...S.badgeGreen }}>
+                        {report.submitted ? 'Submitted' : 'Pending'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { getDiscounts, createDiscount, deleteDiscount } from '../api/retailApi';
 
 const S = {
   page: { maxWidth: 1200, margin: '0 auto', padding: 20 },
@@ -30,57 +32,87 @@ const S = {
 
 export default function Discounts({ onTabChange }) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const isOwnerOrManager = user?.role === 'owner' || user?.role === 'manager';
 
-  const activePromotions = [
-    {
-      id: 1,
-      name: 'Weekend Sale',
-      description: '10% off all accessories',
-      runs: 'Every Sat-Sun',
-      type: 'Percentage',
-      borderColor: '#1a6b3a',
-      badgeClass: 'badgeGreen',
-      status: 'Active',
-    },
-    {
-      id: 2,
-      name: 'Buy 2 Get 1 Free',
-      description: 'Lightning cables only',
-      runs: '10 Apr – 20 Apr',
-      type: 'BOGO',
-      borderColor: '#2563eb',
-      badgeClass: 'badgeBlue',
-      status: 'Active',
-    },
-    {
-      id: 3,
-      name: 'New Customer Welcome',
-      description: '$5 off first purchase over $20',
-      runs: 'Ongoing',
-      type: 'Fixed Amount',
-      borderColor: '#7c3aed',
-      badgeClass: 'badgePurple',
-      status: 'Active',
-    },
-    {
-      id: 4,
-      name: 'Easter Special',
-      description: '15% off power banks',
-      runs: '18 Apr – 21 Apr',
-      type: 'Percentage',
-      borderColor: '#c97d1a',
-      badgeClass: 'badgeAmber',
-      status: 'Scheduled',
-    },
-  ];
+  const { data: allDiscounts = [], isLoading } = useQuery({
+    queryKey: ['retail-discounts'],
+    queryFn: getDiscounts,
+    staleTime: 30000
+  });
 
-  const pastPromotions = [
-    { name: 'March Madness', type: '20% off', period: '1-7 Mar', timesUsed: 45, discounted: '$312.00', impact: '+$840 revenue' },
-    { name: 'Valentine\'s Bundle', type: 'BOGO', period: '12-14 Feb', timesUsed: 28, discounted: '$196.00', impact: '+$520 revenue' },
-    { name: 'New Year Sale', type: '15% off', period: '1-3 Jan', timesUsed: 62, discounted: '$445.00', impact: '+$1,200 revenue' },
-    { name: 'Black Friday ZW', type: '25% off', period: '29 Nov', timesUsed: 89, discounted: '$680.00', impact: '+$1,800 revenue' },
-  ];
+  const createDiscountMutation = useMutation({
+    mutationFn: createDiscount,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['retail-discounts'] })
+  });
+
+  const deleteDiscountMutation = useMutation({
+    mutationFn: deleteDiscount,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['retail-discounts'] })
+  });
+
+  const getBorderColor = (type) => {
+    const typeMap = {
+      'percentage': '#1a6b3a',
+      'fixed': '#2563eb',
+      'bogo': '#7c3aed',
+      'bundle': '#c97d1a'
+    };
+    return typeMap[type?.toLowerCase()] || '#1a6b3a';
+  };
+
+  const getBadgeClass = (type) => {
+    const typeMap = {
+      'percentage': 'badgeGreen',
+      'fixed': 'badgeBlue',
+      'bogo': 'badgePurple',
+      'bundle': 'badgeAmber'
+    };
+    return typeMap[type?.toLowerCase()] || 'badgeGreen';
+  };
+
+  const activePromotions = useMemo(() =>
+    allDiscounts.filter(d => d.is_current === true).map(d => ({
+      id: d.id,
+      name: d.name,
+      description: d.code ? `Code: ${d.code}` : d.name,
+      runs: d.start_date && d.end_date ? `${d.start_date} – ${d.end_date}` : 'Ongoing',
+      type: d.discount_type,
+      borderColor: getBorderColor(d.discount_type),
+      badgeClass: getBadgeClass(d.discount_type),
+      status: 'Active'
+    }))
+  , [allDiscounts]);
+
+  const pastPromotions = useMemo(() =>
+    allDiscounts.filter(d => d.is_expired === true).map(d => ({
+      id: d.id,
+      name: d.name,
+      type: d.discount_type,
+      period: d.start_date && d.end_date ? `${d.start_date} – ${d.end_date}` : 'N/A',
+      timesUsed: d.times_used || 0,
+      discounted: `$${(d.value || 0).toFixed(2)}`,
+      impact: `${d.times_used > 0 ? '+' : ''}${(d.value * d.times_used).toFixed(2)}`
+    }))
+  , [allDiscounts]);
+
+  const totalDiscounted = allDiscounts.reduce((sum, d) => sum + (d.times_used * d.value || 0), 0);
+  const avgRate = allDiscounts.length > 0
+    ? (allDiscounts.reduce((sum, d) => sum + (d.discount_type === 'percentage' ? d.value : 0), 0) / allDiscounts.length)
+    : 0;
+
+  const handleCreateDiscount = () => {
+    createDiscountMutation.mutate({
+      name: 'New Discount',
+      discount_type: 'percentage',
+      value: 10,
+      min_purchase: 0,
+      start_date: new Date().toISOString().split('T')[0],
+      end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      usage_limit: 100,
+      code: 'NEWDISCOUNT'
+    });
+  };
 
   return (
     <div style={S.page}>
@@ -88,7 +120,17 @@ export default function Discounts({ onTabChange }) {
       <div style={S.header}>
         <h1 style={S.title}>Discounts & Promotions</h1>
         {isOwnerOrManager && (
-          <button style={S.headerBtn}>+ Create Discount</button>
+          <button
+            onClick={handleCreateDiscount}
+            disabled={createDiscountMutation.isPending}
+            style={{
+              ...S.headerBtn,
+              opacity: createDiscountMutation.isPending ? 0.6 : 1,
+              cursor: createDiscountMutation.isPending ? 'not-allowed' : 'pointer'
+            }}
+          >
+            + Create Discount
+          </button>
         )}
       </div>
 
@@ -97,21 +139,21 @@ export default function Discounts({ onTabChange }) {
         <div style={S.metricCard}>
           <div style={S.metricLabel}>Active Promotions</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ ...S.metricValue, color: '#1a6b3a' }}>4</div>
+            <div style={{ ...S.metricValue, color: '#1a6b3a' }}>{activePromotions.length}</div>
             <div style={{ ...S.metricIcon, background: '#e8f5ee' }}>🎯</div>
           </div>
         </div>
         <div style={S.metricCard}>
-          <div style={S.metricLabel}>Total Discount Given (MTD)</div>
+          <div style={S.metricLabel}>Total Discount Given</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ ...S.metricValue, color: '#c97d1a' }}>$186.50</div>
+            <div style={{ ...S.metricValue, color: '#c97d1a' }}>${totalDiscounted.toFixed(2)}</div>
             <div style={{ ...S.metricIcon, background: '#fef3e2' }}>💰</div>
           </div>
         </div>
         <div style={S.metricCard}>
           <div style={S.metricLabel}>Avg. Discount Rate</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ ...S.metricValue, color: '#2563eb' }}>5.2%</div>
+            <div style={{ ...S.metricValue, color: '#2563eb' }}>{avgRate.toFixed(1)}%</div>
             <div style={{ ...S.metricIcon, background: '#EFF6FF' }}>📊</div>
           </div>
         </div>
@@ -120,50 +162,60 @@ export default function Discounts({ onTabChange }) {
       {/* Active Promotions */}
       <div style={S.card}>
         <h2 style={S.cardTitle}>Active Promotions</h2>
-        <div style={S.promoGrid}>
-          {activePromotions.map(promo => (
-            <div key={promo.id} style={{ ...S.promoCard, borderLeftColor: promo.borderColor }}>
-              <div style={S.promoName}>{promo.name}</div>
-              <div style={S.promoDesc}>{promo.description}</div>
-              <div style={S.promoMeta}>Runs: {promo.runs}</div>
-              <div>
-                <span style={{ ...S.badge, ...S[promo.badgeClass] }}>{promo.type}</span>
-                <span style={{ ...S.badge, background: '#e8f5ee', color: '#1a6b3a' }}>
-                  {promo.status === 'Active' ? '✓' : '◯'} {promo.status}
-                </span>
+        {isLoading ? (
+          <div style={{ padding: 20, textAlign: 'center', color: '#6b7280' }}>Loading promotions...</div>
+        ) : activePromotions.length === 0 ? (
+          <div style={{ padding: 20, textAlign: 'center', color: '#6b7280' }}>No active promotions</div>
+        ) : (
+          <div style={S.promoGrid}>
+            {activePromotions.map(promo => (
+              <div key={promo.id} style={{ ...S.promoCard, borderLeftColor: promo.borderColor }}>
+                <div style={S.promoName}>{promo.name}</div>
+                <div style={S.promoDesc}>{promo.description}</div>
+                <div style={S.promoMeta}>Runs: {promo.runs}</div>
+                <div>
+                  <span style={{ ...S.badge, ...S[promo.badgeClass] }}>{promo.type}</span>
+                  <span style={{ ...S.badge, background: '#e8f5ee', color: '#1a6b3a' }}>
+                    {promo.status === 'Active' ? '✓' : '◯'} {promo.status}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Past Promotions Table */}
       <div style={S.card}>
         <h2 style={S.cardTitle}>Past Promotions</h2>
-        <table style={S.table}>
-          <thead>
-            <tr>
-              <th style={S.th}>Name</th>
-              <th style={S.th}>Type</th>
-              <th style={S.th}>Period</th>
-              <th style={S.th}>Times Used</th>
-              <th style={S.th}>Total Discounted</th>
-              <th style={S.th}>Revenue Impact</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pastPromotions.map((promo, idx) => (
-              <tr key={idx}>
-                <td style={S.td}>{promo.name}</td>
-                <td style={S.td}>{promo.type}</td>
-                <td style={S.td}>{promo.period}</td>
-                <td style={S.td}>{promo.timesUsed}</td>
-                <td style={S.td}>{promo.discounted}</td>
-                <td style={{ ...S.td, color: '#1a6b3a', fontWeight: 600 }}>{promo.impact}</td>
+        {pastPromotions.length === 0 ? (
+          <div style={{ padding: 20, textAlign: 'center', color: '#6b7280' }}>No past promotions</div>
+        ) : (
+          <table style={S.table}>
+            <thead>
+              <tr>
+                <th style={S.th}>Name</th>
+                <th style={S.th}>Type</th>
+                <th style={S.th}>Period</th>
+                <th style={S.th}>Times Used</th>
+                <th style={S.th}>Total Discounted</th>
+                <th style={S.th}>Revenue Impact</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {pastPromotions.map((promo) => (
+                <tr key={promo.id}>
+                  <td style={S.td}>{promo.name}</td>
+                  <td style={S.td}>{promo.type}</td>
+                  <td style={S.td}>{promo.period}</td>
+                  <td style={S.td}>{promo.timesUsed}</td>
+                  <td style={S.td}>{promo.discounted}</td>
+                  <td style={{ ...S.td, color: '#1a6b3a', fontWeight: 600 }}>{promo.impact}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

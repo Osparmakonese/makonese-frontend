@@ -1,11 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  getDailySummary,
-  getProducts,
-  getLowStockProducts,
-  getCashierSessions,
-  getSales,
+  getRetailDashboard,
 } from '../api/retailApi';
 import { fmt } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
@@ -267,91 +263,69 @@ const S = {
 export default function RetailDashboard() {
   const { user } = useAuth() || {};
 
-  const { data: summary, isLoading: sumLoading } = useQuery({
-    queryKey: ['retail-summary'],
-    queryFn: getDailySummary,
+  const { data: dashboard, isLoading: sumLoading, error: dashboardError } = useQuery({
+    queryKey: ['retail-dashboard'],
+    queryFn: getRetailDashboard,
+    staleTime: 30000,
   });
 
-  const { data: products = [] } = useQuery({
-    queryKey: ['retail-products'],
-    queryFn: getProducts,
-  });
+  // Safely extract data from dashboard API response
+  const summary = dashboard ? {
+    total_sales: dashboard.revenue_mtd || 0,
+  } : {};
 
-  const { data: lowStock = [] } = useQuery({
-    queryKey: ['retail-low-stock'],
-    queryFn: getLowStockProducts,
-  });
+  const productCount = dashboard?.products_count || 0;
+  const lowStock = dashboard?.low_stock_alerts || [];
+  const recentActivityData = dashboard?.recent_activity || [];
+  const revenueTrend = dashboard?.revenue_trend || [];
 
-  const { data: sessions = [] } = useQuery({
-    queryKey: ['retail-cashier-sessions'],
-    queryFn: getCashierSessions,
-  });
-
-  const { data: sales = [] } = useQuery({
-    queryKey: ['retail-sales-recent'],
-    queryFn: getSales,
-  });
-
-  const openSessions = sessions.filter((s) => !s.closed_at);
-  const productCount = products.length;
-  const recentSales = sales.slice(0, 10);
   const username = user?.first_name || 'User';
 
-  // Build weekly chart from actual sales data
+  // Build weekly chart from dashboard revenue_trend
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const chartData = (() => {
+    if (revenueTrend.length > 0) {
+      return revenueTrend.map(item => {
+        const d = new Date(item.date);
+        return { day: dayNames[d.getDay()], amount: item.total || 0, date: item.date };
+      });
+    }
     const now = new Date();
     const days = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const dayTotal = sales
-        .filter(s => s.created_at && s.created_at.startsWith(dateStr))
-        .reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
-      days.push({ day: dayNames[d.getDay()], amount: dayTotal, date: dateStr });
+      days.push({ day: dayNames[d.getDay()], amount: 0, date: d.toISOString().split('T')[0] });
     }
     return days;
   })();
   const maxAmount = Math.max(...chartData.map((d) => d.amount), 1);
 
-  // Build recent activity feed from sales, products, sessions
+  // Build recent activity feed from API data
   const getActivityItems = () => {
     const items = [];
 
-    // Add recent sales
-    sales.slice(0, 5).forEach((sale) => {
+    // Add recent activity items from API
+    recentActivityData.slice(0, 6).forEach((activity) => {
       items.push({
-        id: `sale-${sale.id}`,
-        type: 'sale',
+        id: `activity-${activity.id}`,
+        type: 'activity',
         dot: '#2d9e58',
-        title: `Sale #${sale.receipt_number}`,
-        desc: `${(sale.items_data || []).length} items • ${fmt(sale.total, 'zwd')}`,
-        time: sale.created_at,
+        title: activity.description || `Transaction #${activity.receipt}`,
+        desc: `${fmt(activity.total, 'zwd')}`,
+        time: activity.time,
       });
     });
 
-    // Add product updates
+    // Add low stock alerts
     lowStock.slice(0, 2).forEach((product) => {
       items.push({
         id: `product-${product.id}`,
         type: 'product',
         dot: '#2563eb',
-        title: `${product.name}`,
+        title: `${product.name || 'Product'}`,
         desc: `Low stock: ${product.quantity_in_stock} units`,
         time: product.updated_at || new Date().toISOString(),
-      });
-    });
-
-    // Add session activity
-    openSessions.slice(0, 2).forEach((session) => {
-      items.push({
-        id: `session-${session.id}`,
-        type: 'session',
-        dot: '#ec4899',
-        title: `Cashier ${session.cashier_name || 'Active'}`,
-        desc: 'Session started',
-        time: session.opened_at,
       });
     });
 
@@ -397,6 +371,16 @@ export default function RetailDashboard() {
     );
   }
 
+  if (dashboardError) {
+    return (
+      <div style={S.page}>
+        <div style={{ padding: '20px', color: '#c0392b', textAlign: 'center' }}>
+          Failed to load dashboard. Please try again later.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={S.page}>
       {/* Hero Banner */}
@@ -406,7 +390,7 @@ export default function RetailDashboard() {
           <div style={S.bannerSub}>
             <span style={S.bannerSubItem}>Makonese Farm</span>
             <span style={S.bannerSubItem}>{productCount} products</span>
-            <span style={S.bannerSubItem}>{openSessions.length} active sessions</span>
+            <span style={S.bannerSubItem}>{lowStock.length} low stock alerts</span>
           </div>
         </div>
         <div style={S.bannerIcon}>{'\u{1F6D2}'}</div>
@@ -442,20 +426,20 @@ export default function RetailDashboard() {
           </div>
         </div>
 
-        {/* Active Sessions Card */}
+        {/* Today Revenue Card */}
         <div style={S.metricCard}>
           <div style={S.iconCircle('#c97d1a')}>
             {'\u{1F4B3}'}
           </div>
-          <div style={S.metricLabel}>Sessions</div>
-          <div style={S.metricValue}>{openSessions.length}</div>
+          <div style={S.metricLabel}>Today Revenue</div>
+          <div style={S.metricValue}>{fmt(dashboard?.today_revenue || 0, 'zwd')}</div>
           <div style={S.metricTrend}>↑ 1.8%</div>
           <div style={S.progressBar}>
             <div style={S.progressFill(38, '#c97d1a')} />
           </div>
         </div>
 
-        {/* Expenses/Alerts Card */}
+        {/* Alerts Card */}
         <div style={S.metricCard}>
           <div style={S.iconCircle('#c0392b')}>
             {'\u{26A0}'}
@@ -524,7 +508,7 @@ export default function RetailDashboard() {
         </div>
       </div>
 
-      {/* Recent Sales */}
+      {/* Recent Transactions */}
       <div style={S.card}>
         <h3 style={S.sectionTitle}>Recent Transactions</h3>
         <table style={S.table}>
@@ -538,27 +522,21 @@ export default function RetailDashboard() {
             </tr>
           </thead>
           <tbody>
-            {recentSales.map((sale) => (
-              <tr key={sale.id}>
+            {recentActivityData.slice(0, 10).map((activity) => (
+              <tr key={activity.id}>
                 <td style={S.td}>
-                  <strong>{sale.receipt_number}</strong>
+                  <strong>{activity.receipt || '-'}</strong>
                 </td>
-                <td style={S.td}>{(sale.items_data || []).length}</td>
+                <td style={S.td}>{activity.items_count || 0}</td>
                 <td style={S.td}>
-                  <strong>{fmt(sale.total, 'zwd')}</strong>
+                  <strong>{fmt(activity.total, 'zwd')}</strong>
                 </td>
                 <td style={S.td}>
                   <span style={S.badge('amber')}>
-                    {sale.payment_method === 'cash'
-                      ? 'Cash'
-                      : sale.payment_method === 'card'
-                        ? 'Card'
-                        : sale.payment_method === 'mobile_money'
-                          ? 'Mobile'
-                          : 'Mixed'}
+                    {activity.method ? (activity.method.charAt(0).toUpperCase() + activity.method.slice(1)) : 'Unknown'}
                   </span>
                 </td>
-                <td style={S.td}>{sale.created_at ? new Date(sale.created_at).toLocaleString() : ''}</td>
+                <td style={S.td}>{activity.time ? new Date(activity.time).toLocaleString() : ''}</td>
               </tr>
             ))}
           </tbody>

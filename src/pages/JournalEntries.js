@@ -1,14 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-
-const SAMPLE_DATA = [
-  { date: '10 Apr', ref: 'JE-0045', description: 'Stock purchase — accessories', debit: '$124.00', credit: '$124.00', status: 'Posted' },
-  { date: '9 Apr', ref: 'JE-0044', description: 'Daily sales revenue', debit: '$310.00', credit: '$310.00', status: 'Posted' },
-  { date: '8 Apr', ref: 'JE-0043', description: 'Rent — April', debit: '$200.00', credit: '$200.00', status: 'Posted' },
-  { date: '7 Apr', ref: 'JE-0042', description: 'EcoCash settlement', debit: '$180.00', credit: '$180.00', status: 'Posted' },
-  { date: '5 Apr', ref: 'JE-0041', description: 'Staff wages — week 14', debit: '$85.00', credit: '$85.00', status: 'Posted' },
-  { date: '3 Apr', ref: 'JE-0040', description: 'Utilities — electricity', debit: '$45.00', credit: '$45.00', status: 'Draft' },
-];
+import { getJournalEntries, createJournalEntry, getTrialBalance } from '../api/retailApi';
 
 const styles = {
   page: { maxWidth: 1200, margin: '0 auto', padding: 20 },
@@ -41,37 +34,75 @@ const styles = {
 
 export default function JournalEntries({ onTabChange }) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const canCreate = user?.role === 'owner' || user?.role === 'manager';
 
-  const calculateTotals = () => {
-    const debits = SAMPLE_DATA.reduce((sum, row) => {
-      const val = parseFloat(row.debit.replace('$', ''));
-      return sum + (isNaN(val) ? 0 : val);
-    }, 0);
+  const { data: entries = [], isLoading: entriesLoading } = useQuery({
+    queryKey: ['retail-journal-entries'],
+    queryFn: getJournalEntries,
+    staleTime: 30000
+  });
 
-    const credits = SAMPLE_DATA.reduce((sum, row) => {
-      const val = parseFloat(row.credit.replace('$', ''));
-      return sum + (isNaN(val) ? 0 : val);
-    }, 0);
+  const { data: trialBalance = {}, isLoading: balanceLoading } = useQuery({
+    queryKey: ['retail-trial-balance'],
+    queryFn: getTrialBalance,
+    staleTime: 30000
+  });
 
-    const balance = debits - credits;
+  const createEntryMutation = useMutation({
+    mutationFn: createJournalEntry,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retail-journal-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['retail-trial-balance'] });
+    }
+  });
 
-    return {
-      debits: `$${debits.toFixed(2)}`,
-      credits: `$${credits.toFixed(2)}`,
-      balance: `$${Math.abs(balance).toFixed(2)}`,
-      isBalanced: Math.abs(balance) < 0.01,
-    };
+  const formattedEntries = useMemo(() =>
+    entries.map(entry => ({
+      id: entry.id,
+      date: entry.entry_date,
+      ref: `JE-${String(entry.id).padStart(4, '0')}`,
+      description: entry.description || entry.entry_type,
+      debit: `$${(entry.debit_amount || 0).toFixed(2)}`,
+      credit: `$${(entry.credit_amount || 0).toFixed(2)}`,
+      status: entry.created_at ? 'Posted' : 'Draft'
+    }))
+  , [entries]);
+
+  const totals = useMemo(() => ({
+    debits: `$${(trialBalance.total_debit || 0).toFixed(2)}`,
+    credits: `$${(trialBalance.total_credit || 0).toFixed(2)}`,
+    balance: `$${Math.abs((trialBalance.total_debit || 0) - (trialBalance.total_credit || 0)).toFixed(2)}`,
+    isBalanced: trialBalance.balanced === true
+  }), [trialBalance]);
+
+  const handleCreateEntry = () => {
+    createEntryMutation.mutate({
+      entry_date: new Date().toISOString().split('T')[0],
+      reference: `JE-${String(entries.length + 1).padStart(4, '0')}`,
+      description: 'New Journal Entry',
+      entry_type: 'general',
+      debit_account: 1,
+      credit_account: 2,
+      debit_amount: 0,
+      credit_amount: 0
+    });
   };
-
-  const totals = calculateTotals();
 
   return (
     <div style={styles.page}>
       <div style={styles.header}>
         <h1 style={styles.title}>Journal Entries</h1>
         {canCreate && (
-          <button style={styles.addBtn}>
+          <button
+            onClick={handleCreateEntry}
+            disabled={createEntryMutation.isPending}
+            style={{
+              ...styles.addBtn,
+              opacity: createEntryMutation.isPending ? 0.6 : 1,
+              cursor: createEntryMutation.isPending ? 'not-allowed' : 'pointer'
+            }}
+          >
             {'\u002B'} New Entry
           </button>
         )}
@@ -81,55 +112,61 @@ export default function JournalEntries({ onTabChange }) {
       <div style={styles.summaryRow}>
         <div style={styles.summaryCard}>
           <div style={styles.summaryLabel}>Total Debits</div>
-          <div style={styles.summaryValue}>{totals.debits}</div>
+          <div style={styles.summaryValue}>{balanceLoading ? '...' : totals.debits}</div>
         </div>
         <div style={styles.summaryCard}>
           <div style={styles.summaryLabel}>Total Credits</div>
-          <div style={styles.summaryValue}>{totals.credits}</div>
+          <div style={styles.summaryValue}>{balanceLoading ? '...' : totals.credits}</div>
         </div>
         <div style={styles.summaryCard}>
           <div style={styles.summaryLabel}>Balance</div>
-          <div style={{ ...styles.summaryValue, color: totals.isBalanced ? '#1a6b3a' : '#c0392b' }}>
-            {totals.balance}
+          <div style={{ ...styles.summaryValue, color: balanceLoading ? '#6b7280' : totals.isBalanced ? '#1a6b3a' : '#c0392b' }}>
+            {balanceLoading ? '...' : totals.balance}
           </div>
         </div>
       </div>
 
       {/* Table Card */}
       <div style={styles.card}>
-        <table style={styles.table}>
-          <thead>
-            <tr style={{ background: '#f9fafb' }}>
-              <th style={styles.th}>Date</th>
-              <th style={styles.th}>Ref</th>
-              <th style={styles.th}>Description</th>
-              <th style={styles.th}>Debit</th>
-              <th style={styles.th}>Credit</th>
-              <th style={styles.th}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {SAMPLE_DATA.map((row, idx) => (
-              <tr
-                key={idx}
-                style={{
-                  borderBottom: idx < SAMPLE_DATA.length - 1 ? '1px solid #e5e7eb' : 'none',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-              >
-                <td style={styles.td}>{row.date}</td>
-                <td style={{ ...styles.td, ...styles.refCell }}>{row.ref}</td>
-                <td style={styles.td}>{row.description}</td>
-                <td style={{ ...styles.td, ...styles.monospaceCell }}>{row.debit}</td>
-                <td style={{ ...styles.td, ...styles.monospaceCell }}>{row.credit}</td>
-                <td style={styles.td}>
-                  <span style={styles.statusPill(row.status)}>{row.status}</span>
-                </td>
+        {entriesLoading ? (
+          <div style={{ padding: 20, textAlign: 'center', color: '#6b7280' }}>Loading journal entries...</div>
+        ) : formattedEntries.length === 0 ? (
+          <div style={{ padding: 20, textAlign: 'center', color: '#6b7280' }}>No journal entries found</div>
+        ) : (
+          <table style={styles.table}>
+            <thead>
+              <tr style={{ background: '#f9fafb' }}>
+                <th style={styles.th}>Date</th>
+                <th style={styles.th}>Ref</th>
+                <th style={styles.th}>Description</th>
+                <th style={styles.th}>Debit</th>
+                <th style={styles.th}>Credit</th>
+                <th style={styles.th}>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {formattedEntries.map((row, idx) => (
+                <tr
+                  key={row.id}
+                  style={{
+                    borderBottom: idx < formattedEntries.length - 1 ? '1px solid #e5e7eb' : 'none',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <td style={styles.td}>{row.date}</td>
+                  <td style={{ ...styles.td, ...styles.refCell }}>{row.ref}</td>
+                  <td style={styles.td}>{row.description}</td>
+                  <td style={{ ...styles.td, ...styles.monospaceCell }}>{row.debit}</td>
+                  <td style={{ ...styles.td, ...styles.monospaceCell }}>{row.credit}</td>
+                  <td style={styles.td}>
+                    <span style={styles.statusPill(row.status)}>{row.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
