@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getFieldReport, getFieldHistory, getFieldPnL } from '../api/farmApi';
+import { analyzeAI } from '../api/aiApi';
 import { fmt, cropEmoji, cropGradient, cropImage } from '../utils/format';
 
 const S = {
@@ -119,31 +120,14 @@ export default function FieldModal({ field, isOpen, onClose }) {
   const runAnalysis = async () => {
     setAiLoading(true);
     try {
-      const apiKey = localStorage.getItem('anthropic_api_key');
-      if (!apiKey) {
-        setAnalysis('Please add your Anthropic API key in Settings to use Smart Analysis.');
-        setAiLoading(false);
-        return;
-      }
-      const prompt = `Analyze this farm field data and provide actionable insights:\n\nField: ${field.name}\nCrop: ${field.crop}\nSize: ${field.size_hectares || field.hectares} hectares\nStatus: ${field.status}\nRevenue: $${rev}\nTotal Costs: $${totalCosts}\nNet: $${net}\nExpenses: ${JSON.stringify(expenses.slice(0, 20))}\n\nProvide: 1) Performance summary 2) Cost efficiency analysis 3) Recommendations 4) Risk flags`;
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1024,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      });
-      const data = await res.json();
-      setAnalysis(data.content?.[0]?.text || 'No response received.');
+      const data = await analyzeAI('farm_field_insights', { field_id: field.id });
+      setAnalysis(data.analysis || 'No response received.');
     } catch (err) {
-      setAnalysis('Analysis failed: ' + (err.message || 'Unknown error'));
+      if (err.response?.status === 402) {
+        setAnalysis('You\u2019ve used all your AI credits this month. Credits reset on the 1st.');
+      } else {
+        setAnalysis('Analysis failed: ' + (err.response?.data?.error || err.message));
+      }
     }
     setAiLoading(false);
   };
@@ -151,57 +135,15 @@ export default function FieldModal({ field, isOpen, onClose }) {
   const runHistoryAnalysis = async () => {
     setHistoryLoading(true);
     try {
-      const apiKey = localStorage.getItem('anthropic_api_key');
-      if (!apiKey) {
-        setHistoryResult('Please add your Anthropic API key in Settings to use History Analysis.');
-        setHistoryLoading(false);
-        return;
-      }
-      const history = await getFieldHistory(field.id);
-      const prompt = `You are an agricultural advisor for Makonese Farm Zimbabwe. Analyse the COMPLETE history of this field across all seasons.
-
-Field: ${field.name}
-Crop: ${field.crop}
-Size: ${field.size_hectares || field.hectares} hectares
-Status: ${field.status}
-
-EXPENSE HISTORY (grouped by opening/season):
-${JSON.stringify(history.expenses || [], null, 2)}
-
-STOCK USAGE HISTORY:
-${JSON.stringify(history.stock_usage || [], null, 2)}
-
-TRIP / REVENUE HISTORY:
-${JSON.stringify(history.trips || [], null, 2)}
-
-LABOUR HISTORY:
-${JSON.stringify(history.labour || [], null, 2)}
-
-Identify:
-1. BEST PERFORMING SEASON — which season had best net profit and why.
-2. KEY PATTERNS — what inputs, timing, or practices correlated with better performance.
-3. COST EFFICIENCY — which spending categories gave best return.
-4. MARKET PATTERNS — best trip timing, prices achieved.
-5. SPECIFIC RECOMMENDATIONS — based on history, what should the owner do differently or repeat next season for this field?`;
-
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 2048,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      });
-      const data = await res.json();
-      setHistoryResult(data.content?.[0]?.text || 'No response received.');
+      const question = `Analyse the complete history of field "${field.name}" (${field.crop}, ${field.size_hectares || field.hectares} ha). Identify: 1) Best performing season and why, 2) Key patterns in inputs and timing, 3) Cost efficiency by category, 4) Market patterns, 5) Specific recommendations for next season.`;
+      const data = await analyzeAI('natural_language_query', { question });
+      setHistoryResult(data.analysis || 'No response received.');
     } catch (err) {
-      setHistoryResult('History analysis failed: ' + (err.message || 'Unknown error'));
+      if (err.response?.status === 402) {
+        setHistoryResult('You\u2019ve used all your AI credits this month. Credits reset on the 1st.');
+      } else {
+        setHistoryResult('History analysis failed: ' + (err.response?.data?.error || err.message));
+      }
     }
     setHistoryLoading(false);
   };

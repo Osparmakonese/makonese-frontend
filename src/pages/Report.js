@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboard, getFields, getWagesSummary, getFarmAssets, getLivestockSales, getCattle, getGoats, getSheep, getPigs, getBroilerBatches, getLayerFlocks, getEggCollections, getBroilerExpenses, getLayerExpenses, downloadReport, saveBlob } from '../api/farmApi';
+import { analyzeFarmReport } from '../api/aiApi';
 import { fmt, IMAGES } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 
@@ -124,17 +125,15 @@ export default function Report() {
   const runAnalysis = async () => {
     setAiLoading(true);
     try {
-      const apiKey = localStorage.getItem('anthropic_api_key');
-      if (!apiKey) { setAnalysis('Add your Anthropic API key in Settings to use AI analysis.'); setAiLoading(false); return; }
-      const prompt = `Full financial analysis of Makonese Farm Season 2025:\n\nRevenue: $${totalRevenue} (Trips: $${tripRevenue}, Direct: $${directIncome})\nLivestock Sales: $${livestockSalesRev}\nField costs: $${fieldCosts}\nWages: $${wagesOwed}\nTrip expenses: $${tripExpenses}\nLivestock costs (health/feed): $${livestockHealthCosts}\nFarm overhead (depreciation): $${totalDepreciation}\nNet: $${net}\n\nFields: ${JSON.stringify(fields.map(f => ({ name: f.name, crop: f.crop, revenue: f.total_revenue, costs: f.total_costs, labour: f.total_labour })))}\n\nFarm Assets: ${JSON.stringify((assets || []).map(a => ({ name: a.name, cost: a.cost, lifespan: a.lifespan })))}\n\nLivestock: ${JSON.stringify(lsData)}\nLivestock Sales by Type: ${JSON.stringify(livestockSalesByType)}\n\nProvide: 1) Executive summary 2) Revenue analysis (including livestock) 3) Cost efficiency 4) Field performance 5) Livestock performance 6) Asset depreciation impact 7) Recommendations for next season`;
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 2048, messages: [{ role: 'user', content: prompt }] }),
-      });
-      const data = await res.json();
-      setAnalysis(data.content?.[0]?.text || 'No response.');
-    } catch (err) { setAnalysis('Analysis failed: ' + err.message); }
+      const data = await analyzeFarmReport('season');
+      setAnalysis(data.analysis || 'No response.');
+    } catch (err) {
+      if (err.response?.status === 402) {
+        setAnalysis('You\u2019ve used all your AI credits this month. Credits reset on the 1st.');
+      } else {
+        setAnalysis('Analysis failed: ' + (err.response?.data?.error || err.message));
+      }
+    }
     setAiLoading(false);
   };
 

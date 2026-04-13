@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getMyTenant, updateMyTenant } from '../api/coreApi';
 import { getVapidKey, subscribePush, unsubscribePush, sendTestPush } from '../api/farmApi';
+import { getAIBudget } from '../api/aiApi';
 import { useQuery } from '@tanstack/react-query';
 
 function urlBase64ToUint8Array(base64String) {
@@ -46,14 +47,20 @@ export default function Settings() {
   const [permPOS, setPermPOS] = useState(true);
   const [permViewReports, setPermViewReports] = useState(false);
 
-  // WhatsApp + Push + API key (kept from original)
+  // WhatsApp + Push
   const [phone1, setPhone1] = useState(() => localStorage.getItem('wa_phone_1') || '');
   const [phone2, setPhone2] = useState(() => localStorage.getItem('wa_phone_2') || '');
   const [reminder, setReminder] = useState(() => localStorage.getItem('reminder_9pm') === 'true');
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('anthropic_api_key') || '');
   const [pushOn, setPushOn] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
   const [pushMsg, setPushMsg] = useState('');
+
+  // AI Budget
+  const { data: aiBudget, isLoading: aiLoading } = useQuery({
+    queryKey: ['ai-budget'],
+    queryFn: getAIBudget,
+    staleTime: 30000,
+  });
 
   useEffect(() => {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
@@ -95,7 +102,6 @@ export default function Settings() {
 
   const saveTenant = () => { setSaved('Changes saved!'); setTimeout(() => setSaved(''), 2000); };
   const savePhones = () => { localStorage.setItem('wa_phone_1', phone1); localStorage.setItem('wa_phone_2', phone2); setSaved('Phones saved!'); setTimeout(() => setSaved(''), 2000); };
-  const saveApiKey2 = () => { localStorage.setItem('anthropic_api_key', apiKey); setSaved('API key saved!'); setTimeout(() => setSaved(''), 2000); };
 
   if (role !== 'owner') {
     return <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}><div style={{ fontSize: 32 }}>{'\u{1F512}'}</div><p>Settings are owner-only.</p></div>;
@@ -149,16 +155,57 @@ export default function Settings() {
           {saved === 'Phones saved!' && <div style={{ fontSize: 11, color: '#1a6b3a', fontWeight: 600, marginTop: 6 }}>{'\u2713'} {saved}</div>}
         </div>
 
-        {/* AI Key */}
+        {/* AI Usage */}
         <div style={card}>
-          <div style={cardTitle}>{'\u{1F916}'} AI Analysis (Anthropic)</div>
-          <div style={{ background: '#fef9c3', border: '1px solid #f59e0b', borderRadius: 8, padding: '8px 12px', marginBottom: 10, fontSize: 9, color: '#92400e', lineHeight: 1.5 }}>
-            Your API key is stored locally only. Never share it.
-          </div>
-          <label style={fl}>API Key</label>
-          <input style={fi} type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="sk-ant-..." />
-          <button style={btnP} onClick={saveApiKey2}>Save API Key</button>
-          {saved === 'API key saved!' && <div style={{ fontSize: 11, color: '#1a6b3a', fontWeight: 600, marginTop: 6 }}>{'\u2713'} {saved}</div>}
+          <div style={cardTitle}>{'\u{1F916}'} Pewil AI Usage</div>
+          {aiLoading ? (
+            <div style={{ fontSize: 11, color: '#6b7280' }}>Loading usage...</div>
+          ) : aiBudget ? (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                <span style={{ fontSize: 11, color: '#6b7280' }}>Plan</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#1a6b3a', textTransform: 'capitalize' }}>{aiBudget.plan}</span>
+              </div>
+              {/* Credits bar */}
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginBottom: 3 }}>
+                  <span>{aiBudget.credits_used} / {aiBudget.credits_total} credits used</span>
+                  <span>{aiBudget.credits_remaining} left</span>
+                </div>
+                <div style={{ height: 8, background: '#e5e7eb', borderRadius: 99, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', borderRadius: 99, transition: 'width 0.3s',
+                    width: `${Math.min(aiBudget.usage_percent, 100)}%`,
+                    background: aiBudget.usage_percent > 80 ? '#c0392b' : aiBudget.usage_percent > 50 ? '#c97d1a' : '#1a6b3a',
+                  }} />
+                </div>
+              </div>
+              {/* Cost */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginBottom: 10 }}>
+                <span>API cost this month</span>
+                <span style={{ fontWeight: 600, color: '#111827' }}>${parseFloat(aiBudget.cost_usd || 0).toFixed(4)}</span>
+              </div>
+              {/* Resets info */}
+              <div style={{ fontSize: 9, color: '#6b7280', marginBottom: 10 }}>Credits reset on the 1st of each month.</div>
+              {/* Usage breakdown */}
+              {aiBudget.usage_by_feature?.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Usage Breakdown</div>
+                  {aiBudget.usage_by_feature.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid #f3f4f6' }}>
+                      <span style={{ fontSize: 10, color: '#374151' }}>{f.description}</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#111827' }}>{f.count}x</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {aiBudget.usage_by_feature?.length === 0 && (
+                <div style={{ fontSize: 10, color: '#9ca3af', fontStyle: 'italic' }}>No AI analyses used yet this month.</div>
+              )}
+            </>
+          ) : (
+            <div style={{ fontSize: 10, color: '#9ca3af' }}>AI usage data unavailable.</div>
+          )}
         </div>
       </div>
 
