@@ -12,7 +12,7 @@ import { initials, avatarColor } from '../utils/format';
   - Hick's Law: Sections reduce cognitive load vs flat 20-item grid
   - Von Restorff Effect: Active item has green border + bg to stand out
 */
-const DRAWER_SECTIONS = [
+const FARM_DRAWER_SECTIONS = [
   { label: 'Farm Operations', items: [
     { key: 'Costs', emoji: '\u{1F9FE}', label: 'Costs', sub: 'Farm expenses' },
     { key: 'Farm Assets', emoji: '\u{1F3D7}\uFE0F', label: 'Assets', sub: 'Equipment' },
@@ -45,7 +45,26 @@ const DRAWER_SECTIONS = [
   ]},
 ];
 
-const BOTTOM_PRIMARY = ['Dashboard', 'Fields', 'Sales & Market', 'Stock'];
+const RETAIL_DRAWER_SECTIONS = [
+  { label: 'Retail', items: [
+    { key: 'POS', emoji: '\u{1F6D2}', label: 'POS', sub: 'Process sales' },
+    { key: 'Products', emoji: '\u{1F3F7}\uFE0F', label: 'Products', sub: 'Catalog' },
+    { key: 'Sales History', emoji: '\u{1F4CB}', label: 'Sales', sub: 'Transactions' },
+    { key: 'Cashier Sessions', emoji: '\u{1F4B5}', label: 'Sessions', sub: 'Registers' },
+  ]},
+  { label: 'Accounting', items: [
+    { key: 'Journal Entries', emoji: '\u{1F4D2}', label: 'Journal', sub: 'Double-entry' },
+    { key: 'Retail Report', emoji: '\u{1F4CA}', label: 'Reports', sub: 'P&L + analytics', ownerOnly: true },
+    { key: 'Retail Payroll', emoji: '\u{1F4B0}', label: 'Payroll', sub: 'PAYE + NSSA' },
+  ]},
+  { label: 'System', items: [
+    { key: 'Retail Billing', emoji: '\u{1F4B3}', label: 'Billing', sub: 'Subscription' },
+    { key: 'Retail Settings', emoji: '\u2699\uFE0F', label: 'Settings', sub: 'Configuration' },
+  ]},
+];
+
+const FARM_BOTTOM_PRIMARY = ['Dashboard', 'Fields', 'Sales & Market', 'Stock'];
+const RETAIL_BOTTOM_PRIMARY = ['Retail', 'POS', 'Products', 'Cashier Sessions'];
 
 export default function Layout({
   activeTab, onTabChange, user, onLogout,
@@ -56,6 +75,8 @@ export default function Layout({
   const [showMobileMore, setShowMobileMore] = useState(false);
   const role = user?.role || 'worker';
   const ac = avatarColor(user?.username || '');
+  const BOTTOM_PRIMARY = activeModule === 'retail' ? RETAIL_BOTTOM_PRIMARY : FARM_BOTTOM_PRIMARY;
+  const DRAWER_SECTIONS = activeModule === 'retail' ? RETAIL_DRAWER_SECTIONS : FARM_DRAWER_SECTIONS;
   const isMore = !BOTTOM_PRIMARY.includes(activeTab);
   const goTab = (tab) => {
     onTabChange(tab);
@@ -109,23 +130,46 @@ export default function Layout({
 
       {/* Bottom nav — Hick's Law: only 5 primary choices */}
       <div className="bottom-nav">
-        <button className={`bn-tab${activeTab === 'Dashboard' ? ' active' : ''}`} onClick={() => goTab('Dashboard')}>
-          <span className="bn-icon">{'\u{1F3E0}'}</span>
-          <span className="bn-label">Home</span>
-        </button>
-        <button className={`bn-tab${activeTab === 'Fields' ? ' active' : ''}`} onClick={() => goTab('Fields')}>
-          <span className="bn-icon">{'\u{1F33E}'}</span>
-          <span className="bn-label">Fields</span>
-        </button>
-        <button className={`bn-tab${activeTab === 'Sales & Market' ? ' active' : ''}`} onClick={() => goTab('Sales & Market')}>
-          <span className="bn-icon">{'\u{1F69A}'}</span>
-          <span className="bn-label">Sales</span>
-        </button>
-        <button className={`bn-tab${activeTab === 'Stock' ? ' active' : ''}`} onClick={() => goTab('Stock')}>
-          <span className="bn-icon">{'\u{1F4E6}'}</span>
-          <span className="bn-label">Stock</span>
-          {lowStockCount > 0 && <span className="bn-badge">{lowStockCount}</span>}
-        </button>
+        {activeModule === 'farm' ? (
+          <>
+            <button className={`bn-tab${activeTab === 'Dashboard' ? ' active' : ''}`} onClick={() => goTab('Dashboard')}>
+              <span className="bn-icon">{'\u{1F3E0}'}</span>
+              <span className="bn-label">Home</span>
+            </button>
+            <button className={`bn-tab${activeTab === 'Fields' ? ' active' : ''}`} onClick={() => goTab('Fields')}>
+              <span className="bn-icon">{'\u{1F33E}'}</span>
+              <span className="bn-label">Fields</span>
+            </button>
+            <button className={`bn-tab${activeTab === 'Sales & Market' ? ' active' : ''}`} onClick={() => goTab('Sales & Market')}>
+              <span className="bn-icon">{'\u{1F69A}'}</span>
+              <span className="bn-label">Sales</span>
+            </button>
+            <button className={`bn-tab${activeTab === 'Stock' ? ' active' : ''}`} onClick={() => goTab('Stock')}>
+              <span className="bn-icon">{'\u{1F4E6}'}</span>
+              <span className="bn-label">Stock</span>
+              {lowStockCount > 0 && <span className="bn-badge">{lowStockCount}</span>}
+            </button>
+          </>
+        ) : (
+          <>
+            <button className={`bn-tab${activeTab === 'Retail' ? ' active' : ''}`} onClick={() => goTab('Retail')}>
+              <span className="bn-icon">{'\u{1F4CA}'}</span>
+              <span className="bn-label">Home</span>
+            </button>
+            <button className={`bn-tab${activeTab === 'POS' ? ' active' : ''}`} onClick={() => goTab('POS')}>
+              <span className="bn-icon">{'\u{1F6D2}'}</span>
+              <span className="bn-label">POS</span>
+            </button>
+            <button className={`bn-tab${activeTab === 'Products' ? ' active' : ''}`} onClick={() => goTab('Products')}>
+              <span className="bn-icon">{'\u{1F3F7}\uFE0F'}</span>
+              <span className="bn-label">Products</span>
+            </button>
+            <button className={`bn-tab${activeTab === 'Cashier Sessions' ? ' active' : ''}`} onClick={() => goTab('Cashier Sessions')}>
+              <span className="bn-icon">{'\u{1F4B5}'}</span>
+              <span className="bn-label">Sessions</span>
+            </button>
+          </>
+        )}
         <button className={`bn-tab${isMore ? ' active' : ''}`} onClick={() => setShowMobileMore(true)}>
           <span className="bn-icon">{'\u22EF'}</span>
           <span className="bn-label">More</span>

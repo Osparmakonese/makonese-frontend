@@ -43,6 +43,10 @@ import CashierSessions from './pages/CashierSessions';
 import StockAdjustments from './pages/StockAdjustments';
 import Categories from './pages/Categories';
 import RetailReport from './pages/RetailReport';
+import JournalEntries from './pages/JournalEntries';
+import RetailPayroll from './pages/RetailPayroll';
+import RetailBilling from './pages/RetailBilling';
+import RetailSettings from './pages/RetailSettings';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 /* --- */
@@ -80,6 +84,10 @@ const PAGES = {
   'Stock Adjustments': StockAdjustments,
   'Categories': Categories,
   'Retail Report': RetailReport,
+  'Journal Entries': JournalEntries,
+  'Retail Payroll': RetailPayroll,
+  'Retail Billing': RetailBilling,
+  'Retail Settings': RetailSettings,
   // Billing & Account
   'Billing': Billing,
   'Team': TeamManagement,
@@ -120,6 +128,10 @@ const PAGE_META = {
   'Stock Adjustments': { title: 'Stock Adjustments', sub: 'Log damaged, stolen, or restocked items' },
   'Categories': { title: 'Categories', sub: 'Organize products into categories' },
   'Retail Report': { title: 'Retail Report', sub: 'Store P&L, inventory and performance' },
+  'Journal Entries': { title: 'Journal Entries', sub: 'Double-entry accounting ledger' },
+  'Retail Payroll': { title: 'Payroll', sub: 'PAYE + NSSA — Zimbabwe payroll' },
+  'Retail Billing': { title: 'Billing & Subscription', sub: 'Manage your Pewil plan and payments' },
+  'Retail Settings': { title: 'Settings', sub: 'Tenant configuration and permissions' },
   // Billing
   'Billing': { title: 'Billing', sub: 'Pewil subscription, invoices, and usage' },
   'Team': { title: 'Team & Users', sub: 'Manage team members and permissions' },
@@ -156,6 +168,10 @@ const PRIMARY_ACTIONS = {
   'Stock Adjustments': '+ Log Adjustment',
   'Categories': '+ Add Category',
   'Retail Report': null,
+  'Journal Entries': '+ New Entry',
+  'Retail Payroll': '+ New Run',
+  'Retail Billing': null,
+  'Retail Settings': 'Save Changes',
   'Billing': 'Change Plan',
   'Team': '+ Invite User',
 };

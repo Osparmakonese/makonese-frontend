@@ -125,15 +125,25 @@ const NAV_ITEMS = [
     { key: 'Workers', emoji: '\u{1F477}', label: 'Workers' },
     { key: 'Hours & Pay', emoji: '\u23F1', label: 'Hours & Pay' },
   ]},
-  { section: 'RETAIL', collapsible: true, items: [
-    { key: 'Retail', emoji: '\u{1F6D2}', label: 'Retail Dashboard' },
-    { key: 'POS', emoji: '\u{1F4B3}', label: 'Point of Sale' },
-    { key: 'Products', emoji: '\u{1F3F7}', label: 'Products' },
+  { section: 'MAIN', module: 'retail', collapsible: false, items: [
+    { key: 'Retail', emoji: '\u{1F4CA}', label: 'Dashboard' },
+  ]},
+  { section: 'RETAIL', module: 'retail', collapsible: false, items: [
+    { key: 'POS', emoji: '\u{1F6D2}', label: 'Point of Sale' },
+    { key: 'Products', emoji: '\u{1F3F7}\uFE0F', label: 'Products' },
     { key: 'Sales History', emoji: '\u{1F4CB}', label: 'Sales History' },
     { key: 'Cashier Sessions', emoji: '\u{1F4B5}', label: 'Cashier Sessions' },
     { key: 'Stock Adjustments', emoji: '\u{1F504}', label: 'Stock Adjustments' },
     { key: 'Categories', emoji: '\u{1F5C2}', label: 'Categories' },
-    { key: 'Retail Report', emoji: '\u{1F4CA}', label: 'Report', ownerOnly: true },
+  ]},
+  { section: 'ACCOUNTING', module: 'retail', collapsible: false, items: [
+    { key: 'Journal Entries', emoji: '\u{1F4D2}', label: 'Journal Entries' },
+    { key: 'Retail Report', emoji: '\u{1F4CA}', label: 'Reports', ownerOnly: true },
+    { key: 'Retail Payroll', emoji: '\u{1F4B0}', label: 'Payroll' },
+  ]},
+  { section: 'SYSTEM', module: 'retail', collapsible: false, items: [
+    { key: 'Retail Billing', emoji: '\u{1F4B3}', label: 'Billing' },
+    { key: 'Retail Settings', emoji: '\u2699\uFE0F', label: 'Settings' },
   ]},
   { section: 'OWNER ONLY', ownerOnly: true, collapsible: false, items: [
     { key: 'Report', emoji: '\u{1F4C8}', label: 'Report' },
@@ -160,16 +170,14 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
   const hasFarm = modules.includes('farm');
   const hasRetail = modules.includes('retail');
 
-  // Module-based section filtering:
-  // When activeModule is 'farm' → show MAIN, LIVESTOCK, ECONOMICS, PEOPLE
-  // When activeModule is 'retail' → show RETAIL (non-collapsible)
-  // OWNER ONLY → always shown for owners in both modes
-  const FARM_SECTIONS = ['MAIN', 'LIVESTOCK', 'ECONOMICS', 'PEOPLE'];
-  const RETAIL_SECTIONS = ['RETAIL'];
-  const shouldShowSection = (sectionName) => {
-    if (FARM_SECTIONS.includes(sectionName)) return activeModule === 'farm' && hasFarm;
-    if (RETAIL_SECTIONS.includes(sectionName)) return activeModule === 'retail' && hasRetail;
-    return true; // OWNER ONLY always shows
+  // Module-based section filtering using the `module` property on each section
+  // Sections with module: 'retail' show only in retail mode
+  // Sections without a module property are farm sections (except OWNER ONLY)
+  const shouldShowSection = (section) => {
+    if (section.module === 'retail') return activeModule === 'retail' && hasRetail;
+    if (section.section === 'OWNER ONLY') return true;
+    // Farm sections: MAIN, LIVESTOCK, ECONOMICS, PEOPLE
+    return activeModule === 'farm' && hasFarm;
   };
 
   // Display name for the switcher
@@ -249,9 +257,9 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
       <nav style={S.nav}>
         {NAV_ITEMS.map((section, idx) => {
           if (section.ownerOnly && role !== 'owner') return null;
-          if (!shouldShowSection(section.section)) return null;
-          // When retail is the active module, show RETAIL items flat (non-collapsible)
-          const isCollapsible = section.collapsible && !(activeModule === 'retail' && section.section === 'RETAIL');
+          if (!shouldShowSection(section)) return null;
+          // Retail sections are always flat (non-collapsible)
+          const isCollapsible = section.collapsible && !section.module;
           const isExpanded = isCollapsible ? !!expanded[section.section] : true;
           const hasActive = sectionHasActive(section);
 
