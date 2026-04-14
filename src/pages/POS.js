@@ -5,6 +5,7 @@ import {
   barcodeLookup,
   getCashierSessions,
   getPOSSettings,
+  updatePOSSettings,
 } from '../api/retailApi';
 import { fmt } from '../utils/format';
 import { confirm } from '../utils/confirm';
@@ -22,6 +23,7 @@ import { requireAgeVerification } from '../utils/ageVerify';
 import QuickTilesPanel from '../components/QuickTilesPanel';
 import ScannerLanePOS from '../components/ScannerLanePOS';
 import DarkSupermarketPOS from '../components/DarkSupermarketPOS';
+import POSImmersiveControls from '../components/POSImmersiveControls';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 
@@ -1199,16 +1201,33 @@ export default function POS() {
                 : '#f9fafb';
   const themeCls = `pos-theme-${settings.theme}`;
 
-  // Immersive themes (pnp + dark) ALWAYS hide Pewil chrome. This lets the
-  // lane layouts reach edge-to-edge the way they do in our v2/v3 mockups.
+  // Immersive themes (pnp + dark) DEFAULT to focus mode on, so the cashier
+  // sees an edge-to-edge lane layout — but the user can toggle chrome back
+  // via the floating POSImmersiveControls cluster in the top-right.
   const immersive = settings.theme === 'pnp' || settings.theme === 'dark';
+  const [hasAutoFocused, setHasAutoFocused] = useState(false);
+
+  // "Exit theme" handler — reverts the tenant POS theme back to default light
+  // view and also drops out of focus mode so the Pewil chrome re-appears.
+  const exitImmersiveTheme = async () => {
+    try {
+      // Optimistic update so the UI switches instantly.
+      qc.setQueryData(['pos-settings'], (old) => ({ ...(old || {}), theme: 'light' }));
+      setFocusMode(false);
+      await updatePOSSettings({ ...settings, theme: 'light' });
+      qc.invalidateQueries({ queryKey: ['pos-settings'] });
+    } catch (e) {
+      console.error('Failed to exit theme', e);
+    }
+  };
   useEffect(() => {
-    if (immersive) document.body.classList.add('pewil-pos-focus');
-    return () => {
-      // Only clean up if user hasn't manually toggled focus mode.
-      if (immersive && !focusMode) document.body.classList.remove('pewil-pos-focus');
-    };
-  }, [immersive, focusMode]);
+    if (immersive && !hasAutoFocused) {
+      setFocusMode(true);
+      setHasAutoFocused(true);
+    }
+    if (!immersive) setHasAutoFocused(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [immersive]);
 
   // ──────────────────────────────────────────────────────────────────
   // Pick n Pay / SAP CAR scanner-lane render branch.
@@ -1264,6 +1283,13 @@ export default function POS() {
             brandName={user?.tenant_name || 'Makonese Retail'}
           />
         </div>
+
+        <POSImmersiveControls
+          variant="light"
+          focusMode={focusMode}
+          setFocusMode={setFocusMode}
+          onExitTheme={exitImmersiveTheme}
+        />
 
         {/* Receipt Modal — shared across all themes */}
         <ReceiptModal
@@ -1337,6 +1363,13 @@ export default function POS() {
             lastReceiptId={lastReceiptId}
           />
         </div>
+
+        <POSImmersiveControls
+          variant="dark"
+          focusMode={focusMode}
+          setFocusMode={setFocusMode}
+          onExitTheme={exitImmersiveTheme}
+        />
 
         <ReceiptModal
           isOpen={showReceipt}
