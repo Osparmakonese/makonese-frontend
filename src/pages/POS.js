@@ -5,7 +5,6 @@ import {
   barcodeLookup,
   getCashierSessions,
   getPOSSettings,
-  updatePOSSettings,
 } from '../api/retailApi';
 import { fmt } from '../utils/format';
 import { confirm } from '../utils/confirm';
@@ -1207,19 +1206,6 @@ export default function POS() {
   const immersive = settings.theme === 'pnp' || settings.theme === 'dark';
   const [hasAutoFocused, setHasAutoFocused] = useState(false);
 
-  // "Exit theme" handler — reverts the tenant POS theme back to default light
-  // view and also drops out of focus mode so the Pewil chrome re-appears.
-  const exitImmersiveTheme = async () => {
-    try {
-      // Optimistic update so the UI switches instantly.
-      qc.setQueryData(['pos-settings'], (old) => ({ ...(old || {}), theme: 'light' }));
-      setFocusMode(false);
-      await updatePOSSettings({ ...settings, theme: 'light' });
-      qc.invalidateQueries({ queryKey: ['pos-settings'] });
-    } catch (e) {
-      console.error('Failed to exit theme', e);
-    }
-  };
   useEffect(() => {
     if (immersive && !hasAutoFocused) {
       setFocusMode(true);
@@ -1288,7 +1274,6 @@ export default function POS() {
           variant="light"
           focusMode={focusMode}
           setFocusMode={setFocusMode}
-          onExitTheme={exitImmersiveTheme}
         />
 
         {/* Receipt Modal — shared across all themes */}
@@ -1368,7 +1353,6 @@ export default function POS() {
           variant="dark"
           focusMode={focusMode}
           setFocusMode={setFocusMode}
-          onExitTheme={exitImmersiveTheme}
         />
 
         <ReceiptModal
