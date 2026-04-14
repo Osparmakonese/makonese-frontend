@@ -170,6 +170,11 @@ const NAV_ITEMS = [
     { key: 'Billing', emoji: '\u{1F4B3}', label: 'Billing' },
     { key: 'Settings', emoji: '\u2699\uFE0F', label: 'Settings' },
     { key: 'Import', emoji: '\u{1F4E5}', label: 'Import' },
+  ]},
+  // Admin Panel is cross-module. It manages users, permissions, audit trail,
+  // and password policy — all tenant-level concerns. Available to owners in
+  // either the farm or retail module so retail-only tenants still get it.
+  { section: 'ADMINISTRATION', module: 'any', ownerOnly: true, collapsible: false, items: [
     { key: 'Admin Panel', emoji: '\u{1F510}', label: 'Admin Panel' },
   ]},
 ];
@@ -194,6 +199,10 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
   const shouldShowSection = (section) => {
     if (section.module === 'retail') return activeModule === 'retail' && hasRetail;
     if (section.module === 'farm') return activeModule === 'farm' && hasFarm;
+    // `module: 'any'` — show in whichever module is currently active as long
+    // as the tenant has at least one module. Used for cross-cutting surfaces
+    // like the tenant Admin Panel.
+    if (section.module === 'any') return hasFarm || hasRetail;
     // Sections without a module tag default to farm
     return activeModule === 'farm' && hasFarm;
   };
