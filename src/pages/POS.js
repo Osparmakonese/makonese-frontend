@@ -16,6 +16,9 @@ import {
   submitSaleOnline, installOfflineSync, getPendingCount,
   onPendingChange, isOffline as posIsOffline,
 } from '../utils/offlinePOS';
+import { promptWeight } from '../utils/weightPrompt';
+import { requireAgeVerification } from '../utils/ageVerify';
+import QuickTilesPanel from '../components/QuickTilesPanel';
 import api from '../api/axios';
 
 /* ─── Receipt Modal ─── */
@@ -770,8 +773,24 @@ export default function POS() {
     return match && p.quantity_in_stock > 0;
   });
 
-  const addToCart = (product) => {
+  // Low-level: add a single product line with a known quantity. Used after
+  // the weight modal resolves, or for ordinary piece-based items.
+  const addLineToCart = (product, quantity) => {
     setCart((prev) => {
+      // For weighable items every capture is a new line — cashier might weigh
+      // two bunches of bananas separately and should see both.
+      if (product.is_weighable) {
+        return [
+          ...prev,
+          {
+            product_id: product.id,
+            name: product.name,
+            unit_price: product.selling_price,
+            quantity,
+            product,
+          },
+        ];
+      }
       const existing = prev.find((item) => item.product_id === product.id);
       if (existing) {
         return prev.map((item) =>
@@ -779,7 +798,7 @@ export default function POS() {
             ? {
               ...item,
               quantity: Math.min(
-                item.quantity + 1,
+                item.quantity + quantity,
                 product.quantity_in_stock
               ),
             }
@@ -792,11 +811,27 @@ export default function POS() {
           product_id: product.id,
           name: product.name,
           unit_price: product.selling_price,
-          quantity: 1,
+          quantity,
           product,
         },
       ];
     });
+  };
+
+  // Public entry point. Handles weighable items by popping the weight modal
+  // first. Age-verification is deferred to checkout so the cashier isn't
+  // prompted per bottle — one prompt per sale, with all age-gated items.
+  const addToCart = async (product) => {
+    if (product.is_weighable) {
+      try {
+        const { weight } = await promptWeight({ product });
+        addLineToCart(product, weight);
+      } catch (_) {
+        // cashier cancelled weighing — nothing added, nothing to clean up.
+      }
+      return;
+    }
+    addLineToCart(product, 1);
   };
 
   const updateCartQty = (productId, qty) => {
@@ -976,7 +1011,7 @@ export default function POS() {
     }
   };
 
-  const handleCompleteSale = () => {
+  const handleCompleteSale = async () => {
     if (!isLockOwner) {
       alert('This tab is read-only — POS is already active in another tab. Complete the sale there, or close the other tab and retry.');
       return;
@@ -990,6 +1025,29 @@ export default function POS() {
     if (cart.length === 0) {
       alert('Cart is empty');
       return;
+    }
+
+    // Batch 3: age gate. Scan the cart once; if any line item has an
+    // age-restricted product, run the verification modal. One prompt covers
+    // the whole sale so cashiers don't get nagged per bottle.
+    const ageRestrictedProducts = cart
+      .map((item) => item.product)
+      .filter((p) => p && p.is_age_restricted);
+
+    let ageVerification = null;
+    if (ageRestrictedProducts.length > 0) {
+      try {
+        // We don't have the authenticated user's username on hand, so the
+        // backend will fall back to request.user.username via AuditMixin;
+        // we pass a hint in `age_verified_by` for the receipt/audit row.
+        ageVerification = await requireAgeVerification({
+          products: ageRestrictedProducts,
+          cashierUsername: '', // filled server-side
+        });
+      } catch (_) {
+        // Cashier cancelled / manager declined → abort the sale.
+        return;
+      }
     }
 
     const saleData = {
@@ -1012,6 +1070,15 @@ export default function POS() {
       amount_tendered: parseFloat(amountTendered) || grandTotal,
       change_given: Math.max(0, (parseFloat(amountTendered) || grandTotal) - grandTotal),
     };
+
+    if (ageVerification && !ageVerification.skipped) {
+      saleData.age_verified_by = ageVerification.verifiedBy || null;
+      saleData.age_verified_method = ageVerification.method || null;
+      // If manager approval was required, the approve endpoint already
+      // recorded a signed audit row server-side. The token itself doesn't
+      // need to be persisted on the sale — age_verified_method='manager'
+      // plus the approval row is enough for audit.
+    }
 
     createSaleMut.mutate(saleData);
   };
@@ -1254,6 +1321,9 @@ export default function POS() {
             </div>
           )}
         </div>
+
+        {/* Batch 3: Quick tiles for produce / unbarcoded items. */}
+        <QuickTilesPanel products={products} onSelect={addToCart} />
 
         {/* Product Grid */}
         <div style={S.productGrid}>
