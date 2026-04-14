@@ -200,6 +200,7 @@ export default function Suppliers({ onTabChange }) {
   const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [poModalOpen, setPoModalOpen] = useState(false);
+  const [deletingSupplier, setDeletingSupplier] = useState(null);
 
   const isOwnerOrManager = user?.role === 'owner' || user?.role === 'manager';
 
@@ -278,8 +279,13 @@ export default function Suppliers({ onTabChange }) {
   };
 
   const handleDeleteSupplier = (s) => {
-    if (window.confirm(`Delete supplier "${s.name}"? This cannot be undone.`)) {
-      deleteSupplierMutation.mutate(s.id);
+    setDeletingSupplier(s);
+  };
+  const confirmDeleteSupplier = () => {
+    if (deletingSupplier) {
+      deleteSupplierMutation.mutate(deletingSupplier.id, {
+        onSettled: () => setDeletingSupplier(null),
+      });
     }
   };
 
@@ -300,6 +306,24 @@ export default function Suppliers({ onTabChange }) {
         products={products}
         submitting={createPOMutation.isPending}
       />
+
+      {/* Delete confirmation modal */}
+      {deletingSupplier && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: '#fff', padding: 24, borderRadius: 8, maxWidth: 400, width: '90%' }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: 18, fontWeight: 700 }}>Delete Supplier</h3>
+            <p style={{ margin: '0 0 20px 0', color: '#4b5563' }}>
+              Delete supplier <strong>"{deletingSupplier.name}"</strong>? This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setDeletingSupplier(null)} style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #d1d5db', backgroundColor: '#fff', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={confirmDeleteSupplier} disabled={deleteSupplierMutation.isPending} style={{ padding: '8px 16px', borderRadius: 6, border: 'none', backgroundColor: '#dc2626', color: '#fff', cursor: 'pointer', fontWeight: 600 }}>
+                {deleteSupplierMutation.isPending ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
