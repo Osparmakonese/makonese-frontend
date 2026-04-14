@@ -24,7 +24,7 @@ function AddProductModal({ isOpen, onClose, onSubmit, categories, loading, initi
     selling_price: '',
     quantity_in_stock: '',
     reorder_level: '',
-    unit: 'Piece',
+    unit: 'piece',
     expiry_date: '',
     description: '',
   });
@@ -39,7 +39,7 @@ function AddProductModal({ isOpen, onClose, onSubmit, categories, loading, initi
         selling_price: initialData.selling_price || '',
         quantity_in_stock: initialData.quantity_in_stock || '',
         reorder_level: initialData.reorder_level || '',
-        unit: initialData.unit || 'Piece',
+        unit: initialData.unit || 'piece',
         expiry_date: initialData.expiry_date || '',
         description: initialData.description || '',
       });
@@ -52,7 +52,7 @@ function AddProductModal({ isOpen, onClose, onSubmit, categories, loading, initi
         selling_price: '',
         quantity_in_stock: '',
         reorder_level: '',
-        unit: 'Piece',
+        unit: 'piece',
         expiry_date: '',
         description: '',
       });
@@ -326,11 +326,11 @@ function AddProductModal({ isOpen, onClose, onSubmit, categories, loading, initi
                   boxSizing: 'border-box',
                 }}
               >
-                <option value="Piece">Piece</option>
-                <option value="Kg">Kg</option>
-                <option value="Liter">Liter</option>
-                <option value="Meter">Meter</option>
-                <option value="Box">Box</option>
+                <option value="piece">Piece</option>
+                <option value="kg">Kg</option>
+                <option value="litre">Litre</option>
+                <option value="box">Box</option>
+                <option value="pack">Pack</option>
               </select>
             </div>
             <div>
