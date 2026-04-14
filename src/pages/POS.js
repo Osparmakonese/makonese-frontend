@@ -246,6 +246,7 @@ const S = {
     background: '#f9fafb',
     padding: '12px',
     boxSizing: 'border-box',
+    position: 'relative',
   },
   left: {
     display: 'flex',
@@ -549,6 +550,34 @@ export default function POS() {
   const [amountTendered, setAmountTendered] = useState('');
   const [receipt, setReceipt] = useState(null);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Toggle body class so CSS hides Pewil chrome in focus mode. Auto-clean on unmount.
+  useEffect(() => {
+    if (focusMode) document.body.classList.add('pewil-pos-focus');
+    else document.body.classList.remove('pewil-pos-focus');
+    return () => document.body.classList.remove('pewil-pos-focus');
+  }, [focusMode]);
+
+  // Track native fullscreen state so the button reflects reality if user hits ESC.
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (e) {
+      console.warn('Fullscreen request failed:', e);
+    }
+  };
 
   const { data: products = [] } = useQuery({
     queryKey: ['retail-products-pos'],
@@ -697,7 +726,56 @@ export default function POS() {
   };
 
   return (
-    <div style={S.page}>
+    <div style={{ ...S.page, height: focusMode ? '100vh' : 'calc(100vh - 110px)' }}>
+      {/* POS Control Bar — Focus mode + Fullscreen */}
+      <div
+        style={{
+          position: focusMode ? 'fixed' : 'absolute',
+          top: focusMode ? 8 : 8,
+          right: 8,
+          zIndex: 50,
+          display: 'flex',
+          gap: 6,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setFocusMode((v) => !v)}
+          title={focusMode ? 'Exit focus mode (show app chrome)' : 'Focus mode — hide sidebar and topbar'}
+          style={{
+            padding: '6px 12px',
+            borderRadius: 8,
+            border: '1px solid #d1d5db',
+            background: focusMode ? '#1a6b3a' : '#fff',
+            color: focusMode ? '#fff' : '#111827',
+            fontSize: 11,
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          }}
+        >
+          {focusMode ? '✕ Exit Focus' : '◱ Focus Mode'}
+        </button>
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Go fullscreen'}
+          style={{
+            padding: '6px 12px',
+            borderRadius: 8,
+            border: '1px solid #d1d5db',
+            background: isFullscreen ? '#1a6b3a' : '#fff',
+            color: isFullscreen ? '#fff' : '#111827',
+            fontSize: 11,
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          }}
+        >
+          {isFullscreen ? '⤡ Exit Fullscreen' : '⛶ Fullscreen'}
+        </button>
+      </div>
+
       {/* LEFT PANEL: Products Grid */}
       <div style={S.left}>
         {/* Header with title and search bar */}

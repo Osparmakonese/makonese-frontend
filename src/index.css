@@ -263,3 +263,17 @@ input, select, textarea, button {
   .field-cards-mobile { display: none !important; }
   .trips-list-mobile { display: none !important; }
 }
+
+/* POS Focus Mode — hide Pewil chrome so cashiers see only POS */
+body.pewil-pos-focus .sidebar-desktop,
+body.pewil-pos-focus .topbar-desktop,
+body.pewil-pos-focus .bottom-nav,
+body.pewil-pos-focus .mobile-header {
+  display: none !important;
+}
+body.pewil-pos-focus .main-content {
+  margin-left: 0 !important;
+}
+body.pewil-pos-focus main.page-content-mobile {
+  padding: 0 !important;
+}
