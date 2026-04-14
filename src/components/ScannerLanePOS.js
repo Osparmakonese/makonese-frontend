@@ -1,17 +1,14 @@
 /**
  * ScannerLanePOS.js — Pick n Pay / SAP CAR scanner-lane render for POS.
  *
- * This is the visual layout the owner approved in v3 mockup:
+ * Full-viewport, premium UI fidelity to the v3 HTML mockup:
  *   - Red Pick n Pay header (MAKONESE RETAIL · lane info)
- *   - Center: scrolling receipt-style line list (monospace, ALL-CAPS descriptions,
- *     columns: SKU / Description / Qty / Unit / Line total)
- *   - Scan bar at bottom (blue border) + online status pill
+ *   - Receipt-style line list (monospace, ALL-CAPS descriptions)
+ *   - Scan bar (blue border) + online status pill
  *   - Black totals panel with big yellow TOTAL DUE
- *   - Right rail: DynaKey function strip (Line actions, Sale, Payment, Keypad)
- *     plus a big green FINALISE SALE button at the bottom
+ *   - Right rail: DynaKey function strip (300px) with big green FINALISE SALE
  *
- * All cart state & handlers are passed in as props so this view shares the same
- * business logic as the default layout.
+ * Designed to fill the entire viewport when the POS theme is "pnp".
  */
 import React from 'react';
 import { fmt } from '../utils/format';
@@ -21,28 +18,33 @@ const K = (label, sub, variant, onClick) => (
     type="button"
     onClick={onClick}
     style={{
-      padding: variant === 'big' ? '20px 10px' : '12px 10px',
+      padding: variant === 'big' ? '22px 12px' : '14px 10px',
       border: '1px solid ' +
         (variant === 'blue' ? '#1a56db'
         : variant === 'red' ? '#b91c1c'
         : variant === 'green' ? '#15803d'
         : '#cbd5e1'),
-      borderRadius: 6,
+      borderRadius: 8,
       background:
         variant === 'blue' ? '#1a56db'
         : variant === 'red' ? '#e31e24'
         : variant === 'green' ? '#16a34a'
         : '#fff',
       color: (variant === 'blue' || variant === 'red' || variant === 'green') ? '#fff' : '#0f172a',
-      fontSize: variant === 'big' ? 16 : 12,
-      fontWeight: 700,
+      fontSize: variant === 'big' ? 18 : 13,
+      fontWeight: 800,
       textAlign: 'center',
       cursor: 'pointer',
-      marginBottom: 6,
-      boxShadow: '0 1px 0 #e2e8f0',
+      marginBottom: 8,
+      boxShadow: '0 2px 4px rgba(15,23,42,0.08)',
       width: '100%',
-      lineHeight: 1.2,
+      lineHeight: 1.25,
+      letterSpacing: '0.03em',
+      transition: 'transform 0.05s ease, box-shadow 0.15s ease',
     }}
+    onMouseDown={(e) => (e.currentTarget.style.transform = 'translateY(1px)')}
+    onMouseUp={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+    onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
   >
     {label}
     {sub && (
@@ -53,7 +55,8 @@ const K = (label, sub, variant, onClick) => (
               : variant === 'green' ? '#bbf7d0'
               : '#64748b',
         fontSize: 10,
-        marginTop: 2,
+        marginTop: 3,
+        letterSpacing: '0.05em',
       }}>
         {sub}
       </div>
@@ -62,24 +65,16 @@ const K = (label, sub, variant, onClick) => (
 );
 
 export default function ScannerLanePOS({
-  // cart + products
   cart, removeFromCart, updateCartQty,
-  // barcode / scan
   barcode, setBarcode, handleBarcodeSubmit, barcodeInputRef,
-  // totals
   subtotal, discountAmount, taxAmount, grandTotal,
-  // actions
   handleCompleteSale, handleSuspendSale,
   priceCheckMode, setPriceCheckMode,
-  // status
   offline, pendingCount,
-  // user / session
   user, laneLabel,
-  // tenant name for header
   brandName,
 }) {
   const itemCount = cart.reduce((n, i) => n + (i.quantity || 0), 0);
-  // VAT 15% shown as information only; your tax logic stays in handleCompleteSale.
   const vatShown = taxAmount || subtotal * 0.15 / 1.15;
 
   const now = new Date();
@@ -96,8 +91,8 @@ export default function ScannerLanePOS({
             <div style={styles.branch}>Retail POS · Scanner Lane</div>
           </div>
           <div style={styles.laneBox}>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>{laneLabel || 'Lane 01'}</div>
-            <div style={{ fontSize: 11, opacity: 0.9 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '0.04em' }}>{laneLabel || 'Lane 01'}</div>
+            <div style={{ fontSize: 12, opacity: 0.92, marginTop: 2 }}>
               {(user?.username || 'Cashier')} · {dateStr} · {timeStr}
             </div>
           </div>
@@ -112,15 +107,15 @@ export default function ScannerLanePOS({
           <span style={{ textAlign: 'right' }}>Line total</span>
         </div>
 
-        {/* Line items — receipt style */}
+        {/* Line items */}
         <div style={styles.lines}>
           {cart.length === 0 ? (
             <div style={styles.emptyHint}>
-              <div style={{ fontSize: 40, opacity: 0.3 }}>⌨</div>
-              <div style={{ marginTop: 8, fontSize: 13, color: '#64748b' }}>
+              <div style={{ fontSize: 64, opacity: 0.25 }}>⌨</div>
+              <div style={{ marginTop: 12, fontSize: 16, color: '#475569', fontWeight: 600 }}>
                 Waiting for first scan…
               </div>
-              <div style={{ marginTop: 4, fontSize: 11, color: '#94a3b8' }}>
+              <div style={{ marginTop: 6, fontSize: 13, color: '#94a3b8' }}>
                 Scan a barcode or tap a DynaKey on the right.
               </div>
             </div>
@@ -155,7 +150,7 @@ export default function ScannerLanePOS({
                     {weighTag ? Number(item.quantity).toFixed(3) : item.quantity}
                   </span>
                   <span style={styles.num}>{fmt(item.unit_price)}</span>
-                  <span style={{ ...styles.num, fontWeight: 700 }}>{fmt(lineTotal)}</span>
+                  <span style={{ ...styles.num, fontWeight: 800, color: '#0f172a' }}>{fmt(lineTotal)}</span>
                 </div>
               );
             })
@@ -183,7 +178,7 @@ export default function ScannerLanePOS({
           </span>
         </div>
 
-        {/* Totals panel — big yellow TOTAL DUE */}
+        {/* Totals panel */}
         <div style={styles.totals}>
           <div style={styles.cell}>
             <div style={styles.cellLbl}>Items</div>
@@ -240,105 +235,106 @@ export default function ScannerLanePOS({
 const styles = {
   shell: {
     display: 'grid',
-    gridTemplateColumns: '1fr 260px',
+    gridTemplateColumns: '1fr 300px',
     height: '100%',
+    width: '100%',
     background: '#fff',
-    border: '1px solid #cbd5e1',
-    borderRadius: 10,
     overflow: 'hidden',
-    margin: 8,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
     fontFamily: "'Segoe UI', Tahoma, sans-serif",
   },
   main: { display: 'flex', flexDirection: 'column', background: '#fff', minWidth: 0 },
   head: {
     background: 'linear-gradient(#e31e24, #b91c1c)',
     color: '#fff',
-    padding: '10px 16px',
+    padding: '16px 28px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottom: '3px solid #1a56db',
+    borderBottom: '4px solid #1a56db',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
   },
-  brand: { fontWeight: 800, fontSize: 16, letterSpacing: '0.04em' },
-  branch: { fontWeight: 400, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#fecaca', marginTop: 2 },
+  brand: { fontWeight: 900, fontSize: 22, letterSpacing: '0.06em' },
+  branch: { fontWeight: 500, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#fecaca', marginTop: 3 },
   laneBox: { fontSize: 12, textAlign: 'right', lineHeight: 1.4 },
   gridHead: {
     display: 'grid',
-    gridTemplateColumns: '70px 1fr 70px 90px 110px',
+    gridTemplateColumns: '90px 1fr 90px 120px 140px',
     background: '#1e293b',
     color: '#fff',
-    fontSize: 11,
-    fontWeight: 700,
-    padding: '6px 12px',
+    fontSize: 12,
+    fontWeight: 800,
+    padding: '10px 24px',
     textTransform: 'uppercase',
-    letterSpacing: '0.04em',
+    letterSpacing: '0.08em',
   },
-  lines: { flex: 1, overflow: 'auto', background: '#fff', padding: '2px 0', minHeight: 0 },
+  lines: { flex: 1, overflow: 'auto', background: '#fff', padding: '4px 0', minHeight: 0 },
   row: {
     display: 'grid',
-    gridTemplateColumns: '70px 1fr 70px 90px 110px',
-    padding: '7px 12px',
+    gridTemplateColumns: '90px 1fr 90px 120px 140px',
+    padding: '12px 24px',
     fontFamily: "'Consolas', 'Courier New', monospace",
-    fontSize: 14,
+    fontSize: 17,
     borderBottom: '1px dotted #e2e8f0',
     color: '#0f172a',
     cursor: 'pointer',
   },
-  sku: { color: '#64748b' },
-  desc: { fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  sku: { color: '#64748b', fontWeight: 600 },
+  desc: { fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   num: { textAlign: 'right' },
   tag: {
-    display: 'inline-block', fontSize: 10, padding: '1px 5px', borderRadius: 3,
-    marginLeft: 8, verticalAlign: 'middle', fontFamily: 'sans-serif', fontWeight: 700,
+    display: 'inline-block', fontSize: 11, padding: '2px 7px', borderRadius: 3,
+    marginLeft: 10, verticalAlign: 'middle', fontFamily: 'sans-serif', fontWeight: 800,
+    letterSpacing: '0.04em',
   },
   tagAge: { background: '#fee2e2', color: '#991b1b' },
   tagW: { background: '#d1fae5', color: '#065f46' },
-  emptyHint: { textAlign: 'center', padding: '40px 20px', color: '#64748b' },
+  emptyHint: { textAlign: 'center', padding: '80px 20px', color: '#64748b' },
   scanBar: {
-    padding: '8px 12px',
+    padding: '14px 24px',
     background: '#e2e8f0',
     borderTop: '1px solid #cbd5e1',
     display: 'flex',
-    gap: 8,
+    gap: 12,
     alignItems: 'center',
   },
-  scanLbl: { fontSize: 11, color: '#64748b', fontWeight: 700, textTransform: 'uppercase' },
+  scanLbl: { fontSize: 12, color: '#475569', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' },
   scanInput: {
     flex: 1,
-    padding: '10px 12px',
+    padding: '14px 16px',
     border: '2px solid #1a56db',
-    borderRadius: 4,
+    borderRadius: 6,
     fontFamily: "'Consolas', monospace",
-    fontSize: 16,
+    fontSize: 20,
     outline: 'none',
     background: '#fff',
     color: '#0f172a',
+    fontWeight: 600,
   },
   statusPill: {
-    fontSize: 11, padding: '4px 8px', borderRadius: 4, background: '#16a34a', color: '#fff', fontWeight: 700,
+    fontSize: 12, padding: '6px 12px', borderRadius: 4, background: '#16a34a', color: '#fff', fontWeight: 800,
+    letterSpacing: '0.04em',
   },
   totals: {
     background: '#0f172a',
     color: '#fff',
-    padding: '14px 18px',
+    padding: '20px 28px',
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr 1.4fr',
-    gap: 16,
-    borderTop: '3px solid #e31e24',
+    gridTemplateColumns: '1fr 1fr 1.6fr',
+    gap: 24,
+    borderTop: '4px solid #e31e24',
   },
   cell: { textAlign: 'right' },
-  cellLbl: { fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 700 },
-  cellVal: { fontSize: 18, fontWeight: 700, fontFamily: "'Consolas', monospace", marginTop: 2 },
+  cellLbl: { fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#94a3b8', fontWeight: 800 },
+  cellVal: { fontSize: 22, fontWeight: 800, fontFamily: "'Consolas', monospace", marginTop: 4 },
   cellTotal: {},
-  cellTotalVal: { fontSize: 34, color: '#facc15', fontWeight: 900, letterSpacing: '0.02em', fontFamily: "'Consolas', monospace", marginTop: 2 },
+  cellTotalVal: { fontSize: 52, color: '#facc15', fontWeight: 900, letterSpacing: '0.02em', fontFamily: "'Consolas', monospace", marginTop: 2, lineHeight: 1 },
   dyn: {
     background: '#f1f5f9',
     borderLeft: '1px solid #cbd5e1',
     display: 'flex',
     flexDirection: 'column',
-    padding: 10,
+    padding: 14,
     overflowY: 'auto',
   },
-  sec: { fontSize: 10, color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '8px 4px 6px' },
+  sec: { fontSize: 10, color: '#64748b', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', padding: '10px 4px 8px' },
 };

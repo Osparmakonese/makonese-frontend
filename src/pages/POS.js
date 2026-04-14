@@ -21,6 +21,7 @@ import { promptWeight } from '../utils/weightPrompt';
 import { requireAgeVerification } from '../utils/ageVerify';
 import QuickTilesPanel from '../components/QuickTilesPanel';
 import ScannerLanePOS from '../components/ScannerLanePOS';
+import DarkSupermarketPOS from '../components/DarkSupermarketPOS';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 
@@ -632,6 +633,9 @@ export default function POS() {
   }, [suspendedSales]);
 
   // Toggle body class so CSS hides Pewil chrome in focus mode. Auto-clean on unmount.
+  // The "pnp" and "dark" themes are full-viewport immersive layouts, so we
+  // force focus mode on whenever either is active — no cashier should see the
+  // Pewil sidebar/topbar while they're ringing up sales at the lane.
   useEffect(() => {
     if (focusMode) document.body.classList.add('pewil-pos-focus');
     else document.body.classList.remove('pewil-pos-focus');
@@ -1195,20 +1199,35 @@ export default function POS() {
                 : '#f9fafb';
   const themeCls = `pos-theme-${settings.theme}`;
 
+  // Immersive themes (pnp + dark) ALWAYS hide Pewil chrome. This lets the
+  // lane layouts reach edge-to-edge the way they do in our v2/v3 mockups.
+  const immersive = settings.theme === 'pnp' || settings.theme === 'dark';
+  useEffect(() => {
+    if (immersive) document.body.classList.add('pewil-pos-focus');
+    return () => {
+      // Only clean up if user hasn't manually toggled focus mode.
+      if (immersive && !focusMode) document.body.classList.remove('pewil-pos-focus');
+    };
+  }, [immersive, focusMode]);
+
   // ──────────────────────────────────────────────────────────────────
   // Pick n Pay / SAP CAR scanner-lane render branch.
   // Selected when the manager picks "Scanner lane" in POS Settings.
   // Reuses the same cart state and handlers as the default view.
   // ──────────────────────────────────────────────────────────────────
   if (settings.theme === 'pnp') {
+    const laneLabel = sessions.find((s) => !s.closed_at)
+      ? `Lane #${sessions.find((s) => !s.closed_at).id}`
+      : 'No session';
     return (
       <div
         className={themeCls}
         data-pos-theme="pnp"
         style={{
-          ...S.page,
+          position: 'fixed',
+          inset: 0,
+          zIndex: 40,
           background: '#f1f5f9',
-          height: focusMode ? '100vh' : 'calc(100vh - 110px)',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -1241,12 +1260,84 @@ export default function POS() {
             offline={offline}
             pendingCount={pendingCount}
             user={user}
-            laneLabel={sessions.find((s) => !s.closed_at) ? `Lane #${sessions.find((s) => !s.closed_at).id}` : 'No session'}
+            laneLabel={laneLabel}
             brandName={user?.tenant_name || 'Makonese Retail'}
           />
         </div>
 
         {/* Receipt Modal — shared across all themes */}
+        <ReceiptModal
+          isOpen={showReceipt}
+          onClose={() => {
+            setShowReceipt(false);
+            barcodeInputRef.current?.focus();
+          }}
+          receipt={receipt}
+        />
+      </div>
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────
+  // Dark Supermarket (Toast × Lightspeed) render branch.
+  // Selected when the manager picks "Dark supermarket" in POS Settings.
+  // ──────────────────────────────────────────────────────────────────
+  if (settings.theme === 'dark') {
+    const laneLabel = sessions.find((s) => !s.closed_at)
+      ? `Lane #${sessions.find((s) => !s.closed_at).id}`
+      : 'No session';
+    return (
+      <div
+        className={themeCls}
+        data-pos-theme="dark"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 40,
+          background: '#0b1020',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {!isLockOwner && activeSessionId && (
+          <div style={{
+            background: '#b91c1c', color: '#fff', padding: '10px 16px', textAlign: 'center',
+            fontSize: 13, fontWeight: 700,
+          }}>
+            🔒 POS is already open in another tab on this register (session #{activeSessionId}).
+          </div>
+        )}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+          <DarkSupermarketPOS
+            products={products}
+            filteredProducts={filteredProducts}
+            addToCart={addToCart}
+            cart={cart}
+            removeFromCart={removeFromCart}
+            updateCartQty={updateCartQty}
+            barcode={barcode}
+            setBarcode={setBarcode}
+            handleBarcodeSubmit={handleBarcodeSubmit}
+            barcodeInputRef={barcodeInputRef}
+            search={search}
+            setSearch={setSearch}
+            subtotal={subtotal}
+            discountAmount={discountAmount}
+            taxAmount={taxAmount}
+            grandTotal={grandTotal}
+            paymentMethod={paymentMethod}
+            setPaymentMethod={setPaymentMethod}
+            handleCompleteSale={handleCompleteSale}
+            handleSuspendSale={handleSuspendSale}
+            offline={offline}
+            pendingCount={pendingCount}
+            user={user}
+            laneLabel={laneLabel}
+            brandName={user?.tenant_name || 'Makonese Retail'}
+            lastReceiptId={lastReceiptId}
+          />
+        </div>
+
         <ReceiptModal
           isOpen={showReceipt}
           onClose={() => {
