@@ -39,7 +39,7 @@ export default function CustomerDisplay() {
         <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '0.03em' }}>{state.storeName}</div>
         {state.member && (
           <div style={{ fontSize: 16, color: '#86efac', fontWeight: 600 }}>
-            👋 {state.member.first_name || state.member.phone || 'Member'} · {state.member.points_balance ?? 0} pts
+            👋 {state.member.name || state.member.phone || 'Member'} · {state.member.points_balance ?? 0} pts
           </div>
         )}
       </div>

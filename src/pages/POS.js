@@ -633,7 +633,7 @@ export default function POS() {
           api.post('/retail/loyalty-transactions/', {
             member: loyaltyMember.id,
             points: pts,
-            transaction_type: 'earned',
+            transaction_type: 'earn',
             notes: `Sale #${data?.id || ''}`,
           }).catch(() => {});
         }
@@ -749,7 +749,7 @@ export default function POS() {
           total: grandTotal, tendered: parseFloat(amountTendered) || 0,
           change: change > 0 ? change : 0,
           member: loyaltyMember ? {
-            first_name: loyaltyMember.first_name, phone: loyaltyMember.phone,
+            name: loyaltyMember.customer_name, phone: loyaltyMember.customer_phone,
             points_balance: loyaltyMember.points_balance,
           } : null,
           message: priceCheckMode ? 'Price check mode' : '',
@@ -805,7 +805,7 @@ export default function POS() {
     const ticket = {
       id: `s-${Date.now()}`,
       label: loyaltyMember
-        ? `${loyaltyMember.first_name || loyaltyMember.phone || 'Member'} · ${cart.length} item${cart.length > 1 ? 's' : ''}`
+        ? `${loyaltyMember.customer_name || loyaltyMember.customer_phone || 'Member'} · ${cart.length} item${cart.length > 1 ? 's' : ''}`
         : `${cart.length} item${cart.length > 1 ? 's' : ''} · ${fmt(grandTotal, 'zwd')}`,
       ts: Date.now(),
       cart, discount, tax, paymentMethod, amountTendered,
@@ -869,7 +869,7 @@ export default function POS() {
     const saleData = {
       session: activeSessions[0].id,
       customer_name: loyaltyMember
-        ? `${loyaltyMember.first_name || ''} ${loyaltyMember.last_name || ''}`.trim() || (loyaltyMember.phone || `Member #${loyaltyMember.id}`)
+        ? (loyaltyMember.customer_name || loyaltyMember.customer_phone || `Member #${loyaltyMember.id}`)
         : undefined,
       items_data: cart.map((item) => ({
         product_id: item.product_id,
@@ -1011,7 +1011,7 @@ export default function POS() {
                    fontSize: 11, fontWeight: 600, cursor: 'pointer', maxWidth: 200, overflow: 'hidden',
                    textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {loyaltyMember
-            ? `👤 ${loyaltyMember.first_name || loyaltyMember.phone || 'Member'} · ${loyaltyMember.points_balance ?? 0} pts`
+            ? `👤 ${loyaltyMember.customer_name || loyaltyMember.customer_phone || 'Member'} · ${loyaltyMember.points_balance ?? 0} pts`
             : '👤 Loyalty'}
         </button>
         <button type="button" onClick={() => setSuspendDrawerOpen(true)}

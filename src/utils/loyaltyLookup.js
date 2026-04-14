@@ -82,11 +82,11 @@ function LoyaltyLookupModal({ onPick, onCancel }) {
                          marginBottom: 6, cursor: 'pointer' }}
               >
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
-                  {m.first_name || m.last_name ? `${m.first_name || ''} ${m.last_name || ''}`.trim() : (m.phone || m.card_number || `Member #${m.id}`)}
+                  {m.customer_name || m.customer_phone || `Member #${m.id}`}
                 </div>
                 <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-                  {m.card_number && <>Card {m.card_number} · </>}
-                  {m.phone && <>{m.phone} · </>}
+                  {m.customer_phone && <>{m.customer_phone} · </>}
+                  {m.tier && <>{m.tier} · </>}
                   <b style={{ color: '#1a6b3a' }}>{m.points_balance ?? 0} pts</b>
                 </div>
               </button>
