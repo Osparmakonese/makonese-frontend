@@ -100,8 +100,28 @@ export default function Settings() {
   useEffect(() => { localStorage.setItem('currency', currency); }, [currency]);
   useEffect(() => { localStorage.setItem('reminder_9pm', String(reminder)); }, [reminder]);
 
-  const saveTenant = () => { setSaved('Changes saved!'); setTimeout(() => setSaved(''), 2000); };
-  const savePhones = () => { localStorage.setItem('wa_phone_1', phone1); localStorage.setItem('wa_phone_2', phone2); setSaved('Phones saved!'); setTimeout(() => setSaved(''), 2000); };
+  const saveTenant = async () => {
+    try {
+      await updateMyTenant({ name: bizName, country, currency, timezone });
+      localStorage.setItem('currency', currency);
+      setSaved('Changes saved!');
+    } catch (e) {
+      setSaved('Error saving: ' + (e?.response?.data?.detail || e.message));
+    }
+    setTimeout(() => setSaved(''), 3000);
+  };
+  const savePhones = async () => {
+    localStorage.setItem('wa_phone_1', phone1);
+    localStorage.setItem('wa_phone_2', phone2);
+    try {
+      await updateMyTenant({ whatsapp_phone_1: phone1, whatsapp_phone_2: phone2 });
+      setSaved('Numbers saved!');
+    } catch (e) {
+      // Fallback: save locally if backend doesn't support these fields yet
+      setSaved('Numbers saved locally!');
+    }
+    setTimeout(() => setSaved(''), 3000);
+  };
 
   if (role !== 'owner') {
     return <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}><div style={{ fontSize: 32 }}>{'\u{1F512}'}</div><p>Settings are owner-only.</p></div>;
@@ -152,7 +172,7 @@ export default function Settings() {
           <label style={fl}>Owner Number 2</label>
           <input style={fi} type="tel" value={phone2} onChange={e => setPhone2(e.target.value)} placeholder="+263..." />
           <button style={btnP} onClick={savePhones}>Save Numbers</button>
-          {saved === 'Phones saved!' && <div style={{ fontSize: 11, color: '#1a6b3a', fontWeight: 600, marginTop: 6 }}>{'\u2713'} {saved}</div>}
+          {(saved === 'Numbers saved!' || saved === 'Numbers saved locally!') && <div style={{ fontSize: 11, color: '#1a6b3a', fontWeight: 600, marginTop: 6 }}>{'\u2713'} {saved}</div>}
         </div>
 
         {/* AI Usage */}

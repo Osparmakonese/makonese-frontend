@@ -32,6 +32,10 @@ function inviteUser(data) {
   return api.post('/core/tenants/invite/', data).then(res => res.data);
 }
 
+function updateUser(id, data) {
+  return api.patch(`/core/tenants/users/${id}/`, data).then(res => res.data);
+}
+
 export default function TeamManagement() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -47,6 +51,9 @@ export default function TeamManagement() {
   const [autoPassword, setAutoPassword] = useState(true);
   const [inviteStatus, setInviteStatus] = useState(null); // null | 'loading' | 'success' | 'error'
   const [inviteMessage, setInviteMessage] = useState('');
+  const [editUser, setEditUser] = useState(null);
+  const [editForm, setEditForm] = useState({ first_name: '', last_name: '', role: 'worker' });
+  const [editStatus, setEditStatus] = useState(null);
 
   const { data: usersData = { count: 0, results: [] }, isLoading } = useQuery({
     queryKey: ['users'],
@@ -79,6 +86,24 @@ export default function TeamManagement() {
       setInviteMessage(msg);
     },
   });
+
+  const updateUserMut = useMutation({
+    mutationFn: ({ id, data }) => updateUser(id, data),
+    onSuccess: () => {
+      setEditStatus('success');
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setTimeout(() => { setEditUser(null); setEditStatus(null); }, 1500);
+    },
+    onError: (err) => {
+      const msg = err?.response?.data?.detail || 'Failed to update user.';
+      setEditStatus('error');
+    },
+  });
+
+  const handleEditSubmit = () => {
+    if (!editUser) return;
+    updateUserMut.mutate({ id: editUser.id, data: { first_name: editForm.first_name, last_name: editForm.last_name, role: editForm.role } });
+  };
 
   const handleInviteSubmit = () => {
     if (!formData.first_name.trim()) {
@@ -272,7 +297,7 @@ export default function TeamManagement() {
                             color: '#374151',
                             cursor: 'pointer',
                             transition: 'all 0.15s',
-                          }} onMouseEnter={e => { e.currentTarget.style.background = '#f9fafb'; e.currentTarget.style.borderColor = '#1a6b3a'; e.currentTarget.style.color = '#1a6b3a'; }} onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.color = '#374151'; }}>
+                          }} onClick={() => { setEditUser(u); setEditForm({ first_name: u.first_name || '', last_name: u.last_name || '', role: u.role || 'worker' }); setEditStatus(null); }} onMouseEnter={e => { e.currentTarget.style.background = '#f9fafb'; e.currentTarget.style.borderColor = '#1a6b3a'; e.currentTarget.style.color = '#1a6b3a'; }} onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.color = '#374151'; }}>
                             Edit
                           </button>
                         )}
@@ -563,6 +588,57 @@ export default function TeamManagement() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT USER MODAL */}
+      {editUser && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
+        }} onClick={() => setEditUser(null)}>
+          <div style={{
+            background: '#fff', borderRadius: 16, padding: 28, width: 420, maxWidth: '90vw',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, margin: 0 }}>
+                Edit User
+              </h3>
+              <button onClick={() => setEditUser(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9ca3af' }}>{'\u2715'}</button>
+            </div>
+            {editStatus === 'success' ? (
+              <div style={{ textAlign: 'center', padding: '20px 0', color: '#1a6b3a', fontWeight: 600 }}>{'\u2705'} User updated!</div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>First Name</label>
+                    <input value={editForm.first_name} onChange={e => setEditForm({ ...editForm, first_name: e.target.value })} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Last Name</label>
+                    <input value={editForm.last_name} onChange={e => setEditForm({ ...editForm, last_name: e.target.value })} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Role</label>
+                  <select value={editForm.role} onChange={e => setEditForm({ ...editForm, role: e.target.value })} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 14, background: '#fff', boxSizing: 'border-box' }}>
+                    <option value="manager">Manager</option>
+                    <option value="worker">Worker</option>
+                    <option value="cashier">Cashier</option>
+                  </select>
+                </div>
+                {editStatus === 'error' && <div style={{ color: '#c0392b', fontSize: 12, marginBottom: 12 }}>Failed to update user. Please try again.</div>}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={handleEditSubmit} disabled={updateUserMut.isPending} style={{ ...btnS(true), flex: 1, justifyContent: 'center', padding: '10px 16px', fontSize: 13 }}>
+                    {updateUserMut.isPending ? 'Saving...' : 'Save Changes'}
+                  </button>
+                  <button onClick={() => setEditUser(null)} style={{ ...btnS(false), flex: 1, justifyContent: 'center', padding: '10px 16px', fontSize: 13 }}>Cancel</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -280,7 +280,7 @@ export default function RetailDashboard() {
   const recentActivityData = dashboard?.recent_activity || [];
   const revenueTrend = dashboard?.revenue_trend || [];
 
-  const username = user?.first_name || 'User';
+  const username = user?.first_name || user?.username || 'User';
 
   // Build weekly chart from dashboard revenue_trend
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -387,9 +387,9 @@ export default function RetailDashboard() {
       {/* Hero Banner */}
       <div style={S.banner}>
         <div style={S.bannerLeft}>
-          <h1 style={S.bannerTitle}>Good morning, {username}</h1>
+          <h1 style={S.bannerTitle}>{new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}, {username}</h1>
           <div style={S.bannerSub}>
-            <span style={S.bannerSubItem}>Makonese Farm</span>
+            <span style={S.bannerSubItem}>{user?.tenant_name || 'Retail'}</span>
             <span style={S.bannerSubItem}>{productCount} products</span>
             <span style={S.bannerSubItem}>{lowStock.length} low stock alerts</span>
           </div>
@@ -408,9 +408,9 @@ export default function RetailDashboard() {
           <div style={S.metricValue}>
             {fmt(summary?.total_sales || 0, 'zwd')}
           </div>
-          <div style={S.metricTrend}>↑ 8.2%</div>
+          <div style={S.metricTrend}>{(summary?.total_sales || 0) > 0 ? 'Month to date' : 'No sales yet'}</div>
           <div style={S.progressBar}>
-            <div style={S.progressFill(65, '#2d9e58')} />
+            <div style={S.progressFill(summary?.total_sales ? 65 : 0, '#2d9e58')} />
           </div>
         </div>
 
@@ -421,9 +421,9 @@ export default function RetailDashboard() {
           </div>
           <div style={S.metricLabel}>Products</div>
           <div style={S.metricValue}>{productCount}</div>
-          <div style={S.metricTrend}>↑ 2.1%</div>
+          <div style={S.metricTrend}>{productCount > 0 ? `${productCount} active SKUs` : 'No products added'}</div>
           <div style={S.progressBar}>
-            <div style={S.progressFill(42, '#2563eb')} />
+            <div style={S.progressFill(productCount > 0 ? 42 : 0, '#2563eb')} />
           </div>
         </div>
 
@@ -434,9 +434,9 @@ export default function RetailDashboard() {
           </div>
           <div style={S.metricLabel}>Today Revenue</div>
           <div style={S.metricValue}>{fmt(dashboard?.today_revenue || 0, 'zwd')}</div>
-          <div style={S.metricTrend}>↑ 1.8%</div>
+          <div style={S.metricTrend}>{(dashboard?.today_revenue || 0) > 0 ? 'Today so far' : 'No sales today'}</div>
           <div style={S.progressBar}>
-            <div style={S.progressFill(38, '#c97d1a')} />
+            <div style={S.progressFill(dashboard?.today_revenue ? 38 : 0, '#c97d1a')} />
           </div>
         </div>
 
@@ -447,9 +447,9 @@ export default function RetailDashboard() {
           </div>
           <div style={S.metricLabel}>Alerts</div>
           <div style={S.metricValue}>{lowStock.length}</div>
-          <div style={S.metricTrend}>↓ 3.2%</div>
+          <div style={S.metricTrend}>{lowStock.length > 0 ? `${lowStock.length} items need attention` : 'All clear'}</div>
           <div style={S.progressBar}>
-            <div style={S.progressFill(28, '#c0392b')} />
+            <div style={S.progressFill(lowStock.length > 0 ? 28 : 0, '#c0392b')} />
           </div>
         </div>
       </div>

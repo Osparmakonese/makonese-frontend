@@ -63,7 +63,7 @@ const S = {
 };
 
 export default function ZimraFiscal({ onTabChange }) {
-  useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [newDevice, setNewDevice] = useState({
     vat_number: '',
@@ -253,7 +253,7 @@ export default function ZimraFiscal({ onTabChange }) {
       <div style={S.card}>
         <h2 style={S.cardTitle}>Fiscal Receipt Preview</h2>
         <div style={S.receipt}>
-          <div style={S.receiptLine}>===== ACME TRADING =====</div>
+          <div style={S.receiptLine}>===== {user?.tenant_name?.toUpperCase() || 'MY STORE'} =====</div>
           <div style={S.receiptLine}>VAT Reg: 10012345</div>
           <div style={S.receiptLine}>Receipt: FIS-2026-04-12-0038</div>
           <div style={S.receiptLine}>Date: 12 Apr 2026 17:45</div>

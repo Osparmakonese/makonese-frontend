@@ -139,7 +139,11 @@ export default function Topbar({ pageTitle, pageSub, primaryAction, onPrimaryAct
     setWaBtnText('Building...');
     try {
       const msg = await buildWhatsAppMessage();
-      window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+      // Use encodeURIComponent for proper emoji encoding in WhatsApp URL
+      const waText = encodeURIComponent(msg);
+      const savedPhone = localStorage.getItem('whatsapp_phone_1') || '';
+      const phoneParam = savedPhone ? savedPhone.replace(/[^0-9]/g, '') : '';
+      window.open(`https://wa.me/${phoneParam}?text=${waText}`, '_blank');
     } catch (err) {
       console.error('WhatsApp message failed:', err);
     }

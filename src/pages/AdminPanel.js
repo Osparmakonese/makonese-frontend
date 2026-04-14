@@ -375,7 +375,7 @@ export default function AdminPanel() {
               return (
                 <div key={u.id} style={S.card}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                    <div style={S.avatar(ac.bg)}>{initials(u.username)}</div>
+                    <div style={S.avatar(ac.bg)}>{initials(u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username)}</div>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 13, color: '#111827' }}>{u.first_name} {u.last_name || u.username}</div>
                       <div style={{ fontSize: 10, color: '#9ca3af', textTransform: 'capitalize' }}>{u.role}</div>

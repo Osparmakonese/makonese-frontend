@@ -264,15 +264,15 @@ export default function Layers() {
                         <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 6, padding: '8px 10px', marginTop: 8, fontSize: 10 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                             <span style={{ color: '#6b7280' }}>Purchase:</span>
-                            <span style={{ color: '#111827', fontWeight: 600 }}>${fmt(purchase)}</span>
+                            <span style={{ color: '#111827', fontWeight: 600 }}>{fmt(purchase)}</span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                             <span style={{ color: '#6b7280' }}>Expenses:</span>
-                            <span style={{ color: '#c0392b', fontWeight: 600 }}>${fmt(flockExpenses)}</span>
+                            <span style={{ color: '#c0392b', fontWeight: 600 }}>{fmt(flockExpenses)}</span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e5e7eb', paddingTop: 3, marginTop: 3 }}>
                             <span style={{ color: '#374151', fontWeight: 700 }}>Total Cost:</span>
-                            <span style={{ color: '#1a6b3a', fontWeight: 700 }}>${fmt(flockTotalCost)}</span>
+                            <span style={{ color: '#1a6b3a', fontWeight: 700 }}>{fmt(flockTotalCost)}</span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
                             <span style={{ color: '#6b7280' }}>Eggs collected:</span>
@@ -291,14 +291,14 @@ export default function Layers() {
                   <div style={{ background: isProfit ? '#f0faf4' : '#fff5f5', border: `1px solid ${isProfit ? '#bbf7d0' : '#fca5a5'}`, borderRadius: 10, padding: 14, marginTop: 12 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>All Flocks P&L</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11 }}>
-                      <div><span style={{ color: '#6b7280' }}>Purchase:</span> <strong>${fmt(totalPurchases)}</strong></div>
-                      <div><span style={{ color: '#6b7280' }}>Expenses:</span> <strong style={{ color: '#c0392b' }}>${fmt(totalExpenses)}</strong></div>
-                      <div><span style={{ color: '#6b7280' }}>Egg Revenue:</span> <strong style={{ color: '#1a6b3a' }}>${fmt(totalRevenue)}</strong></div>
-                      <div><span style={{ color: '#6b7280' }}>Total Cost:</span> <strong>${fmt(totalCost)}</strong></div>
+                      <div><span style={{ color: '#6b7280' }}>Purchase:</span> <strong>{fmt(totalPurchases)}</strong></div>
+                      <div><span style={{ color: '#6b7280' }}>Expenses:</span> <strong style={{ color: '#c0392b' }}>{fmt(totalExpenses)}</strong></div>
+                      <div><span style={{ color: '#6b7280' }}>Egg Revenue:</span> <strong style={{ color: '#1a6b3a' }}>{fmt(totalRevenue)}</strong></div>
+                      <div><span style={{ color: '#6b7280' }}>Total Cost:</span> <strong>{fmt(totalCost)}</strong></div>
                     </div>
                     <div style={{ borderTop: `1px solid ${isProfit ? '#bbf7d0' : '#fca5a5'}`, marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>{isProfit ? 'Profit' : 'Loss'}:</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: isProfit ? '#1a6b3a' : '#c0392b' }}>${fmt(Math.abs(profit))}</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: isProfit ? '#1a6b3a' : '#c0392b' }}>{fmt(Math.abs(profit))}</span>
                     </div>
                   </div>
                 );
@@ -444,7 +444,7 @@ export default function Layers() {
                           <td style={{ ...S.td, fontWeight: 700, color: '#c0392b' }}>{fmt(exp.amount)}</td>
                           <td style={S.td}>
                             <button
-                              onClick={() => setRowDelete({ type: 'expense', id: exp.id, label: `${exp.description} ($${fmt(exp.amount)})` })}
+                              onClick={() => setRowDelete({ type: 'expense', id: exp.id, label: `${exp.description} (${fmt(exp.amount)})` })}
                               style={{ fontSize: 9, padding: '2px 6px', background: 'none', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 4, cursor: 'pointer' }}
                             >
                               Delete

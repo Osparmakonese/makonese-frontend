@@ -280,7 +280,8 @@ function FarmApp() {
       pageSub={meta.sub}
       primaryAction={primaryAction}
       onPrimaryAction={() => {
-        /* --- */
+        /* Dispatch custom event so active page can handle it */
+        window.dispatchEvent(new CustomEvent('pewil-primary-action', { detail: { tab: activeTab } }));
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }}
       dashboardData={dashboardData}

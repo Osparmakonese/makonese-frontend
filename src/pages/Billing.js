@@ -284,7 +284,7 @@ export default function Billing() {
                 <div style={{ fontSize: 12, color: '#6b7280' }}>{p.modules}, {p.users === 999 ? 'unlimited' : p.users} users</div>
                 {currentPlan === p.key
                   ? <div style={{ fontSize: 12, color: '#1a6b3a', marginTop: 8, fontWeight: 600 }}>Current plan</div>
-                  : <button style={{ ...btnS(true), marginTop: 8 }} onClick={(e) => { e.stopPropagation(); handleUpgrade(p.key); }}>Upgrade</button>
+                  : <button style={{ ...btnS(true), marginTop: 8 }} onClick={(e) => { e.stopPropagation(); handleUpgrade(p.key); }}>{p.price < planObj.price ? 'Downgrade' : 'Upgrade'}</button>
                 }
               </div>
             ))}

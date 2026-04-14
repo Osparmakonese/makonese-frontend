@@ -113,7 +113,7 @@ export default function Broilers() {
       'Batch Name': batchForm.batch_name,
       'Quantity': batchForm.quantity,
       'Date Acquired': fmt(batchForm.date_acquired),
-      'Purchase Price': batchForm.purchase_price ? `$${fmt(parseFloat(batchForm.purchase_price))}` : '-',
+      'Purchase Price': batchForm.purchase_price ? fmt(parseFloat(batchForm.purchase_price)) : '-',
       'Target Weight': batchForm.target_weight ? `${batchForm.target_weight} kg` : '-',
     });
     setConfirmOpen(true);
@@ -243,14 +243,14 @@ export default function Broilers() {
                   <div style={{ background: isProfit ? '#f0faf4' : '#fff5f5', border: `1px solid ${isProfit ? '#bbf7d0' : '#fca5a5'}`, borderRadius: 10, padding: 14, marginBottom: 16 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>All Batches P&L</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11 }}>
-                      <div><span style={{ color: '#6b7280' }}>Purchase:</span> <strong>${fmt(purchaseCosts)}</strong></div>
-                      <div><span style={{ color: '#6b7280' }}>Expenses:</span> <strong style={{ color: '#c0392b' }}>${fmt(totalExpenses)}</strong></div>
-                      <div><span style={{ color: '#6b7280' }}>Revenue:</span> <strong style={{ color: '#1a6b3a' }}>${fmt(totalSalesRevenue)}</strong></div>
-                      <div><span style={{ color: '#6b7280' }}>Total Cost:</span> <strong>${fmt(totalCost)}</strong></div>
+                      <div><span style={{ color: '#6b7280' }}>Purchase:</span> <strong>{fmt(purchaseCosts)}</strong></div>
+                      <div><span style={{ color: '#6b7280' }}>Expenses:</span> <strong style={{ color: '#c0392b' }}>{fmt(totalExpenses)}</strong></div>
+                      <div><span style={{ color: '#6b7280' }}>Revenue:</span> <strong style={{ color: '#1a6b3a' }}>{fmt(totalSalesRevenue)}</strong></div>
+                      <div><span style={{ color: '#6b7280' }}>Total Cost:</span> <strong>{fmt(totalCost)}</strong></div>
                     </div>
                     <div style={{ borderTop: `1px solid ${isProfit ? '#bbf7d0' : '#fca5a5'}`, marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>{isProfit ? 'Profit' : 'Loss'}:</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: isProfit ? '#1a6b3a' : '#c0392b' }}>${fmt(Math.abs(profit))}</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: isProfit ? '#1a6b3a' : '#c0392b' }}>{fmt(Math.abs(profit))}</span>
                     </div>
                   </div>
                 );
@@ -287,20 +287,20 @@ export default function Broilers() {
                       <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 6, padding: '8px 10px', marginTop: 6, fontSize: 10 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                           <span style={{ color: '#6b7280' }}>Purchase:</span>
-                          <span style={{ color: '#111827', fontWeight: 600 }}>${fmt(purchaseCost)}</span>
+                          <span style={{ color: '#111827', fontWeight: 600 }}>{fmt(purchaseCost)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                           <span style={{ color: '#6b7280' }}>Expenses:</span>
-                          <span style={{ color: '#c0392b', fontWeight: 600 }}>${fmt(batchExpenses)}</span>
+                          <span style={{ color: '#c0392b', fontWeight: 600 }}>{fmt(batchExpenses)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e5e7eb', paddingTop: 3, marginTop: 3 }}>
                           <span style={{ color: '#374151', fontWeight: 700 }}>Total Cost:</span>
-                          <span style={{ color: '#1a6b3a', fontWeight: 700 }}>${fmt(totalCost)}</span>
+                          <span style={{ color: '#1a6b3a', fontWeight: 700 }}>{fmt(totalCost)}</span>
                         </div>
                         {currentCount > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
                             <span style={{ color: '#6b7280' }}>Per bird:</span>
-                            <span style={{ color: '#374151', fontWeight: 600 }}>${fmt(costPerBird)}</span>
+                            <span style={{ color: '#374151', fontWeight: 600 }}>{fmt(costPerBird)}</span>
                           </div>
                         )}
                       </div>
@@ -369,12 +369,12 @@ export default function Broilers() {
                     <div key={exp.id} style={S.expenseRecord}>
                       <div style={S.expenseRow}>
                         <span>{exp.description || exp.category}</span>
-                        <span style={S.expenseAmount}>${fmt(exp.amount)}</span>
+                        <span style={S.expenseAmount}>{fmt(exp.amount)}</span>
                       </div>
                       <div style={{ ...S.expenseRow, alignItems: 'center' }}>
                         <span style={{ color: '#9ca3af', fontSize: 10 }}>{fmt(exp.record_date || exp.date)} · {batches.find(b => b.id === exp.batch)?.batch_name || 'Unknown'}</span>
                         <button
-                          onClick={() => setRowDelete({ type: 'expense', id: exp.id, label: `${exp.description || exp.category} ($${fmt(exp.amount)})` })}
+                          onClick={() => setRowDelete({ type: 'expense', id: exp.id, label: `${exp.description || exp.category} (${fmt(exp.amount)})` })}
                           style={{ fontSize: 9, padding: '3px 6px', background: 'none', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 4, cursor: 'pointer' }}
                         >
                           Delete
@@ -383,7 +383,7 @@ export default function Broilers() {
                     </div>
                   ))}
                   <div style={S.summary}>
-                    Total Expenses: <strong>${fmt(totalExpenses)}</strong>
+                    Total Expenses: <strong>{fmt(totalExpenses)}</strong>
                   </div>
                 </>
               )}
@@ -437,12 +437,12 @@ export default function Broilers() {
                     <div key={sale.id} style={S.saleRecord}>
                       <div style={S.saleRow}>
                         <span>{sale.quantity} birds - {sale.buyer || 'Direct'}</span>
-                        <span style={S.saleAmount}>${fmt(sale.sale_price)}</span>
+                        <span style={S.saleAmount}>{fmt(sale.sale_price)}</span>
                       </div>
                       <div style={{ ...S.saleRow, alignItems: 'center' }}>
                         <span style={{ color: '#9ca3af', fontSize: 10 }}>{fmt(sale.sale_date)} · {sale.description || '-'}</span>
                         <button
-                          onClick={() => setRowDelete({ type: 'sale', id: sale.id, label: `${sale.quantity} birds → ${sale.buyer || 'Direct'} ($${fmt(sale.sale_price)})` })}
+                          onClick={() => setRowDelete({ type: 'sale', id: sale.id, label: `${sale.quantity} birds → ${sale.buyer || 'Direct'} (${fmt(sale.sale_price)})` })}
                           style={{ fontSize: 9, padding: '3px 6px', background: 'none', color: '#c0392b', border: '1px solid #fca5a5', borderRadius: 4, cursor: 'pointer' }}
                         >
                           Delete
@@ -451,7 +451,7 @@ export default function Broilers() {
                     </div>
                   ))}
                   <div style={S.summary}>
-                    Total Sales Revenue: <strong>${fmt(totalSalesRevenue)}</strong>
+                    Total Sales Revenue: <strong>{fmt(totalSalesRevenue)}</strong>
                   </div>
                 </>
               )}

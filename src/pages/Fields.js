@@ -123,6 +123,7 @@ export default function Fields() {
     if (!form.name.trim()) errs.name = 'Required';
     if (!form.size_ha || parseFloat(form.size_ha) <= 0) errs.size_ha = 'Must be > 0';
     if (Object.keys(errs).length) { setFormErrors(errs); return; }
+    setFormErrors({});
     setPending({...form});
     setConfirmOpen(true);
     return;
@@ -293,7 +294,7 @@ export default function Fields() {
         }}
         fields={pending ? [
           { label: 'Field Name', value: pending.name },
-          { label: 'Crop', value: pending.crop },
+          { label: 'Crop', value: pending.crop.charAt(0).toUpperCase() + pending.crop.slice(1) },
           { label: 'Size (ha)', value: pending.size_ha },
           { label: 'Planting Date', value: pending.plant_date },
         ] : []}

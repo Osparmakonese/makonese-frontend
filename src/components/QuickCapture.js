@@ -129,7 +129,7 @@ export default function QuickCapture() {
         category: form.category || 'other',
         amount: parseFloat(form.amount) || 0,
         description: form.description || 'Quick entry',
-        date: today(),
+        expense_date: form.expense_date || today(),
       });
     } else if (action === 'harvest') {
       harvestMut.mutate({
@@ -171,10 +171,13 @@ export default function QuickCapture() {
     const act = ACTIONS.find(a => a.key === action);
     return (
       <>
-        <div style={S.overlay} onClick={() => { setAction(null); setForm({}); }} />
-        <div style={S.modal}>
-          <div style={S.modalTitle}>
-            <span>{act.icon}</span> {act.label}
+        <div style={S.overlay} onClick={() => { setAction(null); setForm({}); }} onKeyDown={e => { if (e.key === 'Escape') { setAction(null); setForm({}); }}} />
+        <div style={S.modal} onKeyDown={e => { if (e.key === 'Escape') { setAction(null); setForm({}); }}}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={S.modalTitle}>
+              <span>{act.icon}</span> {act.label}
+            </div>
+            <button onClick={() => { setAction(null); setForm({}); }} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#9ca3af', padding: 4, lineHeight: 1 }} title="Close">{'\u2715'}</button>
           </div>
 
           {/* Field selector — shared by all actions */}
@@ -199,9 +202,15 @@ export default function QuickCapture() {
                   </select>
                 </div>
               </div>
-              <div style={S.field}>
-                <label style={S.label}>Description</label>
-                <input style={S.input} placeholder="What was this for?" value={form.description || ''} onChange={e => set('description', e.target.value)} />
+              <div style={S.row}>
+                <div style={S.field}>
+                  <label style={S.label}>Description</label>
+                  <input style={S.input} placeholder="What was this for?" value={form.description || ''} onChange={e => set('description', e.target.value)} />
+                </div>
+                <div style={S.field}>
+                  <label style={S.label}>Date</label>
+                  <input style={S.input} type="date" value={form.expense_date || today()} onChange={e => set('expense_date', e.target.value)} />
+                </div>
               </div>
             </>
           )}
@@ -251,7 +260,7 @@ export default function QuickCapture() {
           )}
 
           <button style={S.submitBtn(act.color)} onClick={submit}>
-            Save {act.label}
+            {act.key === 'expense' ? 'Save Expense' : act.key === 'harvest' ? 'Save Harvest' : act.key === 'water' ? 'Save Water Log' : 'Save Income'}
           </button>
         </div>
       </>

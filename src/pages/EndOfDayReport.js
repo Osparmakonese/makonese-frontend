@@ -228,7 +228,7 @@ const S = {
 
 export default function EndOfDayReport({ onTabChange }) {
   useAuth();
-  const [reportDate, setReportDate] = useState('2026-04-12');
+  const [reportDate, setReportDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   // Fetch end of day report
   const { data: reportData, isLoading, refetch } = useQuery({

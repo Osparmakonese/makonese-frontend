@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getProducts,
@@ -565,6 +565,15 @@ export default function Products() {
     createMut.mutate(formData);
   };
 
+  // Listen for topbar primary action event
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail?.tab === 'Products') setShowModal(true);
+    };
+    window.addEventListener('pewil-primary-action', handler);
+    return () => window.removeEventListener('pewil-primary-action', handler);
+  }, []);
+
   return (
     <div style={S.page}>
       {isWorker && (
@@ -701,12 +710,17 @@ export default function Products() {
         ) : (
           <div style={S.emptyState}>
             <div style={{ fontSize: 48, marginBottom: 10 }}>
-              {'🔍'}
+              {products.length === 0 ? '\u{1F6D2}' : '\u{1F50D}'}
             </div>
-            <p>No products found</p>
+            <p>{products.length === 0 ? 'No products yet' : 'No products found'}</p>
             <p style={{ fontSize: 11, marginTop: 6 }}>
-              Try adjusting your search or filters
+              {products.length === 0 ? 'Add your first product to get started' : 'Try adjusting your search or filters'}
             </p>
+            {products.length === 0 && !isWorker && (
+              <button onClick={() => setShowModal(true)} style={{ ...S.addBtn, marginTop: 12 }}>
+                {'\u{2795}'} Add Product
+              </button>
+            )}
           </div>
         )}
       </div>

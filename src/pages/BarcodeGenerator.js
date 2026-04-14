@@ -247,7 +247,7 @@ export default function BarcodeGenerator({ onTabChange }) {
               textAlign: 'center'
             }}
           >
-            <div style={{ fontWeight: 700, marginBottom: 4 }}>ACME TRADING</div>
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>{user?.tenant_name || 'My Store'}</div>
             <div style={{ borderBottom: '1px solid #111827', marginBottom: 4, paddingBottom: 4 }}>
               ──────────────
             </div>
