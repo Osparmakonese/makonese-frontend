@@ -11,6 +11,8 @@ import { confirm } from '../utils/confirm';
 import { requireManagerApproval } from '../utils/managerApproval';
 import { promptLoyaltyMember } from '../utils/loyaltyLookup';
 import { promptDiscountReason } from '../utils/discountReason';
+import { promptCashDrop, submitCashDrop } from '../utils/cashDrop';
+import { claimSessionLock } from '../utils/posSessionLock';
 import api from '../api/axios';
 
 /* ─── Receipt Modal ─── */
@@ -71,6 +73,24 @@ function ReceiptModal({ isOpen, onClose, receipt }) {
           >
             Receipt #{receipt.receipt_number}
           </p>
+          <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center' }}>
+            {receipt.fiscal_submitted ? (
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 999,
+                background: '#d1fae5', color: '#064e3b', letterSpacing: '0.05em',
+              }}>
+                {'\u2713'} FISCAL: SUBMITTED
+                {receipt.fiscal_receipt_number ? ` · ${receipt.fiscal_receipt_number}` : ''}
+              </span>
+            ) : (
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 999,
+                background: '#fef3c7', color: '#92400e', letterSpacing: '0.05em',
+              }}>
+                {'\u23F3'} FISCAL: PENDING — WILL SYNC TO ZIMRA
+              </span>
+            )}
+          </div>
         </div>
 
         <div style={{ marginBottom: 20 }}>
@@ -572,6 +592,11 @@ export default function POS() {
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [lastReceiptId, setLastReceiptId] = useState(null);
 
+  // Batch 2a: tab-level session lock
+  const sessionLockRef = useRef(null);
+  const [isLockOwner, setIsLockOwner] = useState(true);
+  const [activeSessionId, setActiveSessionId] = useState(null);
+
   // BroadcastChannel for the customer-facing display at /customer-display.
   const displayCh = useRef(null);
   useEffect(() => {
@@ -619,6 +644,33 @@ export default function POS() {
     queryKey: ['retail-sessions-pos'],
     queryFn: getCashierSessions,
   });
+
+  // Claim a tab-level lock on the active session. If another tab is already
+  // running POS for the same session, this tab flips to read-only so we can't
+  // double-ring sales or race stock deductions.
+  useEffect(() => {
+    const active = sessions.find((s) => !s.closed_at);
+    const sid = active?.id || null;
+    if (sid === activeSessionId) return;
+
+    // Release any prior lock on session change.
+    if (sessionLockRef.current) {
+      try { sessionLockRef.current.release(); } catch (_) {}
+      sessionLockRef.current = null;
+    }
+    setActiveSessionId(sid);
+    if (!sid) { setIsLockOwner(true); return; }
+
+    const ctrl = claimSessionLock(sid);
+    sessionLockRef.current = ctrl;
+    setIsLockOwner(ctrl.isOwner());
+    const unsub = ctrl.onChange((owner) => setIsLockOwner(owner));
+    return () => {
+      try { unsub(); } catch (_) {}
+      try { ctrl.release(); } catch (_) {}
+      if (sessionLockRef.current === ctrl) sessionLockRef.current = null;
+    };
+  }, [sessions, activeSessionId]);
 
   const createSaleMut = useMutation({
     mutationFn: createSale,
@@ -854,7 +906,34 @@ export default function POS() {
     } catch (_) { /* cancelled */ }
   };
 
+  const handleCashDrop = async () => {
+    if (!isLockOwner) {
+      alert('This tab is read-only — POS is already active in another tab. Cash drop not allowed here.');
+      return;
+    }
+    const activeSessions = sessions.filter((s) => !s.closed_at);
+    if (activeSessions.length === 0) {
+      alert('No active cashier session.');
+      return;
+    }
+    const sessionId = activeSessions[0].id;
+    const dropData = await promptCashDrop({ sessionId });
+    if (!dropData) return;
+    try {
+      const saved = await submitCashDrop({ sessionId, ...dropData });
+      alert(`Cash drop of ${fmt(saved.amount, 'zwd')} recorded (#${saved.id}).`);
+      qc.invalidateQueries({ queryKey: ['retail-sessions-pos'] });
+    } catch (err) {
+      const msg = err?.response?.data?.detail || err?.message || 'Cash drop failed.';
+      alert('Cash drop failed: ' + msg);
+    }
+  };
+
   const handleCompleteSale = () => {
+    if (!isLockOwner) {
+      alert('This tab is read-only — POS is already active in another tab. Complete the sale there, or close the other tab and retry.');
+      return;
+    }
     const activeSessions = sessions.filter((s) => !s.closed_at);
     if (activeSessions.length === 0) {
       alert('No active cashier session. Please open a session first.');
@@ -966,6 +1045,17 @@ export default function POS() {
 
   return (
     <div style={{ ...S.page, height: focusMode ? '100vh' : 'calc(100vh - 110px)' }}>
+      {!isLockOwner && activeSessionId && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10001,
+          background: '#b91c1c', color: '#fff', padding: '10px 16px', textAlign: 'center',
+          fontSize: 13, fontWeight: 700, letterSpacing: '0.02em',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        }}>
+          🔒 POS is already open in another tab on this register (session #{activeSessionId}).
+          This tab is read-only — close the other tab to take over.
+        </div>
+      )}
       {/* POS Control Bar — Focus mode + Fullscreen */}
       <div
         style={{
@@ -1025,6 +1115,12 @@ export default function POS() {
           style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #d1d5db',
                    background: '#fff', color: '#111827', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
           🖨 Reprint
+        </button>
+        <button type="button" onClick={handleCashDrop}
+          title="Cash drop / pay-out — manager approval required"
+          style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #fde68a',
+                   background: '#fffbeb', color: '#92400e', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+          💵 Cash Drop
         </button>
         <button type="button" onClick={() => setShowHotkeys(true)}
           title="Keyboard shortcuts"
