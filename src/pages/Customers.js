@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCustomers, getTopCustomers, createCustomer, deleteCustomer } from '../api/retailApi';
 import { useAuth } from '../context/AuthContext';
 import { fmt } from '../utils/format';
+import { confirm } from '../utils/confirm';
 import AIInsightCard from '../components/AIInsightCard';
 
 export default function Customers({ onTabChange }) {
@@ -55,8 +56,8 @@ export default function Customers({ onTabChange }) {
     }
   };
 
-  const handleDeleteCustomer = (id) => {
-    if (window.confirm('Are you sure you want to delete this customer?')) {
+  const handleDeleteCustomer = async (id) => {
+    if (await confirm({ title: 'Delete customer', message: 'Are you sure you want to delete this customer?', confirmText: 'Delete' })) {
       deleteMutation.mutate(id);
     }
   };

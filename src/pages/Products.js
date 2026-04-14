@@ -12,6 +12,7 @@ import {
 } from '../api/retailApi';
 import { useAuth } from '../context/AuthContext';
 import { fmt } from '../utils/format';
+import { confirm } from '../utils/confirm';
 
 /* ─── Modal Component ─── */
 function AddProductModal({ isOpen, onClose, onSubmit, categories, loading, initialData }) {
@@ -757,8 +758,8 @@ export default function Products() {
                           Edit
                         </button>
                         <button
-                          onClick={() => {
-                            if (window.confirm(`Delete ${product.name}?`)) {
+                          onClick={async () => {
+                            if (await confirm({ title: 'Delete product', message: `Delete ${product.name}?`, confirmText: 'Delete' })) {
                               deleteMut.mutate(product.id);
                             }
                           }}

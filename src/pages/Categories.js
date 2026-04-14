@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCategories, createCategory, updateCategory, deleteCategory, getProducts } from '../api/retailApi';
+import { confirm } from '../utils/confirm';
 
 /* --- Category Modal --- */
 function CategoryModal({ isOpen, onClose, onSubmit, loading, editCategory }) {
@@ -126,8 +127,8 @@ export default function Categories() {
     setShowModal(true);
   };
 
-  const handleDelete = (cat) => {
-    if (window.confirm(`Are you sure you want to remove "${cat.name}"? This will soft-delete the category.`)) {
+  const handleDelete = async (cat) => {
+    if (await confirm({ title: 'Remove category', message: `Are you sure you want to remove "${cat.name}"? This will soft-delete the category.`, confirmText: 'Remove' })) {
       deleteMut.mutate(cat.id);
     }
   };

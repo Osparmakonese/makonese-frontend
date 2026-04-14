@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { getDiscounts, createDiscount, updateDiscount, deleteDiscount } from '../api/retailApi';
+import { confirm } from '../utils/confirm';
 
 const S = {
   page: { maxWidth: 1200, margin: '0 auto', padding: 20 },
@@ -485,8 +486,8 @@ export default function Discounts({ onTabChange }) {
                           Edit
                         </button>
                         <button
-                          onClick={() => {
-                            if (window.confirm(`Delete ${promo.name}?`)) {
+                          onClick={async () => {
+                            if (await confirm({ title: 'Delete promotion', message: `Delete ${promo.name}?`, confirmText: 'Delete' })) {
                               deleteDiscountMutation.mutate(promo.id);
                             }
                           }}

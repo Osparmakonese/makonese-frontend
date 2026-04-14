@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getReturns, getReturnsSummary, createReturn, completeReturn } from '../api/retailApi';
 import { useAuth } from '../context/AuthContext';
 import { fmt } from '../utils/format';
+import { confirm } from '../utils/confirm';
 
 export default function Returns({ onTabChange }) {
   const { user } = useAuth();
@@ -53,8 +54,8 @@ export default function Returns({ onTabChange }) {
     }
   };
 
-  const handleCompleteReturn = (id) => {
-    if (window.confirm('Mark this return as completed?')) {
+  const handleCompleteReturn = async (id) => {
+    if (await confirm({ title: 'Complete return', message: 'Mark this return as completed?', confirmText: 'Complete', danger: false })) {
       completeMutation.mutate(id);
     }
   };
