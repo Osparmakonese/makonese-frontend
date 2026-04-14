@@ -20,6 +20,8 @@ import {
 import { promptWeight } from '../utils/weightPrompt';
 import { requireAgeVerification } from '../utils/ageVerify';
 import QuickTilesPanel from '../components/QuickTilesPanel';
+import ScannerLanePOS from '../components/ScannerLanePOS';
+import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 
 /* ─── Receipt Modal ─── */
@@ -580,6 +582,7 @@ const S = {
 
 export default function POS() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const barcodeInputRef = useRef(null);
   const [search, setSearch] = useState('');
   const [barcode, setBarcode] = useState('');
@@ -1191,6 +1194,70 @@ export default function POS() {
                 : settings.theme === 'pnp'  ? '#f1f5f9'
                 : '#f9fafb';
   const themeCls = `pos-theme-${settings.theme}`;
+
+  // ──────────────────────────────────────────────────────────────────
+  // Pick n Pay / SAP CAR scanner-lane render branch.
+  // Selected when the manager picks "Scanner lane" in POS Settings.
+  // Reuses the same cart state and handlers as the default view.
+  // ──────────────────────────────────────────────────────────────────
+  if (settings.theme === 'pnp') {
+    return (
+      <div
+        className={themeCls}
+        data-pos-theme="pnp"
+        style={{
+          ...S.page,
+          background: '#f1f5f9',
+          height: focusMode ? '100vh' : 'calc(100vh - 110px)',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {!isLockOwner && activeSessionId && (
+          <div style={{
+            background: '#b91c1c', color: '#fff', padding: '10px 16px', textAlign: 'center',
+            fontSize: 13, fontWeight: 700,
+          }}>
+            🔒 POS is already open in another tab on this register (session #{activeSessionId}).
+          </div>
+        )}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+          <ScannerLanePOS
+            cart={cart}
+            removeFromCart={removeFromCart}
+            updateCartQty={updateCartQty}
+            barcode={barcode}
+            setBarcode={setBarcode}
+            handleBarcodeSubmit={handleBarcodeSubmit}
+            barcodeInputRef={barcodeInputRef}
+            subtotal={subtotal}
+            discountAmount={discountAmount}
+            taxAmount={taxAmount}
+            grandTotal={grandTotal}
+            handleCompleteSale={handleCompleteSale}
+            handleSuspendSale={handleSuspendSale}
+            priceCheckMode={priceCheckMode}
+            setPriceCheckMode={setPriceCheckMode}
+            offline={offline}
+            pendingCount={pendingCount}
+            user={user}
+            laneLabel={sessions.find((s) => !s.closed_at) ? `Lane #${sessions.find((s) => !s.closed_at).id}` : 'No session'}
+            brandName={user?.tenant_name || 'Makonese Retail'}
+          />
+        </div>
+
+        {/* Receipt Modal — shared across all themes */}
+        <ReceiptModal
+          isOpen={showReceipt}
+          onClose={() => {
+            setShowReceipt(false);
+            barcodeInputRef.current?.focus();
+          }}
+          receipt={receipt}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
