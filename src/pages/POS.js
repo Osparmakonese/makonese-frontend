@@ -4,6 +4,7 @@ import {
   getProducts,
   barcodeLookup,
   getCashierSessions,
+  getPOSSettings,
 } from '../api/retailApi';
 import { fmt } from '../utils/format';
 import { confirm } from '../utils/confirm';
@@ -663,6 +664,27 @@ export default function POS() {
     queryFn: getCashierSessions,
   });
 
+  // POS look-and-feel settings — per-tenant singleton.
+  // Fetched once; falls back to sane defaults so the POS still renders
+  // even if the endpoint is unreachable.
+  const { data: posSettings } = useQuery({
+    queryKey: ['pos-settings'],
+    queryFn: getPOSSettings,
+    staleTime: 60000,
+  });
+  const settings = {
+    theme: 'light',
+    show_product_tiles: true,
+    show_category_sidebar: true,
+    show_quick_tiles: true,
+    show_keypad: false,
+    show_receipt_preview: true,
+    enable_hotkeys: true,
+    customer_display_enabled: true,
+    auto_focus_scan: true,
+    ...(posSettings || {}),
+  };
+
   // Claim a tab-level lock on the active session. If another tab is already
   // running POS for the same session, this tab flips to read-only so we can't
   // double-ring sales or race stock deductions.
@@ -874,7 +896,10 @@ export default function POS() {
   };
 
   // Broadcast current state to customer-facing display every render.
+  // Gated by the POSSettings.customer_display_enabled flag so managers can
+  // switch off the second screen at stores that don't have one.
   useEffect(() => {
+    if (settings.customer_display_enabled === false) return;
     try {
       displayCh.current?.postMessage({
         type: 'state',
@@ -1102,6 +1127,9 @@ export default function POS() {
   //   ?   — show hotkey cheatsheet
   //   Esc — cancel price check / close drawers
   useEffect(() => {
+    // Respect the manager's "Enable F-key hotkeys" POS setting — some
+    // stores use keyboards for other reasons and don't want F-keys trapped.
+    if (settings.enable_hotkeys === false) return undefined;
     const onKey = (e) => {
       // Let modals / text fields handle their own keys where reasonable
       const tag = (e.target.tagName || '').toLowerCase();
@@ -1157,8 +1185,19 @@ export default function POS() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cart, priceCheckMode, suspendDrawerOpen, showHotkeys, discount, tax, loyaltyMember]);
 
+  // Theme overrides — applied when the manager picks Dark or Pick n Pay.
+  // Light theme is the default (keeps existing styles untouched).
+  const themeBg = settings.theme === 'dark' ? '#0b1020'
+                : settings.theme === 'pnp'  ? '#f1f5f9'
+                : '#f9fafb';
+  const themeCls = `pos-theme-${settings.theme}`;
+
   return (
-    <div style={{ ...S.page, height: focusMode ? '100vh' : 'calc(100vh - 110px)' }}>
+    <div
+      className={themeCls}
+      data-pos-theme={settings.theme}
+      style={{ ...S.page, background: themeBg, height: focusMode ? '100vh' : 'calc(100vh - 110px)' }}
+    >
       {!isLockOwner && activeSessionId && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10001,
@@ -1323,9 +1362,12 @@ export default function POS() {
         </div>
 
         {/* Batch 3: Quick tiles for produce / unbarcoded items. */}
-        <QuickTilesPanel products={products} onSelect={addToCart} />
+        {settings.show_quick_tiles && (
+          <QuickTilesPanel products={products} onSelect={addToCart} />
+        )}
 
-        {/* Product Grid */}
+        {/* Product Grid — hidden for scan-only lanes (manager setting). */}
+        {settings.show_product_tiles && (
         <div style={S.productGrid}>
           {filteredProducts.length > 0 ? (
             filteredProducts.map((product) => {
@@ -1384,6 +1426,25 @@ export default function POS() {
             </div>
           )}
         </div>
+        )}
+        {/* Scan-only hint — shown when product tiles are hidden. */}
+        {!settings.show_product_tiles && (
+          <div style={{
+            margin: '16px 0 0', padding: '18px 20px',
+            background: settings.theme === 'dark' ? '#111a2e' : settings.theme === 'pnp' ? '#fff7ed' : '#f8fafc',
+            border: settings.theme === 'dark' ? '1px solid #1e293b' : '1px solid #e2e8f0',
+            borderRadius: 10, textAlign: 'center',
+            color: settings.theme === 'dark' ? '#94a3b8' : '#64748b',
+            fontSize: 13, lineHeight: 1.5,
+          }}>
+            <div style={{ fontSize: 28, marginBottom: 6 }}>🔍</div>
+            <b style={{ color: settings.theme === 'dark' ? '#e5e7eb' : '#0f172a', fontSize: 14 }}>Scan-only lane</b>
+            <div style={{ marginTop: 4 }}>
+              Product tiles are hidden. Scan a barcode, or use Quick Tiles / hotkeys to add items.
+              The live receipt appears on the right as you scan.
+            </div>
+          </div>
+        )}
       </div>
 
       {/* RIGHT PANEL: Current Sale / Cart */}

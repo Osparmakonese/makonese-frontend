@@ -60,6 +60,7 @@ import CashierPerformance from './pages/CashierPerformance';
 import CustomerLoyalty from './pages/CustomerLoyalty';
 import BarcodeGenerator from './pages/BarcodeGenerator';
 import ReceiptCustomization from './pages/ReceiptCustomization';
+import POSSettingsPage from './pages/POSSettingsPage';
 import ProfitMargins from './pages/ProfitMargins';
 import DeviceConfiguration from './pages/DeviceConfiguration';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -115,6 +116,7 @@ const PAGES = {
   'Customer Loyalty': CustomerLoyalty,
   'Barcode Labels': BarcodeGenerator,
   'Receipt Setup': ReceiptCustomization,
+  'POS Settings': POSSettingsPage,
   'Profit Margins': ProfitMargins,
   'Device Config': DeviceConfiguration,
   // Billing & Account
@@ -173,6 +175,7 @@ const PAGE_META = {
   'Customer Loyalty': { title: 'Customer Loyalty', sub: 'Points, rewards, and retention program' },
   'Barcode Labels': { title: 'Barcode & Labels', sub: 'Generate barcodes and print shelf labels' },
   'Receipt Setup': { title: 'Receipt Customization', sub: 'Receipt template and printer settings' },
+  'POS Settings': { title: 'POS Settings', sub: 'Cashier-screen style, layout, and behaviour' },
   'Profit Margins': { title: 'Profit Margins', sub: 'Margin analysis and pricing insights' },
   'Device Config': { title: 'Device Configuration', sub: 'Hardware setup, Print Bridge, and ZIMRA compliance' },
   // Billing
@@ -227,6 +230,7 @@ const PRIMARY_ACTIONS = {
   'Customer Loyalty': null,
   'Barcode Labels': 'Print All Labels',
   'Receipt Setup': 'Save Template',
+  'POS Settings': null,
   'Profit Margins': 'Export CSV',
   'Device Config': '+ Add Device',
   'Billing': 'Change Plan',

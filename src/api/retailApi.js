@@ -125,3 +125,7 @@ export const getRetailDashboard = () => api.get('/retail/analytics/dashboard/').
 export const getEndOfDayReport = (date) => api.get('/retail/analytics/end_of_day/', { params: date ? { date } : {} }).then(r => r.data);
 export const getCashierPerformance = (days) => api.get('/retail/analytics/cashier_performance/', { params: days ? { days } : {} }).then(r => r.data);
 export const getProfitMargins = () => api.get('/retail/analytics/profit_margins/').then(r => r.data);
+
+// ── POS Settings (singleton per tenant) ──
+export const getPOSSettings = () => api.get('/retail/pos-settings/').then(r => r.data);
+export const updatePOSSettings = (data) => api.put('/retail/pos-settings/', data).then(r => r.data);

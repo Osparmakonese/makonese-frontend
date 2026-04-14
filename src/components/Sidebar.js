@@ -160,6 +160,7 @@ const NAV_ITEMS = [
     { key: 'ZIMRA Fiscal', emoji: '\u{1F4CB}', label: 'ZIMRA Fiscal' },
     { key: 'Multi-Currency', emoji: '\u{1F4B1}', label: 'Multi-Currency' },
     { key: 'Receipt Setup', emoji: '\u{1F9FE}', label: 'Receipt Setup' },
+    { key: 'POS Settings', emoji: '\u{1F5A5}\uFE0F', label: 'POS Style' },
     { key: 'Retail Billing', emoji: '\u{1F4B3}', label: 'Billing' },
     { key: 'Retail Settings', emoji: '\u2699\uFE0F', label: 'Settings' },
   ]},
