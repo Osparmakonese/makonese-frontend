@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { createExpense, createHarvest, createWaterLog, createIncome, getFields } from '../api/farmApi';
+import { getProducts, createStockAdjustment, createCustomer, createJournalEntry } from '../api/retailApi';
 import { today } from '../utils/format';
 
 /*
@@ -84,11 +85,18 @@ const S = {
   },
 };
 
-const ACTIONS = [
+const FARM_ACTIONS = [
   { key: 'expense', label: 'Log Expense', icon: '\u{1F9FE}', color: '#c0392b' },
   { key: 'harvest', label: 'Log Harvest', icon: '\u{1F33E}', color: '#1a6b3a' },
   { key: 'water', label: 'Log Water', icon: '\u{1F4A7}', color: '#0369a1' },
   { key: 'income', label: 'Record Income', icon: '\u{1F4B0}', color: '#c97d1a' },
+];
+
+const RETAIL_ACTIONS = [
+  { key: 'new_sale', label: 'New Sale', icon: '\u{1F6D2}', color: '#1a6b3a' },
+  { key: 'stock_in', label: 'Stock In', icon: '\u{1F4E6}', color: '#0369a1' },
+  { key: 'new_customer', label: 'New Customer', icon: '\u{1F464}', color: '#c97d1a' },
+  { key: 'retail_expense', label: 'Log Expense', icon: '\u{1F9FE}', color: '#c0392b' },
 ];
 
 const EXPENSE_CATS = [
@@ -99,20 +107,30 @@ const EXPENSE_CATS = [
   { value: 'other', label: 'Other' },
 ];
 
-export default function QuickCapture() {
+export default function QuickCapture({ activeModule = 'farm', onTabChange }) {
   const [open, setOpen] = useState(false);
   const [action, setAction] = useState(null);
   const [success, setSuccess] = useState(false);
   const [form, setForm] = useState({});
   const qc = useQueryClient();
 
-  const { data: fields = [] } = useQuery({ queryKey: ['fields'], queryFn: () => import('../api/farmApi').then(m => m.getFields()), staleTime: 60000 });
+  const isRetail = activeModule === 'retail';
+  const ACTIONS = isRetail ? RETAIL_ACTIONS : FARM_ACTIONS;
+
+  const { data: fields = [] } = useQuery({ queryKey: ['fields'], queryFn: () => import('../api/farmApi').then(m => m.getFields()), staleTime: 60000, enabled: !isRetail });
   const activeFields = (Array.isArray(fields) ? fields : []).filter(f => f.status === 'active');
+
+  const { data: products = [] } = useQuery({ queryKey: ['products'], queryFn: getProducts, staleTime: 60000, enabled: isRetail });
+  const productList = Array.isArray(products) ? products : (products?.results || []);
 
   const expenseMut = useMutation({ mutationFn: createExpense, onSuccess: () => done() });
   const harvestMut = useMutation({ mutationFn: createHarvest, onSuccess: () => done() });
   const waterMut = useMutation({ mutationFn: createWaterLog, onSuccess: () => done() });
   const incomeMut = useMutation({ mutationFn: createIncome, onSuccess: () => done() });
+
+  const stockInMut = useMutation({ mutationFn: createStockAdjustment, onSuccess: () => done() });
+  const customerMut = useMutation({ mutationFn: createCustomer, onSuccess: () => done() });
+  const journalMut = useMutation({ mutationFn: createJournalEntry, onSuccess: () => done() });
 
   const done = () => {
     setSuccess(true);
@@ -123,6 +141,43 @@ export default function QuickCapture() {
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
   const submit = () => {
+    // Retail actions
+    if (action === 'new_sale') {
+      // Navigate to POS
+      if (onTabChange) onTabChange('POS');
+      setAction(null); setForm({}); setOpen(false);
+      return;
+    }
+    if (action === 'stock_in') {
+      if (!form.product) return;
+      stockInMut.mutate({
+        product: parseInt(form.product),
+        adjustment_type: 'stock_in',
+        quantity: parseFloat(form.quantity) || 0,
+        reason: form.reason || 'Quick stock-in',
+      });
+      return;
+    }
+    if (action === 'new_customer') {
+      if (!form.name?.trim()) return;
+      customerMut.mutate({
+        name: form.name.trim(),
+        phone: form.phone || '',
+        email: form.email || '',
+      });
+      return;
+    }
+    if (action === 'retail_expense') {
+      journalMut.mutate({
+        entry_type: 'expense',
+        description: form.description || 'Quick expense',
+        amount: parseFloat(form.amount) || 0,
+        entry_date: form.expense_date || today(),
+        category: form.category || 'other',
+      });
+      return;
+    }
+
     if (action === 'expense') {
       expenseMut.mutate({
         field: form.field || activeFields[0]?.id,
@@ -180,13 +235,94 @@ export default function QuickCapture() {
             <button onClick={() => { setAction(null); setForm({}); }} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#9ca3af', padding: 4, lineHeight: 1 }} title="Close">{'\u2715'}</button>
           </div>
 
-          {/* Field selector — shared by all actions */}
-          <div style={S.field}>
-            <label style={S.label}>Field</label>
-            <select style={S.select} value={form.field || ''} onChange={e => set('field', e.target.value)}>
-              {activeFields.map(f => <option key={f.id} value={f.id}>{f.name} ({f.crop})</option>)}
-            </select>
-          </div>
+          {/* Field selector — only for farm actions */}
+          {!isRetail && (
+            <div style={S.field}>
+              <label style={S.label}>Field</label>
+              <select style={S.select} value={form.field || ''} onChange={e => set('field', e.target.value)}>
+                {activeFields.map(f => <option key={f.id} value={f.id}>{f.name} ({f.crop})</option>)}
+              </select>
+            </div>
+          )}
+
+          {action === 'new_sale' && (
+            <div style={{ padding: '12px 0', fontSize: 13, color: '#6b7280' }}>
+              Opens the Point of Sale page to start a new transaction.
+            </div>
+          )}
+
+          {action === 'stock_in' && (
+            <>
+              <div style={S.field}>
+                <label style={S.label}>Product</label>
+                <select style={S.select} value={form.product || ''} onChange={e => set('product', e.target.value)}>
+                  <option value="">Select product...</option>
+                  {productList.map(p => <option key={p.id} value={p.id}>{p.name} (current: {p.stock_quantity || 0})</option>)}
+                </select>
+              </div>
+              <div style={S.row}>
+                <div style={S.field}>
+                  <label style={S.label}>Quantity In</label>
+                  <input style={S.input} type="number" placeholder="0" value={form.quantity || ''} onChange={e => set('quantity', e.target.value)} />
+                </div>
+                <div style={S.field}>
+                  <label style={S.label}>Reason</label>
+                  <input style={S.input} placeholder="e.g. supplier delivery" value={form.reason || ''} onChange={e => set('reason', e.target.value)} />
+                </div>
+              </div>
+            </>
+          )}
+
+          {action === 'new_customer' && (
+            <>
+              <div style={S.field}>
+                <label style={S.label}>Name</label>
+                <input style={S.input} placeholder="Full name" value={form.name || ''} onChange={e => set('name', e.target.value)} />
+              </div>
+              <div style={S.row}>
+                <div style={S.field}>
+                  <label style={S.label}>Phone</label>
+                  <input style={S.input} placeholder="e.g. +263..." value={form.phone || ''} onChange={e => set('phone', e.target.value)} />
+                </div>
+                <div style={S.field}>
+                  <label style={S.label}>Email</label>
+                  <input style={S.input} type="email" placeholder="optional" value={form.email || ''} onChange={e => set('email', e.target.value)} />
+                </div>
+              </div>
+            </>
+          )}
+
+          {action === 'retail_expense' && (
+            <>
+              <div style={S.row}>
+                <div style={S.field}>
+                  <label style={S.label}>Amount ($)</label>
+                  <input style={S.input} type="number" placeholder="0.00" value={form.amount || ''} onChange={e => set('amount', e.target.value)} />
+                </div>
+                <div style={S.field}>
+                  <label style={S.label}>Category</label>
+                  <select style={S.select} value={form.category || 'other'} onChange={e => set('category', e.target.value)}>
+                    <option value="rent">Rent</option>
+                    <option value="utilities">Utilities</option>
+                    <option value="salaries">Salaries</option>
+                    <option value="supplies">Supplies</option>
+                    <option value="transport">Transport</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div style={S.row}>
+                <div style={S.field}>
+                  <label style={S.label}>Description</label>
+                  <input style={S.input} placeholder="What was this for?" value={form.description || ''} onChange={e => set('description', e.target.value)} />
+                </div>
+                <div style={S.field}>
+                  <label style={S.label}>Date</label>
+                  <input style={S.input} type="date" value={form.expense_date || today()} onChange={e => set('expense_date', e.target.value)} />
+                </div>
+              </div>
+            </>
+          )}
 
           {action === 'expense' && (
             <>
@@ -260,7 +396,15 @@ export default function QuickCapture() {
           )}
 
           <button style={S.submitBtn(act.color)} onClick={submit}>
-            {act.key === 'expense' ? 'Save Expense' : act.key === 'harvest' ? 'Save Harvest' : act.key === 'water' ? 'Save Water Log' : 'Save Income'}
+            {act.key === 'expense' ? 'Save Expense'
+              : act.key === 'harvest' ? 'Save Harvest'
+              : act.key === 'water' ? 'Save Water Log'
+              : act.key === 'income' ? 'Save Income'
+              : act.key === 'new_sale' ? 'Open POS'
+              : act.key === 'stock_in' ? 'Save Stock-In'
+              : act.key === 'new_customer' ? 'Save Customer'
+              : act.key === 'retail_expense' ? 'Save Expense'
+              : 'Save'}
           </button>
         </div>
       </>

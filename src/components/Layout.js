@@ -146,7 +146,7 @@ export default function Layout({
       </div>
 
       {/* Quick Capture FAB — always visible */}
-      <QuickCapture />
+      <QuickCapture activeModule={activeModule} onTabChange={onTabChange} />
 
       {/* Bottom nav — Hick's Law: only 5 primary choices */}
       <div className="bottom-nav">
