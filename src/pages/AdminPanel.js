@@ -9,13 +9,16 @@ import { initials, avatarColor } from '../utils/format';
 
 const TABS = ['Users', 'Permissions', 'Audit Trail', 'Password Policy'];
 const ROLES = ['owner', 'manager', 'worker'];
-const PERMS = [
-  { key: 'can_view_report', label: 'Can view Report' },
-  { key: 'can_view_costs', label: 'Can view Costs' },
-  { key: 'can_view_workers', label: 'Can view Workers' },
-  { key: 'can_view_stock', label: 'Can view Stock' },
-  { key: 'can_view_sales', label: 'Can view Sales & Market' },
-  { key: 'can_view_hours', label: 'Can view Hours & Pay' },
+// Per-module permission flags. `module: 'any'` is always shown; 'farm' or
+// 'retail' entries are shown only when the tenant subscribes to that module.
+// Retail-only tenants thus never see the farm-specific toggles.
+const ALL_PERMS = [
+  { key: 'can_view_report',  label: 'Can view Reports',        module: 'any' },
+  { key: 'can_view_stock',   label: 'Can view Stock',          module: 'any' },
+  { key: 'can_view_sales',   label: 'Can view Sales',          module: 'any' },
+  { key: 'can_view_costs',   label: 'Can view Costs',          module: 'farm' },
+  { key: 'can_view_workers', label: 'Can view Workers',        module: 'farm' },
+  { key: 'can_view_hours',   label: 'Can view Hours & Pay',    module: 'farm' },
 ];
 const emptyUser = { first_name: '', last_name: '', username: '', email: '', role: 'worker', password: '' };
 
@@ -116,6 +119,21 @@ export default function AdminPanel() {
   const role = user?.role || 'worker';
   const qc = useQueryClient();
 
+  // Module-aware permission list. Retail-only tenants won't see Costs /
+  // Workers / Hours toggles; farm-only tenants won't see any retail-specific
+  // ones if those get added later. Falls back to showing all flags when the
+  // tenant has both modules (or none populated — legacy backward-compat).
+  const modules = user?.modules || [];
+  const hasFarm = modules.includes('farm');
+  const hasRetail = modules.includes('retail');
+  const PERMS = modules.length === 0
+    ? ALL_PERMS
+    : ALL_PERMS.filter(p =>
+        p.module === 'any'
+        || (p.module === 'farm' && hasFarm)
+        || (p.module === 'retail' && hasRetail)
+      );
+
   const [activeTab, setActiveTab] = useState('Users');
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUser, setNewUser] = useState(emptyUser);
@@ -172,7 +190,7 @@ export default function AdminPanel() {
   }, [auditData]);
 
   if (role !== 'owner') {
-    return <div style={S.locked}><div style={{ fontSize: 32, marginBottom: 8 }}>🔒</div><p>Admin Panel is only available to the farm owner.</p></div>;
+    return <div style={S.locked}><div style={{ fontSize: 32, marginBottom: 8 }}>🔒</div><p>Admin Panel is only available to the tenant owner.</p></div>;
   }
 
   const exportCSV = () => {
