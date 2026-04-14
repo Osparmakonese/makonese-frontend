@@ -66,6 +66,7 @@ export default function BarcodeGenerator({ onTabChange }) {
         </h1>
         {isOwnerOrManager && (
           <button
+            onClick={() => window.print()}
             style={{
               background: '#1a6b3a',
               color: '#fff',
@@ -187,6 +188,10 @@ export default function BarcodeGenerator({ onTabChange }) {
           </div>
 
           <button
+            onClick={() => {
+              console.log('Generating barcode for:', selectedProduct || defaultSku);
+              window.print();
+            }}
             style={{
               width: '100%',
               background: '#1a6b3a',
@@ -336,6 +341,10 @@ export default function BarcodeGenerator({ onTabChange }) {
                   </td>
                   <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', textAlign: 'center' }}>
                     <button
+                      onClick={() => {
+                        console.log('Generating/printing barcode for:', product.sku);
+                        window.print();
+                      }}
                       style={{
                         background: product.status === 'Generated' ? '#e8f5ee' : '#1a6b3a',
                         color: product.status === 'Generated' ? '#1a6b3a' : '#fff',

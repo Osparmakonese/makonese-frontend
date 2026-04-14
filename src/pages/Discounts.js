@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-import { getDiscounts, createDiscount, deleteDiscount } from '../api/retailApi';
+import { getDiscounts, createDiscount, updateDiscount, deleteDiscount } from '../api/retailApi';
 
 const S = {
   page: { maxWidth: 1200, margin: '0 auto', padding: 20 },
@@ -34,6 +34,17 @@ export default function Discounts({ onTabChange }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const isOwnerOrManager = user?.role === 'owner' || user?.role === 'manager';
+  const [showModal, setShowModal] = useState(false);
+  const [editingDiscount, setEditingDiscount] = useState(null);
+  const [form, setForm] = useState({
+    name: '',
+    code: '',
+    discount_type: 'percentage',
+    value: 10,
+    active: true,
+    start_date: new Date().toISOString().split('T')[0],
+    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  });
 
   const { data: allDiscounts = [], isLoading } = useQuery({
     queryKey: ['retail-discounts'],
@@ -44,6 +55,15 @@ export default function Discounts({ onTabChange }) {
   const createDiscountMutation = useMutation({
     mutationFn: createDiscount,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['retail-discounts'] })
+  });
+
+  const updateDiscountMutation = useMutation({
+    mutationFn: ({ id, data }) => updateDiscount(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retail-discounts'] });
+      setShowModal(false);
+      setEditingDiscount(null);
+    }
   });
 
   const deleteDiscountMutation = useMutation({
@@ -101,17 +121,46 @@ export default function Discounts({ onTabChange }) {
     ? (allDiscounts.reduce((sum, d) => sum + (d.discount_type === 'percentage' ? d.value : 0), 0) / allDiscounts.length)
     : 0;
 
-  const handleCreateDiscount = () => {
-    createDiscountMutation.mutate({
-      name: 'New Discount',
-      discount_type: 'percentage',
-      value: 10,
-      min_purchase: 0,
-      start_date: new Date().toISOString().split('T')[0],
-      end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      usage_limit: 100,
-      code: 'NEWDISCOUNT'
-    });
+  useEffect(() => {
+    if (editingDiscount) {
+      setForm({
+        name: editingDiscount.name || '',
+        code: editingDiscount.code || '',
+        discount_type: editingDiscount.discount_type || 'percentage',
+        value: editingDiscount.value || 10,
+        active: editingDiscount.active !== false,
+        start_date: editingDiscount.start_date || new Date().toISOString().split('T')[0],
+        end_date: editingDiscount.end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      });
+    } else {
+      setForm({
+        name: '',
+        code: '',
+        discount_type: 'percentage',
+        value: 10,
+        active: true,
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      });
+    }
+  }, [editingDiscount]);
+
+  const handleSaveDiscount = () => {
+    if (editingDiscount) {
+      updateDiscountMutation.mutate({ id: editingDiscount.id, data: form });
+    } else {
+      createDiscountMutation.mutate(form);
+    }
+  };
+
+  const handleOpenModal = (discount = null) => {
+    setEditingDiscount(discount);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingDiscount(null);
   };
 
   return (
@@ -121,7 +170,7 @@ export default function Discounts({ onTabChange }) {
         <h1 style={S.title}>Discounts & Promotions</h1>
         {isOwnerOrManager && (
           <button
-            onClick={handleCreateDiscount}
+            onClick={() => handleOpenModal()}
             disabled={createDiscountMutation.isPending}
             style={{
               ...S.headerBtn,
@@ -133,6 +182,209 @@ export default function Discounts({ onTabChange }) {
           </button>
         )}
       </div>
+
+      {/* Discount Modal */}
+      {showModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={handleCloseModal}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              padding: '24px',
+              maxWidth: 500,
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>
+              {editingDiscount ? 'Edit Discount' : 'New Discount'}
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 7,
+                    fontSize: 12,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                  Code
+                </label>
+                <input
+                  type="text"
+                  value={form.code}
+                  onChange={(e) => setForm({ ...form, code: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 7,
+                    fontSize: 12,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                  Type
+                </label>
+                <select
+                  value={form.discount_type}
+                  onChange={(e) => setForm({ ...form, discount_type: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 7,
+                    fontSize: 12,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <option value="percentage">Percentage</option>
+                  <option value="fixed">Fixed</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                  Value
+                </label>
+                <input
+                  type="number"
+                  value={form.value}
+                  onChange={(e) => setForm({ ...form, value: parseFloat(e.target.value) || 0 })}
+                  step="0.01"
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 7,
+                    fontSize: 12,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={form.start_date}
+                  onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 7,
+                    fontSize: 12,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={form.end_date}
+                  onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 7,
+                    fontSize: 12,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <input
+                type="checkbox"
+                checked={form.active}
+                onChange={(e) => setForm({ ...form, active: e.target.checked })}
+                style={{ width: 18, height: 18, cursor: 'pointer' }}
+              />
+              <label style={{ fontSize: 11, fontWeight: 500, color: '#374151', cursor: 'pointer' }}>
+                Active
+              </label>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={handleSaveDiscount}
+                disabled={createDiscountMutation.isPending || updateDiscountMutation.isPending}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  background: '#1a6b3a',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  opacity: createDiscountMutation.isPending || updateDiscountMutation.isPending ? 0.6 : 1,
+                }}
+              >
+                {editingDiscount ? 'Update' : 'Create'}
+              </button>
+              <button
+                onClick={handleCloseModal}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  background: '#f3f4f6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Metrics */}
       <div style={S.metricsGrid}>
@@ -200,19 +452,62 @@ export default function Discounts({ onTabChange }) {
                 <th style={S.th}>Times Used</th>
                 <th style={S.th}>Total Discounted</th>
                 <th style={S.th}>Revenue Impact</th>
+                {isOwnerOrManager && <th style={S.th}>Actions</th>}
               </tr>
             </thead>
             <tbody>
-              {pastPromotions.map((promo) => (
-                <tr key={promo.id}>
-                  <td style={S.td}>{promo.name}</td>
-                  <td style={S.td}>{promo.type}</td>
-                  <td style={S.td}>{promo.period}</td>
-                  <td style={S.td}>{promo.timesUsed}</td>
-                  <td style={S.td}>{promo.discounted}</td>
-                  <td style={{ ...S.td, color: '#1a6b3a', fontWeight: 600 }}>{promo.impact}</td>
-                </tr>
-              ))}
+              {pastPromotions.map((promo) => {
+                const fullDiscount = allDiscounts.find(d => d.id === promo.id);
+                return (
+                  <tr key={promo.id}>
+                    <td style={S.td}>{promo.name}</td>
+                    <td style={S.td}>{promo.type}</td>
+                    <td style={S.td}>{promo.period}</td>
+                    <td style={S.td}>{promo.timesUsed}</td>
+                    <td style={S.td}>{promo.discounted}</td>
+                    <td style={{ ...S.td, color: '#1a6b3a', fontWeight: 600 }}>{promo.impact}</td>
+                    {isOwnerOrManager && (
+                      <td style={S.td}>
+                        <button
+                          onClick={() => handleOpenModal(fullDiscount)}
+                          style={{
+                            padding: '4px 10px',
+                            border: '1px solid #1a6b3a',
+                            background: 'transparent',
+                            color: '#1a6b3a',
+                            borderRadius: 5,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            marginRight: 6,
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete ${promo.name}?`)) {
+                              deleteDiscountMutation.mutate(promo.id);
+                            }
+                          }}
+                          style={{
+                            padding: '4px 10px',
+                            border: '1px solid #c0392b',
+                            background: 'transparent',
+                            color: '#c0392b',
+                            borderRadius: 5,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

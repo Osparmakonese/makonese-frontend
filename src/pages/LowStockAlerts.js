@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { getLowStockProducts, getProducts } from '../api/retailApi';
@@ -35,6 +35,11 @@ const S = {
 
 export default function LowStockAlerts({ onTabChange }) {
   useAuth();
+  const [configOpen, setConfigOpen] = useState(false);
+  const [alertConfig, setAlertConfig] = useState(() => {
+    const saved = localStorage.getItem('lowStockAlertConfig');
+    return saved ? JSON.parse(saved) : { email: true, whatsapp: true, threshold: 5 };
+  });
 
   const { data: lowStockProducts = [], isLoading: lowStockLoading } = useQuery({
     queryKey: ['retail-low-stock'],
@@ -85,13 +90,126 @@ export default function LowStockAlerts({ onTabChange }) {
     return allProducts.filter(p => !lowStockIds.has(p.id)).length;
   }, [allProducts, lowStockProducts]);
 
+  const handleSaveConfig = () => {
+    localStorage.setItem('lowStockAlertConfig', JSON.stringify(alertConfig));
+    setConfigOpen(false);
+  };
+
   return (
     <div style={S.page}>
       {/* Header */}
       <div style={S.header}>
         <h1 style={S.title}>Low Stock Alerts</h1>
-        <button style={S.headerBtn}>Configure Alerts</button>
+        <button
+          onClick={() => setConfigOpen(true)}
+          style={S.headerBtn}
+        >
+          Configure Alerts
+        </button>
       </div>
+
+      {/* Config Modal */}
+      {configOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setConfigOpen(false)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              padding: '24px',
+              maxWidth: 400,
+              width: '90%',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 16, margin: 0 }}>
+              Alert Configuration
+            </h2>
+            <div style={{ marginTop: 16 }}>
+              <div style={S.toggleRow}>
+                <span style={S.toggleLabel}>Email daily low stock summary</span>
+                <input
+                  type="checkbox"
+                  checked={alertConfig.email}
+                  onChange={(e) => setAlertConfig({ ...alertConfig, email: e.target.checked })}
+                  style={{ width: 18, height: 18, cursor: 'pointer' }}
+                />
+              </div>
+              <div style={S.toggleRow}>
+                <span style={S.toggleLabel}>WhatsApp critical alerts</span>
+                <input
+                  type="checkbox"
+                  checked={alertConfig.whatsapp}
+                  onChange={(e) => setAlertConfig({ ...alertConfig, whatsapp: e.target.checked })}
+                  style={{ width: 18, height: 18, cursor: 'pointer' }}
+                />
+              </div>
+              <div style={{ ...S.toggleRow, paddingBottom: 0, borderBottom: 'none' }}>
+                <label style={S.toggleLabel}>
+                  Low Stock Threshold (days)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={alertConfig.threshold}
+                  onChange={(e) => setAlertConfig({ ...alertConfig, threshold: parseInt(e.target.value) || 5 })}
+                  style={{
+                    width: 60,
+                    padding: '6px 8px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 5,
+                    fontSize: 12,
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button
+                onClick={handleSaveConfig}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  background: '#1a6b3a',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setConfigOpen(false)}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  background: '#f3f4f6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Alert Banner */}
       {criticalCount > 0 && (
@@ -190,11 +308,21 @@ export default function LowStockAlerts({ onTabChange }) {
         </div>
         <div style={S.toggleRow}>
           <span style={S.toggleLabel}>Email daily low stock summary</span>
-          <input type="checkbox" defaultChecked style={{ width: 18, height: 18, cursor: 'pointer' }} />
+          <input
+            type="checkbox"
+            checked={alertConfig.email}
+            onChange={(e) => setAlertConfig({ ...alertConfig, email: e.target.checked })}
+            style={{ width: 18, height: 18, cursor: 'pointer' }}
+          />
         </div>
         <div style={S.toggleRow}>
           <span style={S.toggleLabel}>WhatsApp critical alerts</span>
-          <input type="checkbox" defaultChecked style={{ width: 18, height: 18, cursor: 'pointer' }} />
+          <input
+            type="checkbox"
+            checked={alertConfig.whatsapp}
+            onChange={(e) => setAlertConfig({ ...alertConfig, whatsapp: e.target.checked })}
+            style={{ width: 18, height: 18, cursor: 'pointer' }}
+          />
         </div>
       </div>
 

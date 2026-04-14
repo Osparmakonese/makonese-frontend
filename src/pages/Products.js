@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getProducts,
   createProduct,
+  updateProduct,
+  deleteProduct,
   getCategories,
   getLowStockProducts,
   getExpiringProducts,
@@ -12,7 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { fmt } from '../utils/format';
 
 /* ─── Modal Component ─── */
-function AddProductModal({ isOpen, onClose, onSubmit, categories, loading }) {
+function AddProductModal({ isOpen, onClose, onSubmit, categories, loading, initialData }) {
   const [form, setForm] = useState({
     name: '',
     sku: '',
@@ -25,6 +27,36 @@ function AddProductModal({ isOpen, onClose, onSubmit, categories, loading }) {
     expiry_date: '',
     description: '',
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setForm({
+        name: initialData.name || '',
+        sku: initialData.sku || '',
+        category: initialData.category || '',
+        cost_price: initialData.cost_price || '',
+        selling_price: initialData.selling_price || '',
+        quantity_in_stock: initialData.quantity_in_stock || '',
+        reorder_level: initialData.reorder_level || '',
+        unit: initialData.unit || 'Piece',
+        expiry_date: initialData.expiry_date || '',
+        description: initialData.description || '',
+      });
+    } else {
+      setForm({
+        name: '',
+        sku: '',
+        category: '',
+        cost_price: '',
+        selling_price: '',
+        quantity_in_stock: '',
+        reorder_level: '',
+        unit: 'Piece',
+        expiry_date: '',
+        description: '',
+      });
+    }
+  }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -92,7 +124,7 @@ function AddProductModal({ isOpen, onClose, onSubmit, categories, loading }) {
               fontFamily: "'Playfair Display', serif",
             }}
           >
-            {'\u{2795}'} Add Product
+            {initialData ? '\u{270F}' : '\u{2795}'} {initialData ? 'Edit Product' : 'Add Product'}
           </h2>
           <button
             onClick={onClose}
@@ -361,7 +393,7 @@ function AddProductModal({ isOpen, onClose, onSubmit, categories, loading }) {
                 opacity: loading ? 0.6 : 1,
               }}
             >
-              {loading ? 'Saving...' : 'Add Product'}
+              {loading ? 'Saving...' : (initialData ? 'Update Product' : 'Add Product')}
             </button>
             <button
               type="button"
@@ -509,6 +541,7 @@ export default function Products() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [showModal, setShowModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
 
@@ -549,6 +582,24 @@ export default function Products() {
     },
   });
 
+  const updateMut = useMutation({
+    mutationFn: ({ id, data }) => updateProduct(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['retail-products'] });
+      qc.invalidateQueries({ queryKey: ['retail-low-stock'] });
+      setShowModal(false);
+      setEditingProduct(null);
+    },
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['retail-products'] });
+      qc.invalidateQueries({ queryKey: ['retail-low-stock'] });
+    },
+  });
+
   const lowStockIds = new Set(lowStock.map((p) => p.id));
   const expiringIds = new Set(expiring.map((p) => p.id));
 
@@ -562,7 +613,11 @@ export default function Products() {
   }, [products, search, categoryFilter]);
 
   const handleAddProduct = (formData) => {
-    createMut.mutate(formData);
+    if (editingProduct) {
+      updateMut.mutate({ id: editingProduct.id, data: formData });
+    } else {
+      createMut.mutate(formData);
+    }
   };
 
   // Listen for topbar primary action event
@@ -684,8 +739,8 @@ export default function Products() {
                       <td style={S.td}>
                         <button
                           onClick={() => {
-                            // Edit action placeholder
-                            console.log('Edit product:', product.id);
+                            setEditingProduct(product);
+                            setShowModal(true);
                           }}
                           style={{
                             padding: '4px 10px',
@@ -696,9 +751,29 @@ export default function Products() {
                             fontSize: 11,
                             fontWeight: 600,
                             cursor: 'pointer',
+                            marginRight: 6,
                           }}
                         >
                           Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete ${product.name}?`)) {
+                              deleteMut.mutate(product.id);
+                            }
+                          }}
+                          style={{
+                            padding: '4px 10px',
+                            border: '1px solid #c0392b',
+                            background: 'transparent',
+                            color: '#c0392b',
+                            borderRadius: 5,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Delete
                         </button>
                       </td>
                     )}
@@ -810,10 +885,14 @@ export default function Products() {
       {!isWorker && (
         <AddProductModal
           isOpen={showModal}
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            setShowModal(false);
+            setEditingProduct(null);
+          }}
           onSubmit={handleAddProduct}
           categories={categories}
-          loading={createMut.isPending}
+          loading={createMut.isPending || updateMut.isPending}
+          initialData={editingProduct}
         />
       )}
     </div>

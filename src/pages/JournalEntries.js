@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { getJournalEntries, createJournalEntry, getTrialBalance } from '../api/retailApi';
@@ -36,6 +36,14 @@ export default function JournalEntries({ onTabChange }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const canCreate = user?.role === 'owner' || user?.role === 'manager';
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({
+    entry_date: new Date().toISOString().split('T')[0],
+    description: '',
+    account: '',
+    debit_amount: '',
+    credit_amount: '',
+  });
 
   const { data: entries = [], isLoading: entriesLoading } = useQuery({
     queryKey: ['retail-journal-entries'],
@@ -54,6 +62,14 @@ export default function JournalEntries({ onTabChange }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['retail-journal-entries'] });
       queryClient.invalidateQueries({ queryKey: ['retail-trial-balance'] });
+      setShowModal(false);
+      setForm({
+        entry_date: new Date().toISOString().split('T')[0],
+        description: '',
+        account: '',
+        debit_amount: '',
+        credit_amount: '',
+      });
     }
   });
 
@@ -78,14 +94,11 @@ export default function JournalEntries({ onTabChange }) {
 
   const handleCreateEntry = () => {
     createEntryMutation.mutate({
-      entry_date: new Date().toISOString().split('T')[0],
-      reference: `JE-${String(entries.length + 1).padStart(4, '0')}`,
-      description: 'New Journal Entry',
-      entry_type: 'general',
-      debit_account: 1,
-      credit_account: 2,
-      debit_amount: 0,
-      credit_amount: 0
+      entry_date: form.entry_date,
+      description: form.description,
+      account: form.account,
+      debit_amount: form.debit_amount ? parseFloat(form.debit_amount) : 0,
+      credit_amount: form.credit_amount ? parseFloat(form.credit_amount) : 0,
     });
   };
 
@@ -95,7 +108,7 @@ export default function JournalEntries({ onTabChange }) {
         <h1 style={styles.title}>Journal Entries</h1>
         {canCreate && (
           <button
-            onClick={handleCreateEntry}
+            onClick={() => setShowModal(true)}
             disabled={createEntryMutation.isPending}
             style={{
               ...styles.addBtn,
@@ -107,6 +120,174 @@ export default function JournalEntries({ onTabChange }) {
           </button>
         )}
       </div>
+
+      {/* New Entry Modal */}
+      {showModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              padding: '24px',
+              maxWidth: 500,
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>
+              New Journal Entry
+            </h2>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                Date
+              </label>
+              <input
+                type="date"
+                value={form.entry_date}
+                onChange={(e) => setForm({ ...form, entry_date: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                Description
+              </label>
+              <input
+                type="text"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                Account
+              </label>
+              <input
+                type="text"
+                value={form.account}
+                onChange={(e) => setForm({ ...form, account: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                  Debit Amount
+                </label>
+                <input
+                  type="number"
+                  value={form.debit_amount}
+                  onChange={(e) => setForm({ ...form, debit_amount: e.target.value })}
+                  step="0.01"
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 7,
+                    fontSize: 12,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                  Credit Amount
+                </label>
+                <input
+                  type="number"
+                  value={form.credit_amount}
+                  onChange={(e) => setForm({ ...form, credit_amount: e.target.value })}
+                  step="0.01"
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 7,
+                    fontSize: 12,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={handleCreateEntry}
+                disabled={createEntryMutation.isPending}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  background: '#1a6b3a',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  opacity: createEntryMutation.isPending ? 0.6 : 1,
+                }}
+              >
+                {createEntryMutation.isPending ? 'Creating...' : 'Create'}
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  background: '#f3f4f6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary */}
       <div style={styles.summaryRow}>

@@ -202,6 +202,7 @@ export default function Suppliers({ onTabChange }) {
                     <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>Total</th>
                     <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Expected Date</th>
                     <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'left' }}>Status</th>
+                    <th style={{ fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '7px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -218,6 +219,27 @@ export default function Suppliers({ onTabChange }) {
                           <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 20, textTransform: 'uppercase', background: statusColors.bg, color: statusColors.color }}>
                             {po.status}
                           </span>
+                        </td>
+                        <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', textAlign: 'center' }}>
+                          {po.status !== 'Received' && (
+                            <button
+                              onClick={() => receivePOMutation.mutate(po.id)}
+                              disabled={receivePOMutation.isPending}
+                              style={{
+                                background: '#1a6b3a',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '4px 10px',
+                                borderRadius: 4,
+                                fontSize: 9,
+                                fontWeight: 600,
+                                cursor: receivePOMutation.isPending ? 'not-allowed' : 'pointer',
+                                opacity: receivePOMutation.isPending ? 0.6 : 1
+                              }}
+                            >
+                              {receivePOMutation.isPending ? 'Receiving...' : 'Receive'}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );

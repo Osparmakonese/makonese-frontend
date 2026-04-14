@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { getPayrollRuns, createPayrollRun, approvePayrollRun, markPayrollPaid } from '../api/retailApi';
@@ -35,11 +35,28 @@ const styles = {
 export default function RetailPayroll({ onTabChange }) {
   useAuth();
   const queryClient = useQueryClient();
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({
+    period_start: new Date().toISOString().split('T')[0],
+    period_end: new Date().toISOString().split('T')[0],
+  });
 
   const { data: payrollData, isLoading } = useQuery({
     queryKey: ['retail-payroll-runs'],
     queryFn: getPayrollRuns,
     staleTime: 30000
+  });
+
+  const createRunMutation = useMutation({
+    mutationFn: createPayrollRun,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retail-payroll-runs'] });
+      setShowModal(false);
+      setForm({
+        period_start: new Date().toISOString().split('T')[0],
+        period_end: new Date().toISOString().split('T')[0],
+      });
+    }
   });
 
   const payrollRuns = payrollData?.map(run => ({
@@ -58,10 +75,118 @@ export default function RetailPayroll({ onTabChange }) {
     <div style={styles.page}>
       <div style={styles.header}>
         <h1 style={styles.title}>Payroll</h1>
-        <button style={styles.addBtn}>
+        <button
+          onClick={() => setShowModal(true)}
+          style={styles.addBtn}
+        >
           {'\u002B'} New Run
         </button>
       </div>
+
+      {/* New Run Modal */}
+      {showModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              padding: '24px',
+              maxWidth: 400,
+              width: '90%',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: '0 0 16px 0' }}>
+              New Payroll Run
+            </h2>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                Period Start
+              </label>
+              <input
+                type="date"
+                value={form.period_start}
+                onChange={(e) => setForm({ ...form, period_start: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>
+                Period End
+              </label>
+              <input
+                type="date"
+                value={form.period_end}
+                onChange={(e) => setForm({ ...form, period_end: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => createRunMutation.mutate(form)}
+                disabled={createRunMutation.isPending}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  background: '#1a6b3a',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  opacity: createRunMutation.isPending ? 0.6 : 1,
+                }}
+              >
+                {createRunMutation.isPending ? 'Creating...' : 'Create'}
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  background: '#f3f4f6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: 7,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={styles.infoBanner}>
         {'\u26A0\uFE0F'} PAYE + NSSA — Zimbabwe payroll compliance
