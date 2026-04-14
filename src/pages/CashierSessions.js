@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCashierSessions, createCashierSession, closeCashierSession } from '../api/retailApi';
+import { getCashierSessions, createCashierSession, closeCashierSession, getPOSSettings } from '../api/retailApi';
 import { fmt } from '../utils/format';
 import AIInsightCard from '../components/AIInsightCard';
 
@@ -48,28 +48,77 @@ function OpenSessionModal({ isOpen, onClose, onSubmit, loading }) {
   );
 }
 
-/* --- Close Session Modal --- */
-function CloseSessionModal({ isOpen, onClose, onSubmit, session, loading }) {
-  const [closingCash, setClosingCash] = useState('');
+/* --- Close Session Modal (denomination count + blind close + variance reveal) --- */
+// USD cash denominations commonly used in Zimbabwe. (ZWL denoms can be swapped
+// per-tenant later via POSSettings.denomination_set if/when needed.)
+const DENOMS = [
+  { value: 100, label: '$100' },
+  { value: 50,  label: '$50'  },
+  { value: 20,  label: '$20'  },
+  { value: 10,  label: '$10'  },
+  { value: 5,   label: '$5'   },
+  { value: 2,   label: '$2'   },
+  { value: 1,   label: '$1'   },
+  { value: 0.5, label: '50c'  },
+  { value: 0.25,label: '25c'  },
+  { value: 0.10,label: '10c'  },
+  { value: 0.05,label: '5c'   },
+];
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(session.id, { closing_cash: parseFloat(closingCash) || 0 });
-    setClosingCash('');
-  };
+function CloseSessionModal({ isOpen, onClose, onSubmit, session, loading, blindClose }) {
+  const [counts, setCounts] = useState({});   // { '100': 3, '20': 5, ... }
+  const [submitted, setSubmitted] = useState(false);
+
+  // Reset whenever modal reopens with a different session.
+  useEffect(() => {
+    if (isOpen) { setCounts({}); setSubmitted(false); }
+  }, [isOpen, session && session.id]);
 
   if (!isOpen || !session) return null;
 
+  const countedCash = DENOMS.reduce((sum, d) => {
+    const c = parseInt(counts[d.value] || 0, 10);
+    return sum + (isNaN(c) ? 0 : c) * d.value;
+  }, 0);
+
+  // Expected cash = opening_float + cash sales (paid in cash).
+  const cashPayments = (session.payment_breakdown && session.payment_breakdown.cash) || { total: 0 };
+  const expectedCash = Number(session.opening_float || 0) + Number(cashPayments.total || 0);
+  const variance = countedCash - expectedCash;
+
+  const showVariance = !blindClose || submitted;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (blindClose && !submitted) {
+      // First submit in blind mode → reveal variance, ask cashier to confirm.
+      setSubmitted(true);
+      return;
+    }
+    const payload = {
+      closing_cash: countedCash,
+      closing_denominations: Object.fromEntries(
+        Object.entries(counts)
+          .filter(([, c]) => parseInt(c, 10) > 0)
+          .map(([d, c]) => [d, parseInt(c, 10)])
+      ),
+    };
+    onSubmit(session.id, payload);
+  };
+
+  const pillColor = variance === 0 ? '#1a6b3a' : variance < 0 ? '#c0392b' : '#b8860b';
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={onClose}>
-      <div style={{ background: '#fff', borderRadius: 12, padding: 24, maxWidth: 420, width: '90%' }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div style={{ background: '#fff', borderRadius: 12, padding: 24, maxWidth: 560, width: '92%', maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#111827' }}>
             {'\u{1F512}'} Close Session #{session.id}
           </h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#9ca3af' }}>{'\u00D7'}</button>
         </div>
 
+        {/* Session facts */}
         <div style={{ background: '#f9fafb', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 11 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
             <span style={{ color: '#6b7280' }}>Cashier:</span>
@@ -79,20 +128,80 @@ function CloseSessionModal({ isOpen, onClose, onSubmit, session, loading }) {
             <span style={{ color: '#6b7280' }}>Opened:</span>
             <strong>{session.opened_at ? new Date(session.opened_at).toLocaleString() : ''}</strong>
           </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ color: '#6b7280' }}>Sales:</span>
+            <strong>{session.sales_count || 0} txns &middot; {fmt(session.sales_total || 0, 'zwd')}</strong>
+          </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: '#6b7280' }}>Opening Float:</span>
             <strong style={{ color: '#1a6b3a' }}>{fmt(session.opening_float, 'zwd')}</strong>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>Closing Cash (Count the Drawer)</label>
-            <input type="number" step="0.01" value={closingCash} onChange={e => setClosingCash(e.target.value)} required placeholder="0.00" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: 7, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+        {blindClose && !submitted && (
+          <div style={{ background: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', borderRadius: 7, padding: 10, marginBottom: 12, fontSize: 11 }}>
+            {'\u{1F441}'} <strong>Blind close mode.</strong> Count the drawer by denomination without seeing the expected total. Variance will be revealed after you submit.
           </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: '#6b7280', marginBottom: 8, textTransform: 'uppercase' }}>
+            Denomination count
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 14 }}>
+            {DENOMS.map(d => {
+              const c = counts[d.value] || '';
+              const sub = (parseInt(c || 0, 10) || 0) * d.value;
+              return (
+                <div key={d.value} style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e5e7eb', borderRadius: 7, padding: '6px 8px' }}>
+                  <span style={{ fontWeight: 700, width: 46, color: '#111827' }}>{d.label}</span>
+                  <span style={{ color: '#9ca3af' }}>x</span>
+                  <input
+                    type="number" min="0" step="1"
+                    value={c}
+                    onChange={e => setCounts(prev => ({ ...prev, [d.value]: e.target.value }))}
+                    placeholder="0"
+                    style={{ flex: 1, padding: '6px 8px', border: '1px solid #e5e7eb', borderRadius: 5, fontSize: 13, outline: 'none', minWidth: 0 }}
+                  />
+                  <span style={{ fontSize: 11, color: '#6b7280', minWidth: 62, textAlign: 'right' }}>
+                    {sub > 0 ? fmt(sub, 'zwd') : ''}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Totals panel */}
+          <div style={{ background: '#f3f4f6', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ color: '#6b7280' }}>Counted (drawer):</span>
+              <strong>{fmt(countedCash, 'zwd')}</strong>
+            </div>
+            {showVariance ? (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ color: '#6b7280' }}>Expected:</span>
+                  <strong>{fmt(expectedCash, 'zwd')}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px dashed #d1d5db' }}>
+                  <span style={{ color: '#6b7280' }}>Variance:</span>
+                  <strong style={{ color: pillColor }}>
+                    {variance > 0 ? '+' : ''}{fmt(variance, 'zwd')}
+                  </strong>
+                </div>
+              </>
+            ) : (
+              <div style={{ color: '#9ca3af', fontStyle: 'italic', fontSize: 11 }}>
+                Expected / variance hidden until submit.
+              </div>
+            )}
+          </div>
+
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="submit" disabled={loading} style={{ flex: 1, padding: 10, background: '#c0392b', color: '#fff', border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', opacity: loading ? 0.6 : 1 }}>
-              {loading ? 'Closing...' : 'Close Session'}
+              {loading
+                ? 'Closing...'
+                : (blindClose && !submitted) ? 'Review Variance' : 'Confirm & Close Session'}
             </button>
             <button type="button" onClick={onClose} style={{ flex: 1, padding: 10, background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
           </div>
@@ -142,6 +251,13 @@ export default function CashierSessions() {
     queryFn: getCashierSessions,
     staleTime: 30000,
   });
+
+  const { data: posSettings } = useQuery({
+    queryKey: ['retail-pos-settings-for-close'],
+    queryFn: getPOSSettings,
+    staleTime: 60000,
+  });
+  const blindClose = !!(posSettings && posSettings.blind_close);
 
   const openMut = useMutation({
     mutationFn: createCashierSession,
@@ -228,7 +344,16 @@ export default function CashierSessions() {
                     <td style={{ ...S.tableCell, ...S.cashierCell }}>{session.cashier_username}</td>
                     <td style={S.tableCell}>{session.opened_at ? new Date(session.opened_at).toLocaleString() : '—'}</td>
                     <td style={S.tableCell}>{isOpen ? '—' : (session.closed_at ? new Date(session.closed_at).toLocaleString() : '—')}</td>
-                    <td style={S.tableCell}>0</td>
+                    <td style={S.tableCell}>
+                      <div style={{ fontWeight: 600, color: '#111827' }}>
+                        {session.sales_count || 0}
+                      </div>
+                      {(session.sales_total || 0) > 0 && (
+                        <div style={{ fontSize: 11, color: '#6b7280' }}>
+                          {fmt(session.sales_total || 0, 'zwd')}
+                        </div>
+                      )}
+                    </td>
                     <td style={S.tableCell}>{fmt(session.opening_float || 0, 'zwd')}</td>
                     <td style={S.tableCell}>{isOpen ? '—' : fmt(session.expected_cash || 0, 'zwd')}</td>
                     <td style={S.tableCell}>{isOpen ? '—' : fmt(session.closing_cash || 0, 'zwd')}</td>
@@ -286,7 +411,7 @@ export default function CashierSessions() {
       </div>
 
       <OpenSessionModal isOpen={showOpenModal} onClose={() => setShowOpenModal(false)} onSubmit={data => openMut.mutate(data)} loading={openMut.isPending} />
-      <CloseSessionModal isOpen={!!closingSession} onClose={() => setClosingSession(null)} onSubmit={handleCloseSession} session={closingSession} loading={closeMut.isPending} />
+      <CloseSessionModal isOpen={!!closingSession} onClose={() => setClosingSession(null)} onSubmit={handleCloseSession} session={closingSession} loading={closeMut.isPending} blindClose={blindClose} />
     </div>
   );
 }

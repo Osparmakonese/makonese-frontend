@@ -41,6 +41,7 @@ const TOGGLES = [
   { key: 'enable_hotkeys',         label: 'Enable F-key hotkeys',       hint: 'F2 scan, F4 discount, F10 complete, etc.' },
   { key: 'customer_display_enabled', label: 'Customer-facing display',  hint: 'Broadcast cart + total to the secondary screen.' },
   { key: 'auto_focus_scan',        label: 'Auto-focus scan bar',        hint: 'Keep the cursor in the scan input between sales.' },
+  { key: 'blind_close',            label: 'Blind drawer close',         hint: 'Require cashier to count the drawer by denomination without seeing the expected total. Variance is revealed only after submit \u2014 stops "making it balance" anchoring.' },
 ];
 
 const DEFAULTS = {
@@ -53,6 +54,7 @@ const DEFAULTS = {
   enable_hotkeys: true,
   customer_display_enabled: true,
   auto_focus_scan: true,
+  blind_close: false,
 };
 
 export default function POSSettingsPage() {
