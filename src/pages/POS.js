@@ -7,6 +7,8 @@ import {
   getCashierSessions,
 } from '../api/retailApi';
 import { fmt } from '../utils/format';
+import { confirm } from '../utils/confirm';
+import { requireManagerApproval } from '../utils/managerApproval';
 
 /* ─── Receipt Modal ─── */
 function ReceiptModal({ isOpen, onClose, receipt }) {
@@ -686,6 +688,49 @@ export default function POS() {
     setAmountTendered('');
   };
 
+  // Manager-override: void the current cart (supermarket convention —
+  // cashier summons manager, manager authenticates, cart clears with audit).
+  const handleVoidCart = async () => {
+    if (cart.length === 0) return;
+    if (!(await confirm({
+      title: 'Void current sale',
+      message: 'This will clear the cart. A manager must authorize this action. Continue?',
+      confirmText: 'Summon manager',
+      danger: true,
+    }))) return;
+    try {
+      await requireManagerApproval('void_sale', {
+        resourceType: 'cart',
+        notes: `${cart.length} item(s), subtotal ${subtotal}`,
+      });
+      resetCart();
+    } catch (e) {
+      if (e.message !== 'cancelled') {
+        alert('Void failed: ' + (e.message || 'unknown error'));
+      }
+    }
+  };
+
+  // Manager-override: applying a manual discount requires manager approval.
+  const handleDiscountChange = async (raw) => {
+    const prevVal = parseFloat(discount) || 0;
+    const newVal = parseFloat(raw) || 0;
+    // Only gate when *increasing* discount above 0. Reducing/clearing is free.
+    if (newVal > 0 && newVal !== prevVal) {
+      try {
+        await requireManagerApproval('price_override', {
+          resourceType: 'cart',
+          notes: `Discount ${prevVal} → ${newVal}`,
+        });
+        setDiscount(raw);
+      } catch (_) {
+        // cancelled — keep previous discount
+      }
+    } else {
+      setDiscount(raw);
+    }
+  };
+
   const handleCompleteSale = () => {
     const activeSessions = sessions.filter((s) => !s.closed_at);
     if (activeSessions.length === 0) {
@@ -988,7 +1033,7 @@ export default function POS() {
                   type="number"
                   placeholder="0"
                   value={discount}
-                  onChange={(e) => setDiscount(e.target.value)}
+                  onChange={(e) => handleDiscountChange(e.target.value)}
                   style={S.input}
                 />
               </div>
@@ -1004,6 +1049,28 @@ export default function POS() {
                   style={S.input}
                 />
               </div>
+
+              {/* Void Cart (manager approval) */}
+              <button
+                onClick={handleVoidCart}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  marginBottom: '8px',
+                  background: '#fff',
+                  color: '#dc2626',
+                  border: '1px solid #fecaca',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+                title="Requires manager approval"
+              >
+                ✕ Void Sale (Manager)
+              </button>
 
               {/* Complete Sale Button */}
               <button
