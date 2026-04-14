@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getProducts,
   barcodeLookup,
-  createSale,
   getCashierSessions,
 } from '../api/retailApi';
 import { fmt } from '../utils/format';
@@ -13,6 +12,10 @@ import { promptLoyaltyMember } from '../utils/loyaltyLookup';
 import { promptDiscountReason } from '../utils/discountReason';
 import { promptCashDrop, submitCashDrop } from '../utils/cashDrop';
 import { claimSessionLock } from '../utils/posSessionLock';
+import {
+  submitSaleOnline, installOfflineSync, getPendingCount,
+  onPendingChange, isOffline as posIsOffline,
+} from '../utils/offlinePOS';
 import api from '../api/axios';
 
 /* ─── Receipt Modal ─── */
@@ -73,7 +76,15 @@ function ReceiptModal({ isOpen, onClose, receipt }) {
           >
             Receipt #{receipt.receipt_number}
           </p>
-          <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center' }}>
+          <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {receipt._offline_pending && (
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 999,
+                background: '#fee2e2', color: '#b91c1c', letterSpacing: '0.05em',
+              }}>
+                {'\u{1F4F5}'} OFFLINE — WILL SYNC ON RECONNECT
+              </span>
+            )}
             {receipt.fiscal_submitted ? (
               <span style={{
                 fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 999,
@@ -597,6 +608,10 @@ export default function POS() {
   const [isLockOwner, setIsLockOwner] = useState(true);
   const [activeSessionId, setActiveSessionId] = useState(null);
 
+  // Batch 2b: offline queue state
+  const [pendingCount, setPendingCount] = useState(() => getPendingCount());
+  const [offline, setOffline] = useState(() => posIsOffline());
+
   // BroadcastChannel for the customer-facing display at /customer-display.
   const displayCh = useRef(null);
   useEffect(() => {
@@ -672,28 +687,60 @@ export default function POS() {
     };
   }, [sessions, activeSessionId]);
 
+  // Batch 2b: wraps createSale with an offline queue. On network failure
+  // (or pre-detected offline), the sale gets an idempotent client key,
+  // goes to the queue, and we show an optimistic receipt immediately. The
+  // reconnect sync (installOfflineSync below) drains the queue on recovery.
   const createSaleMut = useMutation({
-    mutationFn: createSale,
-    onSuccess: (data) => {
-      setReceipt(data);
-      setLastReceiptId(data?.id || null);
+    mutationFn: (saleData) => submitSaleOnline(api, saleData),
+    onSuccess: ({ sale, source }) => {
+      setReceipt(sale);
+      setLastReceiptId(sale?.id || null);
       setShowReceipt(true);
-      // Award loyalty points if a member was attached (1 pt per 1 unit of total)
-      if (loyaltyMember) {
-        const pts = Math.floor(parseFloat(data?.total || grandTotal) || 0);
+      // Award loyalty points only when the sale is confirmed server-side.
+      // For queued offline sales we defer until drain (simpler than queuing
+      // a second endpoint — re-award on reconnect is a 2b-follow-up).
+      if (loyaltyMember && source === 'online') {
+        const pts = Math.floor(parseFloat(sale?.total || grandTotal) || 0);
         if (pts > 0) {
           api.post('/retail/loyalty-transactions/', {
             member: loyaltyMember.id,
             points: pts,
             transaction_type: 'earn',
-            notes: `Sale #${data?.id || ''}`,
+            notes: `Sale #${sale?.id || ''}`,
           }).catch(() => {});
         }
       }
       resetCart();
       qc.invalidateQueries({ queryKey: ['retail-products-pos'] });
+      setPendingCount(getPendingCount());
     },
   });
+
+  // Keep offline + pending state live. installOfflineSync also runs a
+  // periodic drain and drains on the 'online' event.
+  useEffect(() => {
+    const stop = installOfflineSync(api, {
+      onDrain: ({ sent, failed, remaining }) => {
+        setPendingCount(remaining);
+        if (sent > 0) {
+          qc.invalidateQueries({ queryKey: ['retail-sessions-pos'] });
+          qc.invalidateQueries({ queryKey: ['retail-products-pos'] });
+        }
+      },
+    });
+    const unsubPending = onPendingChange((n) => setPendingCount(n));
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      try { stop(); } catch (_) {}
+      try { unsubPending(); } catch (_) {}
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, [qc]);
 
   const barcodeLookupMut = useMutation({
     mutationFn: barcodeLookup,
@@ -1122,6 +1169,20 @@ export default function POS() {
                    background: '#fffbeb', color: '#92400e', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
           💵 Cash Drop
         </button>
+        {(offline || pendingCount > 0) && (
+          <div
+            title={offline
+              ? `Offline — ${pendingCount} sale${pendingCount === 1 ? '' : 's'} queued. Will sync on reconnect.`
+              : `Syncing ${pendingCount} queued sale${pendingCount === 1 ? '' : 's'}…`}
+            style={{ padding: '6px 12px', borderRadius: 8,
+                     border: '1px solid ' + (offline ? '#fecaca' : '#fed7aa'),
+                     background: offline ? '#fee2e2' : '#fff7ed',
+                     color: offline ? '#b91c1c' : '#9a3412',
+                     fontSize: 11, fontWeight: 700, letterSpacing: '0.02em' }}>
+            {offline ? '📵 Offline' : '🔄 Syncing'}
+            {pendingCount > 0 ? ` · ${pendingCount}` : ''}
+          </div>
+        )}
         <button type="button" onClick={() => setShowHotkeys(true)}
           title="Keyboard shortcuts"
           style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db',
