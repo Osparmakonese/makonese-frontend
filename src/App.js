@@ -7,6 +7,7 @@ import { useAuth } from './context/AuthContext';
 import { getDashboard, getLowStock } from './api/farmApi';
 import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
+import CustomerDisplay from './pages/CustomerDisplay';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Fields from './pages/Fields';
@@ -310,6 +311,7 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="/customer-display" element={<CustomerDisplay />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

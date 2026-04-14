@@ -9,6 +9,9 @@ import {
 import { fmt } from '../utils/format';
 import { confirm } from '../utils/confirm';
 import { requireManagerApproval } from '../utils/managerApproval';
+import { promptLoyaltyMember } from '../utils/loyaltyLookup';
+import { promptDiscountReason } from '../utils/discountReason';
+import api from '../api/axios';
 
 /* ─── Receipt Modal ─── */
 function ReceiptModal({ isOpen, onClose, receipt }) {
@@ -555,6 +558,32 @@ export default function POS() {
   const [focusMode, setFocusMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Batch 1: usability pack
+  const [priceCheckMode, setPriceCheckMode] = useState(false);
+  const [lastPriceCheck, setLastPriceCheck] = useState(null); // { name, price, stock, ts }
+  const [loyaltyMember, setLoyaltyMember] = useState(null);
+  const [discountReason, setDiscountReason] = useState('');
+  const [discountNotes, setDiscountNotes] = useState('');
+  const [suspendedSales, setSuspendedSales] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('pewil_pos_suspended') || '[]'); }
+    catch (_) { return []; }
+  });
+  const [suspendDrawerOpen, setSuspendDrawerOpen] = useState(false);
+  const [showHotkeys, setShowHotkeys] = useState(false);
+  const [lastReceiptId, setLastReceiptId] = useState(null);
+
+  // BroadcastChannel for the customer-facing display at /customer-display.
+  const displayCh = useRef(null);
+  useEffect(() => {
+    try { displayCh.current = new BroadcastChannel('pewil-pos'); } catch (_) {}
+    return () => { try { displayCh.current?.close(); } catch (_) {} };
+  }, []);
+
+  // Persist suspended sales across refreshes.
+  useEffect(() => {
+    try { localStorage.setItem('pewil_pos_suspended', JSON.stringify(suspendedSales)); } catch (_) {}
+  }, [suspendedSales]);
+
   // Toggle body class so CSS hides Pewil chrome in focus mode. Auto-clean on unmount.
   useEffect(() => {
     if (focusMode) document.body.classList.add('pewil-pos-focus');
@@ -595,7 +624,20 @@ export default function POS() {
     mutationFn: createSale,
     onSuccess: (data) => {
       setReceipt(data);
+      setLastReceiptId(data?.id || null);
       setShowReceipt(true);
+      // Award loyalty points if a member was attached (1 pt per 1 unit of total)
+      if (loyaltyMember) {
+        const pts = Math.floor(parseFloat(data?.total || grandTotal) || 0);
+        if (pts > 0) {
+          api.post('/retail/loyalty-transactions/', {
+            member: loyaltyMember.id,
+            points: pts,
+            transaction_type: 'earned',
+            notes: `Sale #${data?.id || ''}`,
+          }).catch(() => {});
+        }
+      }
       resetCart();
       qc.invalidateQueries({ queryKey: ['retail-products-pos'] });
     },
@@ -604,11 +646,17 @@ export default function POS() {
   const barcodeLookupMut = useMutation({
     mutationFn: barcodeLookup,
     onSuccess: (data) => {
-      if (data) {
+      if (!data) return;
+      if (priceCheckMode) {
+        setLastPriceCheck({
+          name: data.name, price: data.selling_price,
+          stock: data.quantity_in_stock, ts: Date.now(),
+        });
+      } else {
         addToCart(data);
-        setBarcode('');
-        barcodeInputRef.current?.focus();
       }
+      setBarcode('');
+      barcodeInputRef.current?.focus();
     },
   });
 
@@ -686,7 +734,29 @@ export default function POS() {
     setTax('');
     setPaymentMethod('cash');
     setAmountTendered('');
+    setLoyaltyMember(null);
+    setDiscountReason('');
+    setDiscountNotes('');
   };
+
+  // Broadcast current state to customer-facing display every render.
+  useEffect(() => {
+    try {
+      displayCh.current?.postMessage({
+        type: 'state',
+        payload: {
+          items: cart, subtotal, discount: discountAmount, tax: taxAmount,
+          total: grandTotal, tendered: parseFloat(amountTendered) || 0,
+          change: change > 0 ? change : 0,
+          member: loyaltyMember ? {
+            first_name: loyaltyMember.first_name, phone: loyaltyMember.phone,
+            points_balance: loyaltyMember.points_balance,
+          } : null,
+          message: priceCheckMode ? 'Price check mode' : '',
+        },
+      });
+    } catch (_) {}
+  }, [cart, subtotal, discountAmount, taxAmount, grandTotal, amountTendered, change, loyaltyMember, priceCheckMode]);
 
   // Manager-override: void the current cart (supermarket convention —
   // cashier summons manager, manager authenticates, cart clears with audit).
@@ -711,24 +781,77 @@ export default function POS() {
     }
   };
 
-  // Manager-override: applying a manual discount requires manager approval.
-  const handleDiscountChange = async (raw) => {
-    const prevVal = parseFloat(discount) || 0;
-    const newVal = parseFloat(raw) || 0;
-    // Only gate when *increasing* discount above 0. Reducing/clearing is free.
-    if (newVal > 0 && newVal !== prevVal) {
-      try {
-        await requireManagerApproval('price_override', {
-          resourceType: 'cart',
-          notes: `Discount ${prevVal} → ${newVal}`,
-        });
-        setDiscount(raw);
-      } catch (_) {
-        // cancelled — keep previous discount
-      }
-    } else {
-      setDiscount(raw);
+  // Manager-override: applying a manual discount requires reason + manager approval.
+  const openDiscountDialog = async () => {
+    const picked = await promptDiscountReason({ current: discount, max: subtotal });
+    if (!picked) return;
+    try {
+      await requireManagerApproval('price_override', {
+        resourceType: 'cart',
+        notes: `Discount ${picked.amount} (${picked.reason})${picked.notes ? ' — ' + picked.notes : ''}`,
+      });
+      setDiscount(String(picked.amount));
+      setDiscountReason(picked.reason);
+      setDiscountNotes(picked.notes);
+    } catch (_) { /* cancelled */ }
+  };
+  const clearDiscount = () => {
+    setDiscount(''); setDiscountReason(''); setDiscountNotes('');
+  };
+
+  // Suspend / resume park-sale (supermarket convention: pause for a forgotten item).
+  const handleSuspendSale = async () => {
+    if (cart.length === 0) return;
+    const ticket = {
+      id: `s-${Date.now()}`,
+      label: loyaltyMember
+        ? `${loyaltyMember.first_name || loyaltyMember.phone || 'Member'} · ${cart.length} item${cart.length > 1 ? 's' : ''}`
+        : `${cart.length} item${cart.length > 1 ? 's' : ''} · ${fmt(grandTotal, 'zwd')}`,
+      ts: Date.now(),
+      cart, discount, tax, paymentMethod, amountTendered,
+      loyaltyMember, discountReason, discountNotes,
+    };
+    setSuspendedSales((prev) => [ticket, ...prev].slice(0, 20));
+    resetCart();
+  };
+  const handleResumeSale = (ticket) => {
+    setCart(ticket.cart || []);
+    setDiscount(ticket.discount || '');
+    setTax(ticket.tax || '');
+    setPaymentMethod(ticket.paymentMethod || 'cash');
+    setAmountTendered(ticket.amountTendered || '');
+    setLoyaltyMember(ticket.loyaltyMember || null);
+    setDiscountReason(ticket.discountReason || '');
+    setDiscountNotes(ticket.discountNotes || '');
+    setSuspendedSales((prev) => prev.filter((s) => s.id !== ticket.id));
+    setSuspendDrawerOpen(false);
+    barcodeInputRef.current?.focus();
+  };
+  const handleDeleteSuspended = async (ticket) => {
+    if (!(await confirm({ title: 'Delete suspended sale',
+      message: 'This cannot be recovered.', confirmText: 'Delete', danger: true }))) return;
+    setSuspendedSales((prev) => prev.filter((s) => s.id !== ticket.id));
+  };
+
+  // Loyalty — lookup and auto-apply at start of sale
+  const handleLoyaltyLookup = async () => {
+    const m = await promptLoyaltyMember();
+    if (m) setLoyaltyMember(m);
+  };
+
+  // Reprint last receipt (manager-gated)
+  const handleReprint = async () => {
+    if (!lastReceiptId && !receipt) {
+      alert('No recent receipt to reprint.');
+      return;
     }
+    try {
+      await requireManagerApproval('reprint_receipt', {
+        resourceType: 'sale',
+        resourceId: String(lastReceiptId || receipt?.id || ''),
+      });
+      setShowReceipt(true);
+    } catch (_) { /* cancelled */ }
   };
 
   const handleCompleteSale = () => {
@@ -745,6 +868,9 @@ export default function POS() {
 
     const saleData = {
       session: activeSessions[0].id,
+      customer_name: loyaltyMember
+        ? `${loyaltyMember.first_name || ''} ${loyaltyMember.last_name || ''}`.trim() || (loyaltyMember.phone || `Member #${loyaltyMember.id}`)
+        : undefined,
       items_data: cart.map((item) => ({
         product_id: item.product_id,
         product_name: item.name,
@@ -769,6 +895,74 @@ export default function POS() {
       barcodeLookupMut.mutate(barcode);
     }
   };
+
+  // Global hotkeys for cashier keyboards.
+  //   F2  — prompt quantity for last item
+  //   F3  — loyalty lookup
+  //   F4  — toggle price check mode
+  //   F6  — suspend sale
+  //   F7  — remove last line
+  //   F8  — reprint last receipt (manager)
+  //   F9  — complete sale
+  //   F10 — void cart (manager)
+  //   F12 — focus barcode scanner
+  //   ?   — show hotkey cheatsheet
+  //   Esc — cancel price check / close drawers
+  useEffect(() => {
+    const onKey = (e) => {
+      // Let modals / text fields handle their own keys where reasonable
+      const tag = (e.target.tagName || '').toLowerCase();
+      const inField = tag === 'input' || tag === 'textarea' || tag === 'select';
+      const inBarcode = e.target === barcodeInputRef.current;
+
+      if (e.key === 'F2') {
+        e.preventDefault();
+        if (cart.length === 0) return;
+        const last = cart[cart.length - 1];
+        const raw = window.prompt(`Quantity for ${last.name}:`, String(last.quantity));
+        if (raw == null) return;
+        const n = parseInt(raw, 10);
+        if (Number.isFinite(n) && n > 0) updateCartQty(last.product_id, n);
+      } else if (e.key === 'F3') {
+        e.preventDefault();
+        handleLoyaltyLookup();
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        setPriceCheckMode((v) => !v);
+        barcodeInputRef.current?.focus();
+      } else if (e.key === 'F6') {
+        e.preventDefault();
+        handleSuspendSale();
+      } else if (e.key === 'F7') {
+        e.preventDefault();
+        if (cart.length > 0) removeFromCart(cart[cart.length - 1].product_id);
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        handleReprint();
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        handleCompleteSale();
+      } else if (e.key === 'F10') {
+        e.preventDefault();
+        handleVoidCart();
+      } else if (e.key === 'F12') {
+        e.preventDefault();
+        barcodeInputRef.current?.focus();
+      } else if (e.key === '?' && !inField) {
+        e.preventDefault();
+        setShowHotkeys(true);
+      } else if (e.key === 'Escape') {
+        if (priceCheckMode) { setPriceCheckMode(false); setLastPriceCheck(null); }
+        if (suspendDrawerOpen) setSuspendDrawerOpen(false);
+        if (showHotkeys) setShowHotkeys(false);
+      }
+      // Suppress unused-var warning
+      void inBarcode;
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart, priceCheckMode, suspendDrawerOpen, showHotkeys, discount, tax, loyaltyMember]);
 
   return (
     <div style={{ ...S.page, height: focusMode ? '100vh' : 'calc(100vh - 110px)' }}>
@@ -800,6 +994,43 @@ export default function POS() {
           }}
         >
           {focusMode ? '✕ Exit Focus' : '◱ Focus Mode'}
+        </button>
+        <button type="button" onClick={() => setPriceCheckMode((v) => !v)}
+          title="Price check mode (F4) — scan without adding to cart"
+          style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #d1d5db',
+                   background: priceCheckMode ? '#f59e0b' : '#fff',
+                   color: priceCheckMode ? '#fff' : '#111827',
+                   fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+          🔍 Price Check
+        </button>
+        <button type="button" onClick={handleLoyaltyLookup}
+          title="Loyalty lookup (F3)"
+          style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #d1d5db',
+                   background: loyaltyMember ? '#1a6b3a' : '#fff',
+                   color: loyaltyMember ? '#fff' : '#111827',
+                   fontSize: 11, fontWeight: 600, cursor: 'pointer', maxWidth: 200, overflow: 'hidden',
+                   textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {loyaltyMember
+            ? `👤 ${loyaltyMember.first_name || loyaltyMember.phone || 'Member'} · ${loyaltyMember.points_balance ?? 0} pts`
+            : '👤 Loyalty'}
+        </button>
+        <button type="button" onClick={() => setSuspendDrawerOpen(true)}
+          title="Suspended sales"
+          style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #d1d5db',
+                   background: '#fff', color: '#111827', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+          ⏸ Parked ({suspendedSales.length})
+        </button>
+        <button type="button" onClick={handleReprint}
+          title="Reprint last receipt (F8) — manager approval required"
+          style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #d1d5db',
+                   background: '#fff', color: '#111827', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+          🖨 Reprint
+        </button>
+        <button type="button" onClick={() => setShowHotkeys(true)}
+          title="Keyboard shortcuts"
+          style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db',
+                   background: '#fff', color: '#111827', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+          ?
         </button>
         <button
           type="button"
@@ -839,12 +1070,32 @@ export default function POS() {
           <input
             ref={barcodeInputRef}
             type="text"
-            placeholder="Barcode (auto-scanned)"
+            placeholder={priceCheckMode ? '🔍 Scan for price (no add to cart)' : 'Scan barcode (auto-focus)'}
             value={barcode}
             onChange={(e) => setBarcode(e.target.value)}
             onKeyDown={handleBarcodeSubmit}
-            style={{ ...S.searchInput, marginTop: '4px', display: 'none' }}
+            style={{
+              ...S.searchInput,
+              marginTop: '4px',
+              border: priceCheckMode ? '2px solid #f59e0b' : S.searchInput.border,
+              background: priceCheckMode ? '#fffbeb' : '#fff',
+            }}
           />
+          {priceCheckMode && lastPriceCheck && (
+            <div style={{ marginTop: 6, padding: 10, background: '#fffbeb',
+                          border: '1px solid #fde68a', borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: '#b45309', fontWeight: 700, textTransform: 'uppercase' }}>
+                Price check
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginTop: 2 }}>
+                {lastPriceCheck.name}
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1a6b3a', marginTop: 2 }}>
+                {fmt(lastPriceCheck.price, 'zwd')}
+              </div>
+              <div style={{ fontSize: 11, color: '#6b7280' }}>Stock: {lastPriceCheck.stock}</div>
+            </div>
+          )}
         </div>
 
         {/* Product Grid */}
@@ -1026,16 +1277,35 @@ export default function POS() {
                 )}
               </div>
 
-              {/* Discount */}
+              {/* Discount — reason required, manager-gated */}
               <div style={S.section}>
                 <div style={S.sectionLabel}>Discount</div>
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={discount}
-                  onChange={(e) => handleDiscountChange(e.target.value)}
-                  style={S.input}
-                />
+                {discountAmount > 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8,
+                                padding: '8px 10px', background: '#fffbeb',
+                                border: '1px solid #fde68a', borderRadius: 8 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+                        − {fmt(discountAmount, 'zwd')}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#6b7280' }}>
+                        {discountReason || 'manual'}{discountNotes ? ` · ${discountNotes}` : ''}
+                      </div>
+                    </div>
+                    <button type="button" onClick={clearDiscount}
+                      style={{ padding: '4px 8px', background: '#fff', border: '1px solid #e5e7eb',
+                               borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>
+                      Clear
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={openDiscountDialog}
+                    style={{ width: '100%', padding: '10px', background: '#fff',
+                             border: '1px dashed #d1d5db', borderRadius: 8, color: '#4b5563',
+                             fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                    + Add discount (manager)
+                  </button>
+                )}
               </div>
 
               {/* Tax */}
@@ -1049,6 +1319,21 @@ export default function POS() {
                   style={S.input}
                 />
               </div>
+
+              {/* Suspend sale */}
+              <button
+                onClick={handleSuspendSale}
+                style={{
+                  width: '100%', padding: '10px', marginBottom: '8px',
+                  background: '#fff', color: '#1f2937',
+                  border: '1px solid #e5e7eb', borderRadius: '8px',
+                  fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+                  textTransform: 'uppercase', letterSpacing: '0.04em',
+                }}
+                title="Park this sale (F6) — come back to it later"
+              >
+                ⏸ Suspend Sale
+              </button>
 
               {/* Void Cart (manager approval) */}
               <button
@@ -1104,12 +1389,104 @@ export default function POS() {
         </div>
       </div>
 
+      {/* Suspended sales drawer */}
+      {suspendDrawerOpen && (
+        <div onClick={() => setSuspendDrawerOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)',
+                   zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: 12, width: '92%', maxWidth: 520,
+                     maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                     boxShadow: '0 24px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb',
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Parked
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 700 }}>Suspended sales ({suspendedSales.length})</div>
+              </div>
+              <button onClick={() => setSuspendDrawerOpen(false)}
+                style={{ border: 'none', background: 'transparent', fontSize: 20, cursor: 'pointer', color: '#6b7280' }}>×</button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: 16 }}>
+              {suspendedSales.length === 0 ? (
+                <div style={{ color: '#9ca3af', textAlign: 'center', padding: 30, fontSize: 13 }}>
+                  No parked sales.
+                </div>
+              ) : suspendedSales.map((s) => (
+                <div key={s.id}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8,
+                           padding: 12, background: '#f9fafb', border: '1px solid #e5e7eb',
+                           borderRadius: 8, marginBottom: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{s.label}</div>
+                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+                      {new Date(s.ts).toLocaleTimeString()}
+                    </div>
+                  </div>
+                  <button onClick={() => handleResumeSale(s)}
+                    style={{ padding: '6px 12px', background: '#1a6b3a', color: '#fff',
+                             border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    Resume
+                  </button>
+                  <button onClick={() => handleDeleteSuspended(s)}
+                    style={{ padding: '6px 10px', background: '#fff', color: '#dc2626',
+                             border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hotkey cheatsheet */}
+      {showHotkeys && (
+        <div onClick={() => setShowHotkeys(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)',
+                   zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: 12, width: '92%', maxWidth: 460,
+                     padding: 24, boxShadow: '0 24px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>Keyboard shortcuts</div>
+            {[
+              ['F2', 'Change quantity of last item'],
+              ['F3', 'Loyalty lookup'],
+              ['F4', 'Toggle price check mode'],
+              ['F6', 'Suspend current sale'],
+              ['F7', 'Remove last line'],
+              ['F8', 'Reprint last receipt (manager)'],
+              ['F9', 'Complete sale'],
+              ['F10', 'Void sale (manager)'],
+              ['F12', 'Focus barcode scanner'],
+              ['Esc', 'Close modals / exit price check'],
+            ].map(([k, label]) => (
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between',
+                                     padding: '6px 0', borderBottom: '1px solid #f3f4f6', fontSize: 13 }}>
+                <div style={{ color: '#374151' }}>{label}</div>
+                <div style={{ fontFamily: 'monospace', background: '#f3f4f6',
+                               padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 700 }}>
+                  {k}
+                </div>
+              </div>
+            ))}
+            <button onClick={() => setShowHotkeys(false)}
+              style={{ marginTop: 16, width: '100%', padding: 10, background: '#1a6b3a',
+                       color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Receipt Modal */}
       <ReceiptModal
         isOpen={showReceipt}
         onClose={() => {
           setShowReceipt(false);
-          resetCart();
+          // Note: do NOT wipe `receipt` here — we need it for F8 reprint.
           barcodeInputRef.current?.focus();
         }}
         receipt={receipt}
