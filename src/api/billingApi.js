@@ -4,7 +4,13 @@ import api from './axios';
 export const getPlans = () => api.get('/billing/plans/').then(r => r.data);
 
 // Current Plan
-export const getCurrentPlan = () => api.get('/billing/billing/current_plan/').then(r => r.data);
+// module: 'farm' | 'retail' (optional — omit to get all active subs)
+export const getCurrentPlan = (module) => {
+  const url = module
+    ? `/billing/billing/current_plan/?module=${encodeURIComponent(module)}`
+    : '/billing/billing/current_plan/';
+  return api.get(url).then(r => r.data);
+};
 export const changePlan = (data) => api.post('/billing/billing/change_plan/', data).then(r => r.data);
 
 // Invoices
@@ -17,7 +23,12 @@ export const getUsage = () => api.get('/billing/billing/usage/').then(r => r.dat
 export const getPaymentMethods = () => api.get('/billing/billing/payment_methods/').then(r => r.data);
 
 // Initialize payment (multi-provider)
-// body: { plan_slug, payment_method: 'card'|'ecocash'|'onemoney'|'mobile_money', phone_number? }
+// body: {
+//   plan_slug,
+//   payment_method: 'card'|'ecocash'|'onemoney'|'mobile_money',
+//   billing_cycle: 'monthly'|'yearly',
+//   phone_number?
+// }
 export const initializePayment = (data) =>
   api.post('/billing/billing/initialize_payment/', data).then(r => r.data);
 
