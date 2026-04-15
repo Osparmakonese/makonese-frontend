@@ -79,6 +79,7 @@ const RETAIL_DRAWER_SECTIONS = [
     { key: 'Multi-Currency', emoji: '\u{1F4B1}', label: 'Currency', sub: 'Exchange rates' },
     { key: 'Receipt Setup', emoji: '\u{1F9FE}', label: 'Receipts', sub: 'Templates' },
     { key: 'POS Settings', emoji: '\u{1F5A5}\uFE0F', label: 'POS Style', sub: 'Cashier screen look', ownerOnly: true },
+    { key: 'Manager PIN', emoji: '\u{1F510}', label: 'Manager PIN', sub: 'Unlock cashier approvals' },
     { key: 'Retail Billing', emoji: '\u{1F4B3}', label: 'Billing', sub: 'Subscription' },
     { key: 'Retail Settings', emoji: '\u2699\uFE0F', label: 'Settings', sub: 'Configuration' },
   ]},

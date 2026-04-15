@@ -152,3 +152,13 @@ export const createCashDrop = (body, approvalToken) =>
 // ── Manager approval (PIN-based sign-off returning a one-shot token) ──
 export const managerApprove = (body) =>
   api.post('/retail/manager-approval/approve/', body).then(r => r.data);
+
+// ── Manager PIN self-service (managers set/rotate their own PIN) ──
+export const getManagerPinStatus = () =>
+  api.get('/retail/manager-pin/status/').then(r => r.data);
+
+export const setManagerPin = (pin) =>
+  api.post('/retail/manager-pin/set/', { pin }).then(r => r.data);
+
+export const getManagerApprovalCapabilities = () =>
+  api.get('/retail/manager-approval/capabilities/').then(r => r.data);
