@@ -72,11 +72,25 @@ export const getTrialBalance = () => api.get('/retail/journal-entries/trial_bala
 
 // ── Payroll ──
 export const getPayrollRuns = () => api.get('/retail/payroll-runs/').then(r => r.data);
+export const getPayrollRun = (id) => api.get(`/retail/payroll-runs/${id}/`).then(r => r.data);
 export const createPayrollRun = (data) => api.post('/retail/payroll-runs/', data).then(r => r.data);
+export const deletePayrollRun = (id) => api.delete(`/retail/payroll-runs/${id}/`);
+export const generatePayrollLines = (id, body = {}) =>
+  api.post(`/retail/payroll-runs/${id}/generate_lines/`, body).then(r => r.data);
+export const recalculatePayrollRun = (id) =>
+  api.post(`/retail/payroll-runs/${id}/recalculate/`).then(r => r.data);
 export const approvePayrollRun = (id) => api.post(`/retail/payroll-runs/${id}/approve/`).then(r => r.data);
 export const markPayrollPaid = (id) => api.post(`/retail/payroll-runs/${id}/mark_paid/`).then(r => r.data);
+export const getPayslip = (runId, lineId) =>
+  api.get(`/retail/payroll-runs/${runId}/payslip/`, { params: { line: lineId } }).then(r => r.data);
 export const getPayrollLines = (runId) => api.get('/retail/payroll-lines/', { params: runId ? { run: runId } : {} }).then(r => r.data);
 export const createPayrollLine = (data) => api.post('/retail/payroll-lines/', data).then(r => r.data);
+export const updatePayrollLine = (id, data) => api.patch(`/retail/payroll-lines/${id}/`, data).then(r => r.data);
+export const deletePayrollLine = (id) => api.delete(`/retail/payroll-lines/${id}/`);
+
+// ── Zimbabwe Tax Config ──
+export const getTaxConfig = () => api.get('/retail/tax-config/current/').then(r => r.data);
+export const updateTaxConfig = (data) => api.patch('/retail/tax-config/current/', data).then(r => r.data);
 
 // ── Currency Rates ──
 export const getCurrencyRates = () => api.get('/retail/currency-rates/').then(r => r.data);

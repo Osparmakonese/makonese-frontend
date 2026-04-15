@@ -64,6 +64,7 @@ import POSSettingsPage from './pages/POSSettingsPage';
 import ManagerPinPage from './pages/ManagerPinPage';
 import ProfitMargins from './pages/ProfitMargins';
 import DeviceConfiguration from './pages/DeviceConfiguration';
+import TaxConfigPage from './pages/TaxConfigPage';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 /* --- */
@@ -121,6 +122,7 @@ const PAGES = {
   'Manager PIN': ManagerPinPage,
   'Profit Margins': ProfitMargins,
   'Device Config': DeviceConfiguration,
+  'Tax Config': TaxConfigPage,
   // Billing & Account
   'Billing': Billing,
   'Team': TeamManagement,
@@ -181,6 +183,7 @@ const PAGE_META = {
   'Manager PIN': { title: 'Manager PIN', sub: 'Set the PIN cashiers will use to unlock approvals' },
   'Profit Margins': { title: 'Profit Margins', sub: 'Margin analysis and pricing insights' },
   'Device Config': { title: 'Device Configuration', sub: 'Hardware setup, Print Bridge, and ZIMRA compliance' },
+  'Tax Config': { title: 'Tax Config', sub: 'Zimbabwe PAYE bands and NSSA rates' },
   // Billing
   'Billing': { title: 'Billing', sub: 'Pewil subscription, invoices, and usage' },
   'Team': { title: 'Team & Users', sub: 'Manage team members and permissions' },
@@ -237,6 +240,7 @@ const PRIMARY_ACTIONS = {
   'Manager PIN': null,
   'Profit Margins': 'Export CSV',
   'Device Config': '+ Add Device',
+  'Tax Config': 'Save tax configuration',
   'Billing': 'Change Plan',
   'Team': '+ Invite User',
 };
