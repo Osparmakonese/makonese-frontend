@@ -55,6 +55,7 @@ const DEFAULTS = {
   customer_display_enabled: true,
   auto_focus_scan: true,
   blind_close: false,
+  variance_threshold: 5,
 };
 
 export default function POSSettingsPage() {
@@ -162,6 +163,29 @@ export default function POSSettingsPage() {
               </button>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Cash reconciliation */}
+      <section style={styles.card}>
+        <div style={styles.tag}>Cash reconciliation</div>
+        <h2 style={styles.h2}>Variance approval threshold</h2>
+        <p style={styles.p}>
+          When a cashier closes their drawer and |variance| exceeds this amount, the POS forces them to
+          pick a reason code and get a manager PIN sign-off before the session can close. Set to
+          <b> -1</b> to disable the gate entirely, or <b>0</b> to require approval on any non-zero variance.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <input
+            type="number"
+            step="0.01"
+            min="-1"
+            value={form.variance_threshold ?? 5}
+            onChange={(e) => canEdit && set({ variance_threshold: e.target.value })}
+            disabled={!canEdit}
+            style={{ width: 160, padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 7, fontSize: 14, outline: 'none' }}
+          />
+          <span style={{ fontSize: 12, color: '#64748b' }}>USD</span>
         </div>
       </section>
 

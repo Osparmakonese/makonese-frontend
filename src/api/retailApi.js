@@ -129,3 +129,26 @@ export const getProfitMargins = () => api.get('/retail/analytics/profit_margins/
 // ── POS Settings (singleton per tenant) ──
 export const getPOSSettings = () => api.get('/retail/pos-settings/').then(r => r.data);
 export const updatePOSSettings = (data) => api.put('/retail/pos-settings/', data).then(r => r.data);
+
+// ── Cashier session advanced controls (Batch 5/6) ──
+export const getSessionXReport = (id) =>
+  api.get(`/retail/cashier-sessions/${id}/x-report/`).then(r => r.data);
+
+export const closeCashierSessionAdvanced = (id, body, approvalToken) =>
+  api.post(`/retail/cashier-sessions/${id}/close/`, body, {
+    headers: approvalToken ? { 'X-Manager-Approval': approvalToken } : {},
+  }).then(r => r.data);
+
+// ── Cash drops ──
+export const listCashDrops = (sessionId) =>
+  api.get('/retail/cash-drops/', { params: sessionId ? { session: sessionId } : {} })
+    .then(r => r.data);
+
+export const createCashDrop = (body, approvalToken) =>
+  api.post('/retail/cash-drops/', body, {
+    headers: approvalToken ? { 'X-Manager-Approval': approvalToken } : {},
+  }).then(r => r.data);
+
+// ── Manager approval (PIN-based sign-off returning a one-shot token) ──
+export const managerApprove = (body) =>
+  api.post('/retail/manager-approval/approve/', body).then(r => r.data);
