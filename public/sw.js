@@ -1,4 +1,4 @@
-﻿const CACHE = "makonese-v1";
+const CACHE = "pewil-v1";
 const OFFLINE_ASSETS = ["/", "/index.html", "/manifest.json", "/logo192.png", "/favicon.ico"];
 
 self.addEventListener("install", e => {
@@ -15,7 +15,8 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
-  if (url.hostname.includes("railway.app")) {
+  // API calls (Railway or pewil.org) — network-first, offline fallback
+  if (url.hostname.includes("railway.app") || url.hostname === "api.pewil.org") {
     e.respondWith(
       fetch(e.request).catch(() =>
         new Response(JSON.stringify({ offline: true, message: "You are offline. Data will sync when reconnected." }),
@@ -24,11 +25,12 @@ self.addEventListener("fetch", e => {
     );
     return;
   }
+  // Static assets — cache-first, network fallback
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
       return fetch(e.request).then(res => {
-        if (res && res.status === 200) {
+        if (res && res.status === 200 && url.origin === self.location.origin) {
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
@@ -46,9 +48,9 @@ self.addEventListener("sync", e => {
   }
 });
 
-// --- Web Push handler (#7 notifications) ---
+// --- Web Push handler ---
 self.addEventListener("push", e => {
-  let data = { title: "Makonese Farm", body: "New alert", url: "/" };
+  let data = { title: "Pewil", body: "New alert", url: "/app" };
   try {
     if (e.data) data = { ...data, ...e.data.json() };
   } catch (_) {
@@ -58,8 +60,8 @@ self.addEventListener("push", e => {
     body: data.body,
     icon: "/logo192.png",
     badge: "/logo192.png",
-    data: { url: data.url || "/" },
-    tag: data.tag || "farm-alert",
+    data: { url: data.url || "/app" },
+    tag: data.tag || "pewil-alert",
     renotify: true,
   };
   e.waitUntil(self.registration.showNotification(data.title, opts));
@@ -67,7 +69,7 @@ self.addEventListener("push", e => {
 
 self.addEventListener("notificationclick", e => {
   e.notification.close();
-  const url = (e.notification.data && e.notification.data.url) || "/";
+  const url = (e.notification.data && e.notification.data.url) || "/app";
   e.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(clients => {
       for (const c of clients) {

@@ -1,16 +1,17 @@
 {
-  "short_name": "Makonese Farm",
-  "name": "Makonese Farm Financial System",
-  "description": "Farm financial management system",
+  "short_name": "Pewil",
+  "name": "Pewil — Farm & Retail Management",
+  "description": "Farm management and retail POS platform built for African businesses",
   "icons": [
     { "src": "favicon.ico", "sizes": "64x64 32x32 24x24 16x16", "type": "image/x-icon" },
     { "src": "logo192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
     { "src": "logo512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
   ],
-  "start_url": ".",
+  "start_url": "/app",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#0D4A22",
   "background_color": "#ffffff",
-  "scope": "/"
+  "scope": "/",
+  "categories": ["business", "productivity", "finance"]
 }

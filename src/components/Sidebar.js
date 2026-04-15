@@ -170,14 +170,18 @@ const NAV_ITEMS = [
     { key: 'Report', emoji: '\u{1F4C8}', label: 'Report' },
     { key: 'Team', emoji: '\u{1F465}', label: 'Team' },
     { key: 'Billing', emoji: '\u{1F4B3}', label: 'Billing' },
+    { key: 'Data Export', emoji: '\u{1F4E4}', label: 'Data Export' },
+    { key: 'Audit Log', emoji: '\u{1F4DC}', label: 'Audit Log' },
     { key: 'Settings', emoji: '\u2699\uFE0F', label: 'Settings' },
     { key: 'Import', emoji: '\u{1F4E5}', label: 'Import' },
   ]},
-  // Admin Panel is cross-module. It manages users, permissions, audit trail,
-  // and password policy — all tenant-level concerns. Available to owners in
-  // either the farm or retail module so retail-only tenants still get it.
+  // Admin Panel is cross-module. Available to owners in either module.
   { section: 'ADMINISTRATION', module: 'any', ownerOnly: true, collapsible: false, items: [
     { key: 'Admin Panel', emoji: '\u{1F510}', label: 'Admin Panel' },
+  ]},
+  // Help is available to everyone in any module
+  { section: 'SUPPORT', module: 'any', collapsible: false, items: [
+    { key: 'Help', emoji: '\u2753', label: 'Help & Support' },
   ]},
 ];
 

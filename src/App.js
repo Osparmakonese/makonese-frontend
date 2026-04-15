@@ -1,71 +1,93 @@
 import OfflineBanner from './OfflineBanner';
-// v2 - production API routing fix
-import { useState } from 'react';
+// v3 - V1 release with all pages, routes, security, onboarding
+import React, { Suspense, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './context/AuthContext';
 import { getDashboard, getLowStock } from './api/farmApi';
 import Layout from './components/Layout';
-import LandingPage from './pages/LandingPage';
-import CustomerDisplay from './pages/CustomerDisplay';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Fields from './pages/Fields';
-import Sales from './pages/Sales';
-import Costs from './pages/Costs';
-import Stock from './pages/Stock';
-import Workers from './pages/Workers';
-import Hours from './pages/Hours';
-import Report from './pages/Report';
-import Settings from './pages/Settings';
-import Import from './pages/Import';
-import AdminPanel from './pages/AdminPanel';
-import FarmAssets from './pages/FarmAssets';
-import Cattle from './pages/Cattle';
-import Goats from './pages/Goats';
-import Sheep from './pages/Sheep';
-import Pigs from './pages/Pigs';
-import Broilers from './pages/Broilers';
-import Layers from './pages/Layers';
-import Harvest from './pages/Harvest';
-import Budget from './pages/Budget';
-import Water from './pages/Water';
-import Loans from './pages/Loans';
-import MarketPrices from './pages/MarketPrices';
-import Economics from './pages/Economics';
-import Billing from './pages/Billing';
-import TeamManagement from './pages/TeamManagement';
-import Register from './pages/Register';
-import RetailDashboard from './pages/RetailDashboard';
-import Products from './pages/Products';
-import POS from './pages/POS';
-import SalesHistory from './pages/SalesHistory';
-import CashierSessions from './pages/CashierSessions';
-import StockAdjustments from './pages/StockAdjustments';
-import Categories from './pages/Categories';
-import RetailReport from './pages/RetailReport';
-import JournalEntries from './pages/JournalEntries';
-import RetailPayroll from './pages/RetailPayroll';
-import RetailBilling from './pages/RetailBilling';
-import RetailSettings from './pages/RetailSettings';
-import Customers from './pages/Customers';
-import Returns from './pages/Returns';
-import Suppliers from './pages/Suppliers';
-import Discounts from './pages/Discounts';
-import LowStockAlerts from './pages/LowStockAlerts';
-import ZimraFiscal from './pages/ZimraFiscal';
-import MultiCurrency from './pages/MultiCurrency';
-import EndOfDayReport from './pages/EndOfDayReport';
-import CashierPerformance from './pages/CashierPerformance';
-import CustomerLoyalty from './pages/CustomerLoyalty';
-import BarcodeGenerator from './pages/BarcodeGenerator';
-import ReceiptCustomization from './pages/ReceiptCustomization';
-import POSSettingsPage from './pages/POSSettingsPage';
-import ManagerPinPage from './pages/ManagerPinPage';
-import ProfitMargins from './pages/ProfitMargins';
-import DeviceConfiguration from './pages/DeviceConfiguration';
-import TaxConfigPage from './pages/TaxConfigPage';
+import CookieConsent from './components/CookieConsent';
+import OnboardingWalkthrough from './components/OnboardingWalkthrough';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+
+/* --- Eagerly loaded (critical path) --- */
+import LandingPage from './pages/LandingPage';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+
+/* --- Lazy loaded pages (code splitting) --- */
+const CustomerDisplay = React.lazy(() => import('./pages/CustomerDisplay'));
+const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
+const VerifyEmail = React.lazy(() => import('./pages/VerifyEmail'));
+const TermsOfService = React.lazy(() => import('./pages/TermsOfService'));
+const PrivacyPolicy = React.lazy(() => import('./pages/PrivacyPolicy'));
+const Fields = React.lazy(() => import('./pages/Fields'));
+const Sales = React.lazy(() => import('./pages/Sales'));
+const Costs = React.lazy(() => import('./pages/Costs'));
+const Stock = React.lazy(() => import('./pages/Stock'));
+const Workers = React.lazy(() => import('./pages/Workers'));
+const Hours = React.lazy(() => import('./pages/Hours'));
+const Report = React.lazy(() => import('./pages/Report'));
+const Settings = React.lazy(() => import('./pages/Settings'));
+const Import = React.lazy(() => import('./pages/Import'));
+const AdminPanel = React.lazy(() => import('./pages/AdminPanel'));
+const FarmAssets = React.lazy(() => import('./pages/FarmAssets'));
+const Cattle = React.lazy(() => import('./pages/Cattle'));
+const Goats = React.lazy(() => import('./pages/Goats'));
+const Sheep = React.lazy(() => import('./pages/Sheep'));
+const Pigs = React.lazy(() => import('./pages/Pigs'));
+const Broilers = React.lazy(() => import('./pages/Broilers'));
+const Layers = React.lazy(() => import('./pages/Layers'));
+const Harvest = React.lazy(() => import('./pages/Harvest'));
+const Budget = React.lazy(() => import('./pages/Budget'));
+const Water = React.lazy(() => import('./pages/Water'));
+const Loans = React.lazy(() => import('./pages/Loans'));
+const MarketPrices = React.lazy(() => import('./pages/MarketPrices'));
+const Economics = React.lazy(() => import('./pages/Economics'));
+const Billing = React.lazy(() => import('./pages/Billing'));
+const TeamManagement = React.lazy(() => import('./pages/TeamManagement'));
+const RetailDashboard = React.lazy(() => import('./pages/RetailDashboard'));
+const Products = React.lazy(() => import('./pages/Products'));
+const POS = React.lazy(() => import('./pages/POS'));
+const SalesHistory = React.lazy(() => import('./pages/SalesHistory'));
+const CashierSessions = React.lazy(() => import('./pages/CashierSessions'));
+const StockAdjustments = React.lazy(() => import('./pages/StockAdjustments'));
+const Categories = React.lazy(() => import('./pages/Categories'));
+const RetailReport = React.lazy(() => import('./pages/RetailReport'));
+const JournalEntries = React.lazy(() => import('./pages/JournalEntries'));
+const RetailPayroll = React.lazy(() => import('./pages/RetailPayroll'));
+const RetailBilling = React.lazy(() => import('./pages/RetailBilling'));
+const RetailSettings = React.lazy(() => import('./pages/RetailSettings'));
+const Customers = React.lazy(() => import('./pages/Customers'));
+const Returns = React.lazy(() => import('./pages/Returns'));
+const Suppliers = React.lazy(() => import('./pages/Suppliers'));
+const Discounts = React.lazy(() => import('./pages/Discounts'));
+const LowStockAlerts = React.lazy(() => import('./pages/LowStockAlerts'));
+const ZimraFiscal = React.lazy(() => import('./pages/ZimraFiscal'));
+const MultiCurrency = React.lazy(() => import('./pages/MultiCurrency'));
+const EndOfDayReport = React.lazy(() => import('./pages/EndOfDayReport'));
+const CashierPerformance = React.lazy(() => import('./pages/CashierPerformance'));
+const CustomerLoyalty = React.lazy(() => import('./pages/CustomerLoyalty'));
+const BarcodeGenerator = React.lazy(() => import('./pages/BarcodeGenerator'));
+const ReceiptCustomization = React.lazy(() => import('./pages/ReceiptCustomization'));
+const POSSettingsPage = React.lazy(() => import('./pages/POSSettingsPage'));
+const ManagerPinPage = React.lazy(() => import('./pages/ManagerPinPage'));
+const ProfitMargins = React.lazy(() => import('./pages/ProfitMargins'));
+const DeviceConfiguration = React.lazy(() => import('./pages/DeviceConfiguration'));
+const TaxConfigPage = React.lazy(() => import('./pages/TaxConfigPage'));
+// V1 new pages
+const HelpSupport = React.lazy(() => import('./pages/HelpSupport'));
+const DataExport = React.lazy(() => import('./pages/DataExport'));
+const AuditLog = React.lazy(() => import('./pages/AuditLog'));
+
+/* --- Loading fallback for lazy pages --- */
+const PageLoader = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: '#9ca3af', fontSize: 13 }}>
+    Loading...
+  </div>
+);
 
 /* --- */
 const PAGES = {
@@ -126,6 +148,10 @@ const PAGES = {
   // Billing & Account
   'Billing': Billing,
   'Team': TeamManagement,
+  // V1 new pages
+  'Help': HelpSupport,
+  'Data Export': DataExport,
+  'Audit Log': AuditLog,
 };
 
 /* --- */
@@ -187,6 +213,10 @@ const PAGE_META = {
   // Billing
   'Billing': { title: 'Billing', sub: 'Pewil subscription, invoices, and usage' },
   'Team': { title: 'Team & Users', sub: 'Manage team members and permissions' },
+  // V1 new pages
+  'Help': { title: 'Help & Support', sub: 'FAQ, guides, and contact support' },
+  'Data Export': { title: 'Data Export', sub: 'Download all your business data' },
+  'Audit Log': { title: 'Audit Log', sub: 'Track all changes made by your team' },
 };
 
 /* --- */
@@ -243,6 +273,9 @@ const PRIMARY_ACTIONS = {
   'Tax Config': 'Save tax configuration',
   'Billing': 'Change Plan',
   'Team': '+ Invite User',
+  'Help': null,
+  'Data Export': null,
+  'Audit Log': null,
 };
 
 /* --- */
@@ -271,7 +304,6 @@ function FarmApp() {
 
   const handleModuleChange = (mod) => {
     setActiveModule(mod);
-    // Navigate to the appropriate dashboard when switching modules
     if (mod === 'retail') {
       setActiveTab('Retail');
     } else {
@@ -293,7 +325,6 @@ function FarmApp() {
       pageSub={meta.sub}
       primaryAction={primaryAction}
       onPrimaryAction={() => {
-        /* Dispatch custom event so active page can handle it */
         window.dispatchEvent(new CustomEvent('pewil-primary-action', { detail: { tab: activeTab } }));
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }}
@@ -302,29 +333,40 @@ function FarmApp() {
       activeModule={activeModule}
       onModuleChange={handleModuleChange}
     >
-      <Page onTabChange={setActiveTab} />
+      <Suspense fallback={<PageLoader />}>
+        <Page onTabChange={setActiveTab} />
+      </Suspense>
       <PWAInstallPrompt />
-        <OfflineBanner />
+      <OfflineBanner />
+      <OnboardingWalkthrough />
     </Layout>
   );
 }
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route
-        path="/app"
-        element={
-          <ProtectedRoute>
-            <FarmApp />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/customer-display" element={<CustomerDisplay />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>} />
+        <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
+        <Route path="/verify-email" element={<Suspense fallback={<PageLoader />}><VerifyEmail /></Suspense>} />
+        <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsOfService /></Suspense>} />
+        <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense>} />
+        <Route
+          path="/app"
+          element={
+            <ProtectedRoute>
+              <FarmApp />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/customer-display" element={<Suspense fallback={<PageLoader />}><CustomerDisplay /></Suspense>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <CookieConsent />
+    </>
   );
 }
