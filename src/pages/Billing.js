@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getCurrentPlan,
   getInvoices,
   getUsage,
   initializePayment,
-  verifyPayment,
 } from '../api/billingApi';
 import { useAuth } from '../context/AuthContext';
 import PlansTable from '../components/PlansTable';
@@ -43,12 +42,8 @@ export default function Billing() {
   const [showPayModal, setShowPayModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState('monthly');
-  const [payMethod, setPayMethod] = useState('card');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [payStatus, setPayStatus] = useState(null);
   const [payMessage, setPayMessage] = useState('');
-  const [payReference, setPayReference] = useState('');
-  const [payProvider, setPayProvider] = useState('');
 
   const { data: activeSubs = {} } = useQuery({
     queryKey: ['currentPlanByModule'],
@@ -67,8 +62,6 @@ export default function Billing() {
   const handleSelectPlan = ({ plan, billingCycle: cycle }) => {
     setSelectedPlan(plan);
     setBillingCycle(cycle || 'monthly');
-    setPayMethod('card');
-    setPhoneNumber('');
     setPayStatus(null);
     setPayMessage('');
     setShowPayModal(true);
@@ -76,38 +69,20 @@ export default function Billing() {
 
   const handlePay = async () => {
     if (!selectedPlan) return;
-    if ((payMethod === 'ecocash' || payMethod === 'onemoney') && !phoneNumber.trim()) {
-      setPayMessage(`Please enter your ${payMethod === 'ecocash' ? 'EcoCash' : 'OneMoney'} phone number.`);
-      setPayStatus('error');
-      return;
-    }
-
     setPayStatus('loading');
     setPayMessage('');
-
     try {
-      const data = {
+      const result = await initializePayment({
         plan_slug: selectedPlan.slug,
-        payment_method: payMethod,
+        payment_method: 'card', // Pesepay hosted checkout lets the user pick card/EcoCash/OneMoney on their page
         billing_cycle: billingCycle,
-      };
-      if (payMethod === 'ecocash' || payMethod === 'onemoney') {
-        data.phone_number = phoneNumber.trim();
-      }
-
-      const result = await initializePayment(data);
-
+      });
       if (result.redirect_url) {
         window.location.href = result.redirect_url;
         return;
       }
-
-      if (result.instructions) {
-        setPayStatus('pending');
-        setPayMessage(result.instructions);
-        setPayReference(result.reference);
-        setPayProvider(result.provider);
-      }
+      setPayStatus('error');
+      setPayMessage('Unexpected response from payment provider.');
     } catch (err) {
       const msg = err?.response?.data?.detail || 'Payment failed. Please try again.';
       setPayStatus('error');
@@ -115,33 +90,7 @@ export default function Billing() {
     }
   };
 
-  // ─── POLL MOBILE MONEY STATUS ──────────────────────────
-  const pollPayment = useCallback(async () => {
-    if (!payReference || !payProvider) return;
-    try {
-      const result = await verifyPayment({ reference: payReference, provider: payProvider });
-      if (result.status === 'paid') {
-        setPayStatus('success');
-        setPayMessage('Payment confirmed! Your plan is now active.');
-        queryClient.invalidateQueries({ queryKey: ['currentPlanByModule'] });
-        queryClient.invalidateQueries({ queryKey: ['usage'] });
-        queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      } else if (result.status === 'failed') {
-        setPayStatus('error');
-        setPayMessage('Payment failed. Please try again.');
-      }
-    } catch {
-      // Silently retry
-    }
-  }, [payReference, payProvider, queryClient]);
-
-  useEffect(() => {
-    if (payStatus !== 'pending') return;
-    const interval = setInterval(pollPayment, 5000);
-    return () => clearInterval(interval);
-  }, [payStatus, pollPayment]);
-
-  // ─── CHECK URL PARAMS (Pesepay/Contipay redirect callback) ─
+  // ─── CHECK URL PARAMS (Pesepay redirect callback) ────────
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const paymentResult = params.get('payment');
@@ -289,14 +238,14 @@ export default function Billing() {
             </tbody>
           </table>
           <div style={{ marginTop: 24, padding: 16, background: '#f9fafb', borderRadius: 10, fontSize: 13, color: '#6b7280' }}>
-            Payments are processed securely via <strong style={{ color: '#111827' }}>Pesepay</strong> (cards) and <strong style={{ color: '#111827' }}>Contipay</strong> (EcoCash / OneMoney / InnBucks). Card details are never stored on our servers.
+            Payments are processed securely via <strong style={{ color: '#111827' }}>Pesepay</strong> — Visa, Mastercard, EcoCash, OneMoney and Zimswitch all in one hosted checkout. Card details are never stored on our servers.
           </div>
         </div>
       )}
 
       {/* ─── PAYMENT MODAL ──────────────────────────────── */}
       {showPayModal && selectedPlan && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => { if (payStatus !== 'loading' && payStatus !== 'pending') setShowPayModal(false); }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => { if (payStatus !== 'loading') setShowPayModal(false); }}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: 440, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div>
@@ -311,7 +260,7 @@ export default function Billing() {
             </div>
 
             {/* Billing cycle toggle inside modal */}
-            {payStatus !== 'success' && payStatus !== 'pending' && (
+            {payStatus !== 'success' && (
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 {['monthly', 'yearly'].map(c => (
                   <button key={c} onClick={() => setBillingCycle(c)} style={{
@@ -342,67 +291,19 @@ export default function Billing() {
               </div>
             </div>
 
-            {/* Payment method selection */}
-            {payStatus !== 'success' && payStatus !== 'pending' && (
-              <>
-                <div style={{ ...sLabel, marginBottom: 12 }}>Choose Payment Method</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 16 }}>
-                  {[
-                    { key: 'card', label: 'Card', sub: 'Visa / MC', provider: 'Pesepay', icon: '\u{1F4B3}' },
-                    { key: 'ecocash', label: 'EcoCash', sub: 'Econet', provider: 'Contipay', icon: '\u{1F4F1}' },
-                    { key: 'onemoney', label: 'OneMoney', sub: 'NetOne', provider: 'Contipay', icon: '\u{1F4F1}' },
-                  ].map(m => (
-                    <div
-                      key={m.key}
-                      onClick={() => setPayMethod(m.key)}
-                      style={{
-                        border: payMethod === m.key ? '2px solid #1a6b3a' : '2px solid #e5e7eb',
-                        borderRadius: 10,
-                        padding: 12,
-                        cursor: 'pointer',
-                        background: payMethod === m.key ? '#e8f5ee' : '#fff',
-                        textAlign: 'center',
-                      }}
-                    >
-                      <div style={{ fontSize: 22, marginBottom: 4 }}>{m.icon}</div>
-                      <div style={{ fontWeight: 700, fontSize: 11 }}>{m.label}</div>
-                      <div style={{ fontSize: 9, color: '#6b7280', marginTop: 2 }}>{m.sub}</div>
-                      <div style={{ fontSize: 8, color: '#9ca3af', marginTop: 2 }}>via {m.provider}</div>
-                    </div>
-                  ))}
+            {/* Payment info — Pesepay hosted checkout handles method selection */}
+            {payStatus !== 'success' && (
+              <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+                <div style={{ fontSize: 11, color: '#374151', fontWeight: 600, marginBottom: 4 }}>
+                  You{'\u2019'}ll be redirected to Pesepay to complete payment.
                 </div>
-
-                {(payMethod === 'ecocash' || payMethod === 'onemoney') && (
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ fontSize: 11, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>
-                      {payMethod === 'ecocash' ? 'EcoCash' : 'OneMoney'} Number
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder={payMethod === 'ecocash' ? '0771234567' : '0712345678'}
-                      value={phoneNumber}
-                      onChange={e => setPhoneNumber(e.target.value)}
-                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-                    />
-                    <div style={{ fontSize: 9, color: '#9ca3af', marginTop: 4 }}>
-                      {payMethod === 'ecocash' ? 'Econet (077x / 078x)' : 'NetOne (071x)'}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Status messages */}
-            {payStatus === 'pending' && (
-              <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
-                <div style={{ fontWeight: 700, fontSize: 12, color: '#92400E', marginBottom: 4 }}>Waiting for payment confirmation...</div>
-                <div style={{ fontSize: 11, color: '#92400E' }}>{payMessage}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                  <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid #F59E0B', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
-                  <span style={{ fontSize: 10, color: '#92400E' }}>Checking every 5 seconds...</span>
+                <div style={{ fontSize: 10, color: '#6b7280' }}>
+                  Pay with Visa/Mastercard, EcoCash, OneMoney or Zimswitch {'\u2014'} all handled securely by Pesepay.
                 </div>
               </div>
             )}
+
+            {/* Status messages */}
             {payStatus === 'success' && (
               <div style={{ background: '#e8f5ee', border: '1px solid #1a6b3a', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
                 <div style={{ fontWeight: 700, fontSize: 12, color: '#1a6b3a' }}>{'\u2705'} {payMessage}</div>
@@ -419,14 +320,10 @@ export default function Billing() {
               {payStatus !== 'success' && (
                 <button
                   onClick={handlePay}
-                  disabled={payStatus === 'loading' || payStatus === 'pending'}
-                  style={{ ...btnS(true), flex: 1, justifyContent: 'center', padding: '10px 16px', fontSize: 13, opacity: (payStatus === 'loading' || payStatus === 'pending') ? 0.6 : 1 }}
+                  disabled={payStatus === 'loading'}
+                  style={{ ...btnS(true), flex: 1, justifyContent: 'center', padding: '10px 16px', fontSize: 13, opacity: payStatus === 'loading' ? 0.6 : 1 }}
                 >
-                  {payStatus === 'loading' ? 'Processing...'
-                    : payStatus === 'pending' ? 'Waiting...'
-                    : payMethod === 'card' ? `Pay $${totalBilled} via Pesepay`
-                    : payMethod === 'ecocash' ? `Pay $${totalBilled} via EcoCash`
-                    : `Pay $${totalBilled} via OneMoney`}
+                  {payStatus === 'loading' ? 'Redirecting...' : `Pay $${totalBilled} via Pesepay`}
                 </button>
               )}
               <button
