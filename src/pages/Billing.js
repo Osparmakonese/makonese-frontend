@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getCurrentPlan,
   getInvoices,
+  downloadReceipt,
+  emailReceipt,
   getUsage,
   initializePayment,
 } from '../api/billingApi';
@@ -212,7 +214,7 @@ export default function Billing() {
           <div style={sLabel}>Invoice History</div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-              {['Date', 'Description', 'Amount', 'Method', 'Status'].map(h => <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#6b7280' }}>{h}</th>)}
+              {['Date', 'Description', 'Amount', 'Method', 'Status', 'Receipt'].map(h => <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#6b7280' }}>{h}</th>)}
             </tr></thead>
             <tbody>
               {(invoices?.results || []).length > 0 ? invoices.results.map((inv, i) => (
@@ -231,9 +233,46 @@ export default function Billing() {
                       inv.status === 'paid' ? '#1a6b3a' : inv.status === 'pending' ? '#92400E' : '#991B1B'
                     )}>{inv.status}</span>
                   </td>
+                  <td style={{ padding: '10px 14px', fontSize: 12 }}>
+                    {inv.status === 'paid' ? (
+                      <span style={{ display: 'inline-flex', gap: 6 }}>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const blob = await downloadReceipt(inv.id);
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `pewil-receipt-${inv.id}.pdf`;
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+                              URL.revokeObjectURL(url);
+                            } catch (e) {
+                              alert('Could not download receipt.');
+                            }
+                          }}
+                          style={{ padding: '6px 10px', fontSize: 12, background: '#1b5e20', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                        >Download</button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const r = await emailReceipt(inv.id);
+                              alert(r.detail || 'Receipt emailed.');
+                            } catch (e) {
+                              alert('Could not email receipt.');
+                            }
+                          }}
+                          style={{ padding: '6px 10px', fontSize: 12, background: '#fff', color: '#1b5e20', border: '1px solid #1b5e20', borderRadius: 6, cursor: 'pointer' }}
+                        >Email me</button>
+                      </span>
+                    ) : (
+                      <span style={{ color: '#9ca3af', fontSize: 12 }}>—</span>
+                    )}
+                  </td>
                 </tr>
               )) : (
-                <tr><td colSpan={5} style={{ padding: '40px 14px', fontSize: 13, textAlign: 'center', color: '#9ca3af' }}>No invoices yet.</td></tr>
+                <tr><td colSpan={6} style={{ padding: '40px 14px', fontSize: 13, textAlign: 'center', color: '#9ca3af' }}>No invoices yet.</td></tr>
               )}
             </tbody>
           </table>

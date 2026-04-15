@@ -16,6 +16,15 @@ export const changePlan = (data) => api.post('/billing/billing/change_plan/', da
 // Invoices
 export const getInvoices = () => api.get('/billing/billing/invoices/').then(r => r.data);
 
+// Receipts (Phase 5)
+// Download a paid invoice's receipt PDF — returns a Blob for client-side save.
+export const downloadReceipt = (invoiceId) =>
+  api.get(`/billing/billing/${invoiceId}/receipt/`, { responseType: 'blob' })
+     .then(r => r.data);
+// Request the server to email the receipt PDF to the authenticated user.
+export const emailReceipt = (invoiceId) =>
+  api.post(`/billing/billing/${invoiceId}/email-receipt/`).then(r => r.data);
+
 // Usage
 export const getUsage = () => api.get('/billing/billing/usage/').then(r => r.data);
 
