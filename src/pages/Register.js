@@ -153,10 +153,29 @@ export default function Register() {
     email: '',
     username: '',
     password: '',
-    country: 'United States',
+    country: 'ZW',
     currency: 'USD',
     terms_agreed: false,
   });
+
+  // Fetch supported countries from backend
+  const [countries, setCountries] = useState([]);
+  useEffect(() => {
+    const API = process.env.REACT_APP_API_URL || '';
+    fetch(`${API}/api/core/countries/`)
+      .then(r => r.ok ? r.json() : { countries: [] })
+      .then(body => setCountries(body.countries || []))
+      .catch(() => {
+        // Fallback minimal list if backend unreachable
+        setCountries([
+          { code: 'ZW', name: 'Zimbabwe', currency: 'USD' },
+          { code: 'ZA', name: 'South Africa', currency: 'ZAR' },
+          { code: 'KE', name: 'Kenya', currency: 'KES' },
+          { code: 'NG', name: 'Nigeria', currency: 'NGN' },
+          { code: 'GH', name: 'Ghana', currency: 'GHS' },
+        ]);
+      });
+  }, []);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -357,23 +376,18 @@ export default function Register() {
             <select
               style={S.select}
               value={form.country}
-              onChange={e => set('country', e.target.value)}
+              onChange={e => {
+                const code = e.target.value;
+                set('country', code);
+                // Auto-select currency based on country when possible
+                const match = countries.find(c => c.code === code);
+                if (match && match.currency) set('currency', match.currency);
+              }}
             >
-              <option>United States</option>
-              <option>United Kingdom</option>
-              <option>Canada</option>
-              <option>Australia</option>
-              <option>South Africa</option>
-              <option>Zimbabwe</option>
-              <option>Kenya</option>
-              <option>Nigeria</option>
-              <option>Ghana</option>
-              <option>India</option>
-              <option>Brazil</option>
-              <option>Germany</option>
-              <option>France</option>
-              <option>Netherlands</option>
-              <option>Other</option>
+              {countries.length === 0 && <option value="ZW">Zimbabwe</option>}
+              {countries.map(c => (
+                <option key={c.code} value={c.code}>{c.name}</option>
+              ))}
             </select>
           </div>
 
