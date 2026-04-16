@@ -23,6 +23,8 @@ const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
 const VerifyEmail = React.lazy(() => import('./pages/VerifyEmail'));
 const TermsOfService = React.lazy(() => import('./pages/TermsOfService'));
 const PrivacyPolicy = React.lazy(() => import('./pages/PrivacyPolicy'));
+const Pricing = React.lazy(() => import('./pages/Pricing'));
+const Status = React.lazy(() => import('./pages/Status'));
 const Fields = React.lazy(() => import('./pages/Fields'));
 const Sales = React.lazy(() => import('./pages/Sales'));
 const Costs = React.lazy(() => import('./pages/Costs'));
@@ -355,6 +357,8 @@ export default function App() {
         <Route path="/verify-email" element={<Suspense fallback={<PageLoader />}><VerifyEmail /></Suspense>} />
         <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsOfService /></Suspense>} />
         <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense>} />
+        <Route path="/pricing" element={<Suspense fallback={<PageLoader />}><Pricing /></Suspense>} />
+        <Route path="/status" element={<Suspense fallback={<PageLoader />}><Status /></Suspense>} />
         <Route
           path="/app"
           element={
