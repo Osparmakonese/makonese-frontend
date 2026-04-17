@@ -9,6 +9,7 @@ import Layout from './components/Layout';
 import CookieConsent from './components/CookieConsent';
 import OnboardingWalkthrough from './components/OnboardingWalkthrough';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import DemoBanner from './components/DemoBanner';
 
 /* --- Eagerly loaded (critical path) --- */
 import LandingPage from './pages/LandingPage';
@@ -336,6 +337,7 @@ function FarmApp() {
       activeModule={activeModule}
       onModuleChange={handleModuleChange}
     >
+      <DemoBanner />
       <Suspense fallback={<PageLoader />}>
         <Page onTabChange={setActiveTab} />
       </Suspense>

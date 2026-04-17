@@ -2,6 +2,30 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+// ============ Demo handler — called from the hero CTA + any "See a live demo" button ============
+function useDemoEntry() {
+  const navigate = useNavigate();
+  const { demoLogin } = useAuth();
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoError, setDemoError] = useState('');
+  async function enterDemo() {
+    if (demoLoading) return;
+    setDemoLoading(true);
+    setDemoError('');
+    try {
+      const ok = await demoLogin();
+      if (ok) {
+        navigate('/app');
+      } else {
+        setDemoError("Demo isn't available right now. Please try again shortly.");
+      }
+    } finally {
+      setDemoLoading(false);
+    }
+  }
+  return { enterDemo, demoLoading, demoError };
+}
+
 // Exact palette from pewil-design-3-living-africa.html
 const C = {
   amber: '#f4a743',
@@ -81,6 +105,7 @@ function SecKicker({ children, light = false }) {
 const LandingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { enterDemo, demoLoading, demoError } = useDemoEntry();
   const [scrolled, setScrolled] = useState(false);
   const [mobile, setMobile] = useState(window.innerWidth <= 1000);
   const [navOpen, setNavOpen] = useState(false);
@@ -255,13 +280,26 @@ const LandingPage = () => {
               onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 14px 30px -8px rgba(217,86,44,.7)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 10px 24px -8px rgba(217,86,44,.6)'; }}
             >Start your free trial →</button>
-            <Link
-              to="/login"
-              style={{ ...btnOutline, ...btnLg }}
-              onMouseEnter={e => { e.currentTarget.style.background = C.ink; e.currentTarget.style.color = C.cream; }}
+            <button
+              type="button"
+              onClick={enterDemo}
+              disabled={demoLoading}
+              style={{
+                ...btnOutline, ...btnLg,
+                opacity: demoLoading ? 0.65 : 1,
+                cursor: demoLoading ? 'wait' : 'pointer',
+              }}
+              onMouseEnter={e => { if (demoLoading) return; e.currentTarget.style.background = C.ink; e.currentTarget.style.color = C.cream; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.ink; }}
-            >See a live demo</Link>
+            >{demoLoading ? 'Opening demo…' : 'See a live demo'}</button>
           </div>
+          {demoError && (
+            <div style={{
+              marginTop: 14, maxWidth: 520, padding: '10px 14px', borderRadius: 12,
+              background: 'rgba(217,86,44,.1)', color: C.clay,
+              border: `1px solid ${C.terra}`, fontSize: 14,
+            }}>{demoError}</div>
+          )}
           {/* small honest line */}
           <div style={{
             marginTop: 32, display: 'flex', gap: 12, alignItems: 'center',

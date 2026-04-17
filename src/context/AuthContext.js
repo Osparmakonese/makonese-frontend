@@ -21,6 +21,7 @@ export function AuthProvider({ children }) {
     let plan = 'free';
     let retail_perms = {};
     let farm_perms = {};
+    let is_demo = false;
     try {
       const payload = JSON.parse(atob(res.data.access.split('.')[1]));
       role = payload.role || 'owner';
@@ -31,6 +32,7 @@ export function AuthProvider({ children }) {
       plan = payload.plan || 'free';
       retail_perms = payload.retail_perms || {};
       farm_perms = payload.farm_perms || {};
+      is_demo = !!payload.is_demo;
     } catch { /* fallback */ }
 
     return {
@@ -44,6 +46,7 @@ export function AuthProvider({ children }) {
       plan: res.data.plan || plan,
       retail_perms: res.data.retail_perms || retail_perms,
       farm_perms: res.data.farm_perms || farm_perms,
+      is_demo: res.data.is_demo === true ? true : is_demo,
     };
   }
 
@@ -96,6 +99,32 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function demoLogin() {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.post('/core/auth/demo_login/', {});
+      localStorage.setItem('access_token', res.data.access);
+      // No refresh token for demo — force a fresh demo-login when the
+      // 30-minute access token expires.
+      localStorage.setItem('refresh_token', res.data.refresh || '');
+
+      const userData = _extractUserData(res, res.data.username);
+      userData.is_demo = true; // belt + suspenders
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      return true;
+    } catch (err) {
+      setError(
+        err.response?.data?.detail ||
+        'Live demo is temporarily unavailable. Try again in a moment.'
+      );
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function switchTenant(tokenData) {
     // Called after POST /api/core/tenants/switch/ returns new tokens
     localStorage.setItem('access_token', tokenData.access);
@@ -120,7 +149,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, switchTenant, logout, loading, error }}>
+    <AuthContext.Provider value={{ user, login, register, demoLogin, switchTenant, logout, loading, error }}>
       {children}
     </AuthContext.Provider>
   );
