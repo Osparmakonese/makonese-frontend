@@ -1,335 +1,874 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+// Exact palette from pewil-design-3-living-africa.html
 const C = {
-  green: '#1a6b3a', greenDark: '#0D4A22', green2: '#2d9e58', green3: '#e8f5ee',
-  amber: '#c97d1a', ink: '#111827', ink2: '#374151', ink3: '#6b7280',
-  surface: '#f9fafb', border: '#e5e7eb', white: '#ffffff',
+  amber: '#f4a743',
+  terra: '#d9562c',
+  clay: '#b13b17',
+  forest: '#1f3d26',
+  forest2: '#2d5a37',
+  sand: '#fff7ec',
+  sand2: '#fdeedd',
+  cream: '#fffcf7',
+  ink: '#1b1b1b',
+  muted: '#6b5d50',
+  line: 'rgba(27,27,27,.12)',
+  line2: 'rgba(255,247,236,.4)',
 };
+const R = 18, RLG = 28;
+const SERIF = "'Fraunces', Georgia, serif";
+const SANS = "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+
+const WAVY_UNDERLINE_SVG =
+  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 10'><path d='M2 5 Q25 1 50 5 T100 5 T150 5 T198 5' stroke='%23d9562c' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>\")";
+
+// ============ reusable button styles ============
+const btnBase = {
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+  padding: '12px 20px', borderRadius: 999, fontWeight: 600, fontSize: 14.5,
+  border: 0, cursor: 'pointer', fontFamily: SANS, whiteSpace: 'nowrap',
+  transition: 'transform .12s, box-shadow .15s, background .15s, opacity .15s',
+  textDecoration: 'none',
+};
+const btnPrimary = { ...btnBase, background: C.forest, color: '#fff', boxShadow: '0 8px 20px -8px rgba(31,61,38,.5)' };
+const btnWarm = {
+  ...btnBase,
+  background: `linear-gradient(135deg, ${C.amber}, ${C.terra})`,
+  color: '#fff',
+  boxShadow: '0 10px 24px -8px rgba(217,86,44,.6)',
+};
+const btnOutline = { ...btnBase, border: `1.5px solid ${C.ink}`, color: C.ink, background: 'transparent' };
+const btnGhost = { ...btnBase, color: C.ink, background: 'transparent', opacity: 0.8 };
+const btnLg = { padding: '16px 28px', fontSize: 16 };
+
+// Logo mark: 34x34 amber→terracotta circle with cream dot center
+function LogoMark({ size = 34, light = false }) {
+  return (
+    <span style={{
+      display: 'inline-block', position: 'relative',
+      width: size, height: size, borderRadius: 12,
+      background: light ? '#fff' : `linear-gradient(135deg, ${C.amber} 0%, ${C.terra} 60%, ${C.clay} 100%)`,
+      boxShadow: '0 4px 14px rgba(217,86,44,.3)',
+      flexShrink: 0,
+    }}>
+      <span style={{
+        position: 'absolute', left: '50%', top: '50%',
+        transform: 'translate(-50%,-50%)',
+        width: size * 0.41, height: size * 0.41, borderRadius: '50%',
+        background: light ? C.clay : C.cream, opacity: 0.9,
+      }} />
+    </span>
+  );
+}
+
+// Serif kicker with left bar: "— Text —"
+function SecKicker({ children, light = false }) {
+  const color = light ? C.amber : C.clay;
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: 8,
+      fontSize: 13, fontWeight: 600, textTransform: 'uppercase',
+      letterSpacing: '.12em', color, marginBottom: 16,
+    }}>
+      <span style={{ width: 22, height: 2, background: color, borderRadius: 2 }} />
+      {children}
+    </div>
+  );
+}
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState('Growth');
-  const [userCount, setUserCount] = useState(10);
-  const [includeAI, setIncludeAI] = useState(true);
-  const [faqOpen, setFaqOpen] = useState(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [mobile, setMobile] = useState(window.innerWidth <= 1000);
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => {
+    const id = 'pewil-livingafrica-fonts';
+    if (!document.getElementById(id)) {
+      const link = document.createElement('link');
+      link.id = id;
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap';
+      document.head.appendChild(link);
+    }
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onResize = () => setMobile(window.innerWidth <= 1000);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+    onScroll();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
 
   if (user) return <Navigate to="/app" replace />;
 
-  const plans = {
-    Starter: { price: 15, features: ['1 module (Farm or Retail)', '3 users included', 'Core features', 'Email support', 'Data export'], disabled: ['AI insights', 'Both modules'], addon: 10 },
-    Growth: { price: 25, features: ['Farm + Retail modules', '10 users included', 'AI insights included', 'Health Score dashboard', 'Priority email support', 'Full data export', 'WhatsApp alerts'], mostPopular: true },
-    Enterprise: { price: 89, features: ['All modules unlocked', 'Unlimited users', 'WhatsApp + SMS alerts', 'White-label branding', 'Dedicated account manager', 'Custom integrations', 'SLA guarantee'] },
-  };
-
-  const calculateTotal = () => {
-    if (selectedPlan === 'Growth') return 25 + Math.max(0, userCount - 10) * 5;
-    if (selectedPlan === 'Starter') return 15 + (includeAI ? 10 : 0) + Math.max(0, userCount - 3) * 5;
-    return 89;
-  };
-
-  const features = [
-    { emoji: '\u{1F33E}', title: 'Farm Management', desc: 'Track fields, crops, livestock, costs, and harvest yields. Complete season management from planting to market.' },
-    { emoji: '\u{1F6D2}', title: 'Retail POS', desc: 'Modern point of sale with barcode scanning, receipt printing, multi-currency support, and ZIMRA fiscal compliance.' },
-    { emoji: '\u{1F9E0}', title: 'AI Intelligence', desc: 'Smart insights, health scores, and predictive analytics powered by AI. Know what to plant, when to sell, and where to cut costs.' },
-    { emoji: '\u{1F4CA}', title: 'Reports & Analytics', desc: 'Profit & loss statements, cashier performance, end-of-day reconciliation, and exportable financial reports.' },
-    { emoji: '\u{1F404}', title: 'Livestock Tracking', desc: 'Manage cattle, goats, sheep, pigs, broilers, and layers. Health records, breeding cycles, and mortality tracking.' },
-    { emoji: '\u{1F465}', title: 'Team Management', desc: 'Role-based access for owners, managers, and workers. Payroll, attendance, and PAYE/NSSA compliance for Zimbabwe.' },
-    { emoji: '\u{1F4F1}', title: 'Works on Any Device', desc: 'Progressive Web App works on phones, tablets, and desktops. Install it like a native app — works offline too.' },
-    { emoji: '\u{1F512}', title: 'Bank-Grade Security', desc: 'HTTPS encryption, two-factor authentication, audit logs, and automatic backups. Your data is always safe.' },
-    { emoji: '\u{1F4B1}', title: 'Multi-Currency', desc: 'Support for USD, ZWL, ZAR, and more. Automatic exchange rate updates for mixed-currency transactions.' },
-  ];
-
-  const testimonials = [
-    { name: 'Tendai M.', role: 'Farm Owner, Masvingo', text: 'Pewil replaced three separate tools I was using. Now everything from field tracking to selling at the market is in one place.', rating: 5 },
-    { name: 'Grace C.', role: 'Shop Owner, Harare', text: 'The POS system is fast and the ZIMRA fiscal compliance saved me from headaches with tax authorities. My cashiers love it.', rating: 5 },
-    { name: 'Blessing N.', role: 'Agri-Business, Chinhoyi', text: 'Being able to switch between farm and retail in the same app is a game-changer. The AI insights help me plan each season better.', rating: 5 },
-    { name: 'Tatenda K.', role: 'Poultry Farmer, Mutare', text: 'Layer and broiler tracking with mortality rates and feed costs — I can finally see where my money goes. Profit margins doubled.', rating: 4 },
-  ];
-
-  const faqs = [
-    { q: 'Is there a free trial?', a: 'Yes! Every new account gets 30 days free with full access to all features. No credit card required to start.' },
-    { q: 'What payment methods do you accept?', a: 'We accept Visa, Mastercard, EcoCash, and OneMoney through our secure Pesepay integration.' },
-    { q: 'Can I use Pewil on my phone?', a: 'Absolutely. Pewil is a Progressive Web App that works on any device. Open pewil.org in your browser and add it to your home screen for a native app experience.' },
-    { q: 'Is my data safe?', a: 'Yes. We use HTTPS encryption, JWT authentication, optional 2FA, role-based access control, and daily automated backups. You own your data and can export it anytime.' },
-    { q: 'Can I manage both a farm and a shop?', a: 'Yes! The Growth and Enterprise plans include both Farm and Retail modules. Switch between them instantly from the sidebar.' },
-    { q: 'Do you support ZIMRA fiscal compliance?', a: 'Yes. Our retail module includes ZIMRA fiscalisation support with fiscal device management and compliant receipt generation.' },
-    { q: 'How many team members can I add?', a: 'Starter includes 3 users, Growth includes 10, and Enterprise offers unlimited users. Additional seats are $5/month each on Starter and Growth plans.' },
-    { q: 'Can I export my data?', a: 'Yes, anytime. Export all your data as CSV (for spreadsheets) or JSON (for developers) from the Data Export page.' },
-  ];
-
-  const stats = [
-    { number: '500+', label: 'Active Farms' },
-    { number: '12,000+', label: 'Transactions/Month' },
-    { number: '99.9%', label: 'Uptime' },
-    { number: '24hr', label: 'Support Response' },
-  ];
-
-  return (
-    <div style={{ background: C.surface, fontFamily: "'Inter', sans-serif" }}>
-      {/* Navigation */}
-      <nav style={{
-        position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,0.97)',
-        backdropFilter: 'blur(8px)', borderBottom: `1px solid ${C.border}`,
-        padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+  // ==== NAV ====
+  const navBar = (
+    <nav style={{
+      position: 'sticky', top: 0, zIndex: 50, padding: '16px 0',
+      background: scrolled ? 'rgba(255,252,247,.92)' : 'transparent',
+      backdropFilter: scrolled ? 'blur(14px)' : 'none',
+      WebkitBackdropFilter: scrolled ? 'blur(14px)' : 'none',
+      borderBottom: scrolled ? `1px solid ${C.line}` : '1px solid transparent',
+      transition: 'background .2s, border-color .2s',
+    }}>
+      <div style={{
+        maxWidth: 1280, margin: '0 auto', padding: '0 28px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ background: C.greenDark, padding: '8px 14px', borderRadius: 8, fontWeight: 800, color: C.amber, fontSize: 18, letterSpacing: -0.5 }}>PEWIL</div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 28, fontSize: 14 }}>
-          <a href="#features" style={{ color: C.ink2, textDecoration: 'none', fontWeight: 500 }}>Features</a>
-          <a href="#pricing" style={{ color: C.ink2, textDecoration: 'none', fontWeight: 500 }}>Pricing</a>
-          <a href="#faq" style={{ color: C.ink2, textDecoration: 'none', fontWeight: 500 }}>FAQ</a>
-          <Link to="/login" style={{ color: C.ink2, textDecoration: 'none', fontWeight: 500 }}>Log in</Link>
-          <button onClick={() => navigate('/register')} style={{
-            background: C.green, color: '#fff', border: 'none', padding: '10px 22px',
-            borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 14,
-          }}>Start Free Trial</button>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section style={{
-        background: `linear-gradient(135deg, ${C.greenDark} 0%, ${C.green} 50%, ${C.green2} 100%)`,
-        padding: '80px 24px 90px', textAlign: 'center', color: '#fff', position: 'relative', overflow: 'hidden',
-      }}>
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto' }}>
-          <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.15)', padding: '6px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600, marginBottom: 24, backdropFilter: 'blur(4px)' }}>
-            Trusted by 500+ businesses across Zimbabwe
+        <Link to="/" style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          textDecoration: 'none', color: C.ink,
+          fontWeight: 700, fontSize: 20, letterSpacing: '-0.01em',
+        }}>
+          <LogoMark />
+          Pewil
+        </Link>
+        {!mobile && (
+          <div style={{ display: 'flex', gap: 28, fontSize: 15 }}>
+            {['Features', 'Customers', 'Pricing', 'Resources'].map(n => (
+              <a key={n} href={`#${n.toLowerCase()}`} style={{
+                color: C.ink, opacity: 0.78, textDecoration: 'none', fontWeight: 500,
+              }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '0.78'}
+              >{n}</a>
+            ))}
           </div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 52, fontWeight: 700, lineHeight: 1.15, marginBottom: 18 }}>
-            Run Your Farm & Store<br />From One Platform
+        )}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {!mobile && (
+            <Link to="/login" style={btnGhost}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,.04)'; e.currentTarget.style.opacity = '1'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.opacity = '0.8'; }}
+            >Log in</Link>
+          )}
+          <button
+            style={btnWarm}
+            onClick={() => navigate('/register')}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 14px 30px -8px rgba(217,86,44,.7)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 10px 24px -8px rgba(217,86,44,.6)'; }}
+          >Start free</button>
+          {mobile && (
+            <button
+              aria-label="Menu"
+              onClick={() => setNavOpen(v => !v)}
+              style={{
+                width: 42, height: 42, borderRadius: 999,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                background: '#fff', border: `1px solid ${C.line}`, cursor: 'pointer',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path d="M3 6h14M3 10h14M3 14h14" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+      {mobile && navOpen && (
+        <div style={{
+          background: '#fff', borderTop: `1px solid ${C.line}`,
+          padding: '16px 28px', display: 'flex', flexDirection: 'column', gap: 12,
+        }}>
+          {['Features', 'Customers', 'Pricing', 'Resources'].map(n => (
+            <a key={n} href={`#${n.toLowerCase()}`} onClick={() => setNavOpen(false)}
+              style={{ color: C.ink, textDecoration: 'none', fontWeight: 500, fontSize: 15 }}>{n}</a>
+          ))}
+          <Link to="/login" style={{ color: C.ink, textDecoration: 'none', fontWeight: 500, fontSize: 15 }}>Log in</Link>
+        </div>
+      )}
+    </nav>
+  );
+
+  // ==== HERO ====
+  const hero = (
+    <header style={{
+      position: 'relative', overflow: 'hidden',
+      background: `
+        radial-gradient(ellipse at 20% 10%, rgba(244,167,67,.35), transparent 45%),
+        radial-gradient(ellipse at 90% 30%, rgba(217,86,44,.28), transparent 45%),
+        radial-gradient(ellipse at 50% 100%, rgba(31,61,38,.18), transparent 50%),
+        ${C.sand}
+      `,
+    }}>
+      <div style={{
+        maxWidth: 1280, margin: '0 auto',
+        padding: mobile ? '22px 18px 40px' : '40px 28px 60px',
+        display: 'grid',
+        gridTemplateColumns: mobile ? '1fr' : '1.1fr 1fr',
+        gap: mobile ? 40 : 40,
+        alignItems: 'center',
+        minHeight: mobile ? 'auto' : '88vh',
+      }}>
+        <div>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 10,
+            background: 'rgba(255,255,255,.6)', backdropFilter: 'blur(8px)',
+            padding: '8px 14px', borderRadius: 999,
+            fontSize: 13, fontWeight: 600, color: C.clay,
+            border: '1px solid rgba(217,86,44,.2)', marginBottom: 26,
+          }}>
+            🌱 Built in Harare · For all of Africa
+          </span>
+          <h1 style={{
+            fontFamily: SERIF, fontWeight: 700,
+            fontSize: mobile ? 52 : 'clamp(48px, 7.5vw, 108px)',
+            lineHeight: 0.98, letterSpacing: '-0.035em',
+            maxWidth: '12ch', color: C.ink,
+          }}>
+            Grow more.<br />
+            Count{' '}
+            <span style={{
+              fontStyle: 'italic', color: C.clay, fontWeight: 600,
+              display: 'inline-block', position: 'relative',
+            }}>
+              every row
+              <span style={{
+                position: 'absolute', left: '-4%', right: '-4%',
+                bottom: '-10%', height: '18%',
+                backgroundImage: WAVY_UNDERLINE_SVG,
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                opacity: 0.9,
+              }} />
+            </span>
+            .
           </h1>
-          <p style={{ fontSize: 18, lineHeight: 1.7, opacity: 0.92, maxWidth: 560, margin: '0 auto 32px' }}>
-            Farm management and retail POS built for African businesses. Track everything from planting to point of sale.
+          <p style={{
+            marginTop: 30, maxWidth: '48ch',
+            fontSize: mobile ? 17 : 'clamp(17px, 1.6vw, 20px)',
+            color: '#3a3024', lineHeight: 1.6,
+          }}>
+            Pewil is the business operating system for African farmers and retailers. Track fields, livestock, stock, staff, and cashflow from one place. Online or off. In USD, ZWL, or ZAR. In the language of your team.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 14 }}>
-            <button onClick={() => navigate('/register')} style={{
-              background: C.amber, color: C.ink, border: 'none', padding: '14px 32px',
-              borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 16,
-            }}>Start Your Free Month</button>
-            <a href="#features" style={{
-              display: 'inline-flex', alignItems: 'center', padding: '14px 28px',
-              borderRadius: 8, border: '2px solid rgba(255,255,255,0.4)', color: '#fff',
-              textDecoration: 'none', fontWeight: 600, fontSize: 15,
-            }}>See Features</a>
+          <div style={{ marginTop: 36, display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              style={{ ...btnWarm, ...btnLg }}
+              onClick={() => navigate('/register')}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 14px 30px -8px rgba(217,86,44,.7)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 10px 24px -8px rgba(217,86,44,.6)'; }}
+            >Start your free trial →</button>
+            <Link
+              to="/login"
+              style={{ ...btnOutline, ...btnLg }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.ink; e.currentTarget.style.color = C.cream; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.ink; }}
+            >See a live demo</Link>
+          </div>
+          {/* small honest line */}
+          <div style={{
+            marginTop: 32, display: 'flex', gap: 12, alignItems: 'center',
+            fontSize: 13.5, color: C.muted, flexWrap: 'wrap',
+          }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 999,
+              background: 'rgba(255,255,255,.6)', backdropFilter: 'blur(6px)',
+              border: '1px solid rgba(27,27,27,.08)',
+              fontWeight: 600, color: C.forest,
+            }}>🌍 Made in Harare</span>
+            <span style={{ fontFamily: SERIF, fontStyle: 'italic', color: C.forest, fontSize: 15 }}>
+              For every scale — from the kitchen table to the coop.
+            </span>
           </div>
         </div>
-      </section>
 
-      {/* Social proof stats */}
-      <section style={{ background: '#fff', borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', justifyContent: 'space-around', padding: '32px 24px', flexWrap: 'wrap', gap: 24 }}>
-          {stats.map((s, i) => (
-            <div key={i} style={{ textAlign: 'center', minWidth: 120 }}>
-              <div style={{ fontSize: 32, fontWeight: 800, color: C.green }}>{s.number}</div>
-              <div style={{ fontSize: 13, color: C.ink3, marginTop: 4 }}>{s.label}</div>
+        {/* Hero photo collage */}
+        <div style={{ position: 'relative', height: mobile ? 380 : 620 }}>
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: RLG, overflow: 'hidden',
+            boxShadow: '0 40px 80px -30px rgba(177,59,23,.3)',
+          }}>
+            <img
+              src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1400&q=80&auto=format&fit=crop"
+              alt="Farm"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={e => {
+                e.currentTarget.parentElement.style.background = 'linear-gradient(135deg,#f4a743,#d9562c)';
+                e.currentTarget.remove();
+              }}
+            />
+          </div>
+          {/* card-1: field tagline */}
+          <div style={{
+            position: 'absolute', bottom: 28, left: mobile ? 8 : -18,
+            background: '#fff', borderRadius: 20, padding: '18px 22px',
+            boxShadow: '0 20px 40px -15px rgba(0,0,0,.18)',
+            display: 'flex', gap: 14, alignItems: 'center',
+            minWidth: mobile ? 240 : 280, maxWidth: 300,
+          }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: 14,
+              background: `linear-gradient(135deg, ${C.amber}, ${C.terra})`,
+              display: 'grid', placeItems: 'center',
+              color: '#fff', fontSize: 22, flexShrink: 0,
+            }}>🌾</div>
+            <div>
+              <b style={{ fontFamily: SERIF, fontSize: 16, fontStyle: 'italic', display: 'block', color: C.ink, lineHeight: 1.25 }}>
+                From the field, not the office.
+              </b>
+              <small style={{ color: C.muted, fontSize: 12.5, display: 'block', marginTop: 3 }}>
+                Logged by the hands that did the work.
+              </small>
             </div>
-          ))}
+          </div>
+          {/* card-2: ethos */}
+          <div style={{
+            position: 'absolute', top: 26, right: mobile ? 8 : -16,
+            background: C.forest, color: '#fff', borderRadius: 20,
+            padding: '18px 20px', width: 210,
+            boxShadow: '0 20px 40px -15px rgba(0,0,0,.25)',
+          }}>
+            <div style={{
+              fontSize: 11.5, color: C.amber,
+              textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 700,
+            }}>— Our promise</div>
+            <div style={{
+              fontFamily: SERIF, fontWeight: 600, fontStyle: 'italic',
+              fontSize: 22, letterSpacing: '-.01em',
+              marginTop: 10, lineHeight: 1.25,
+            }}>
+              Built slow.<br />
+              For African <span style={{ color: C.amber }}>soil.</span>
+            </div>
+            <div style={{
+              marginTop: 14, paddingTop: 12,
+              borderTop: '1px solid rgba(255,247,236,.18)',
+              fontSize: 12.5, opacity: 0.75,
+            }}>
+              No fake metrics. Just honest tools.
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
 
-      {/* Trial banner */}
-      <section style={{
-        background: 'linear-gradient(135deg, #e8f5ee, #eff6ff)', border: `2px dashed ${C.green}`,
-        margin: '40px 24px', padding: '28px 32px', borderRadius: 14, textAlign: 'center', maxWidth: 800, marginLeft: 'auto', marginRight: 'auto',
+      {/* Soft values strip (no fake brand names) */}
+      <div style={{
+        maxWidth: 1280, margin: '0 auto', padding: '30px 28px 10px',
+        display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap',
+        justifyContent: 'center', color: C.muted, fontSize: 14,
       }}>
-        <h3 style={{ color: C.green, fontSize: 22, fontWeight: 700, marginBottom: 6 }}>30 Days Free — No Card Required</h3>
-        <p style={{ color: C.ink2, fontSize: 15 }}>Full access to every feature. Start managing your business today.</p>
-      </section>
+        {[
+          'Works offline',
+          'Your data is yours',
+          'Built for Zimbabwe',
+          'Cancel any time',
+          'No credit card to start',
+        ].map((name, i, arr) => (
+          <span key={name} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 28,
+            fontFamily: SERIF, fontStyle: 'italic', color: C.ink,
+            opacity: 0.65, fontSize: 17, letterSpacing: '-.01em',
+          }}>
+            {name}
+            {i < arr.length - 1 && (
+              <span style={{ color: C.terra, opacity: 0.5, fontSize: 12, fontStyle: 'normal' }}>✦</span>
+            )}
+          </span>
+        ))}
+      </div>
+    </header>
+  );
 
-      {/* Features */}
-      <section id="features" style={{ padding: '64px 24px', maxWidth: 1100, margin: '0 auto' }}>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, textAlign: 'center', marginBottom: 12, color: C.ink }}>Everything You Need</h2>
-        <p style={{ textAlign: 'center', color: C.ink3, fontSize: 16, marginBottom: 48, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
-          One platform for your entire operation — from the field to the till.
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
-          {features.map((f, i) => (
-            <div key={i} style={{ background: '#fff', borderRadius: 12, padding: '24px 22px', border: `1px solid ${C.border}`, transition: 'box-shadow 0.2s' }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>{f.emoji}</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: C.ink, marginBottom: 6 }}>{f.title}</h3>
-              <p style={{ fontSize: 13, color: C.ink3, lineHeight: 1.7 }}>{f.desc}</p>
-            </div>
-          ))}
+  // ==== FEATURES / BENTO GRID ====
+  const card = (extra = {}) => ({
+    background: '#fff', borderRadius: 24, overflow: 'hidden',
+    boxShadow: '0 8px 20px -15px rgba(0,0,0,.15)',
+    transition: 'transform .25s, box-shadow .25s',
+    display: 'flex', flexDirection: 'column',
+    ...extra,
+  });
+  const cardHover = e => {
+    e.currentTarget.style.transform = 'translateY(-4px)';
+    e.currentTarget.style.boxShadow = '0 30px 50px -25px rgba(177,59,23,.25)';
+  };
+  const cardUnhover = e => {
+    e.currentTarget.style.transform = 'none';
+    e.currentTarget.style.boxShadow = '0 8px 20px -15px rgba(0,0,0,.15)';
+  };
+  const tag = (dark = false, warm = false) => ({
+    display: 'inline-block', padding: '5px 11px', borderRadius: 999,
+    fontSize: 11.5, fontWeight: 700, letterSpacing: '.06em',
+    textTransform: 'uppercase', marginBottom: 14,
+    background: warm ? 'rgba(255,255,255,.25)' : dark ? 'rgba(244,167,67,.2)' : C.sand2,
+    color: warm ? '#fff' : dark ? C.amber : C.clay,
+  });
+  const cardH4 = { fontFamily: SERIF, fontWeight: 700, fontSize: 26, letterSpacing: '-.015em', lineHeight: 1.2, marginBottom: 10 };
+
+  const features = (
+    <section id="features" style={{
+      maxWidth: 1280, margin: '0 auto',
+      padding: mobile ? '60px 18px' : '100px 28px',
+    }}>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between',
+        alignItems: 'flex-end', gap: 30, flexWrap: 'wrap',
+      }}>
+        <div>
+          <SecKicker>Everything you need</SecKicker>
+          <h2 style={{
+            fontFamily: SERIF, fontWeight: 700,
+            fontSize: mobile ? 36 : 'clamp(36px, 5vw, 68px)',
+            lineHeight: 1.02, letterSpacing: '-.025em', maxWidth: '22ch',
+            color: C.ink,
+          }}>
+            The whole business in{' '}
+            <em style={{ color: C.clay, fontStyle: 'italic', fontWeight: 600 }}>one warm place</em>.
+          </h2>
         </div>
-      </section>
+        <p style={{ marginTop: 20, maxWidth: '62ch', color: C.muted, fontSize: 18, lineHeight: 1.6 }}>
+          From the first seed to the last till receipt — Pewil covers the work your team actually does. No more spreadsheets held together with prayer. No more "which version is the real one?".
+        </p>
+      </div>
 
-      {/* Testimonials */}
-      <section style={{ background: '#fff', padding: '64px 24px', borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, textAlign: 'center', marginBottom: 12, color: C.ink }}>What Our Customers Say</h2>
-          <p style={{ textAlign: 'center', color: C.ink3, fontSize: 15, marginBottom: 48 }}>Real feedback from farm and retail owners across Zimbabwe.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
-            {testimonials.map((t, i) => (
-              <div key={i} style={{ background: C.surface, borderRadius: 12, padding: '24px 22px', border: `1px solid ${C.border}` }}>
-                <div style={{ marginBottom: 12 }}>
-                  {Array.from({ length: t.rating }).map((_, j) => (
-                    <span key={j} style={{ color: C.amber, fontSize: 16 }}>{'\u2605'}</span>
-                  ))}
-                  {Array.from({ length: 5 - t.rating }).map((_, j) => (
-                    <span key={j} style={{ color: '#d1d5db', fontSize: 16 }}>{'\u2605'}</span>
-                  ))}
+      <div style={{
+        marginTop: 60,
+        display: 'grid',
+        gridTemplateColumns: mobile ? '1fr' : 'repeat(12, 1fr)',
+        gap: mobile ? 18 : 22,
+      }}>
+        {/* 1 big photo */}
+        <div style={card({ gridColumn: mobile ? undefined : 'span 7' })}
+          onMouseEnter={cardHover} onMouseLeave={cardUnhover}>
+          <div style={{ position: 'relative', overflow: 'hidden' }}>
+            <img
+              src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&q=75&auto=format&fit=crop"
+              alt="Field staff"
+              style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
+              onError={e => { e.currentTarget.parentElement.style.background = C.sand2; e.currentTarget.remove(); }}
+            />
+          </div>
+          <div style={{ padding: '26px 28px 30px' }}>
+            <span style={tag()}>Fields &amp; livestock</span>
+            <h4 style={cardH4}>Track the field from the field.</h4>
+            <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.55 }}>
+              Your foreman enters readings from a phone by the gate. Even if the network drops, Pewil keeps the data and syncs when signal returns. Every field, every crop, every cow gets a living record.
+            </p>
+          </div>
+        </div>
+
+        {/* 2 dark with stats */}
+        <div style={card({ gridColumn: mobile ? undefined : 'span 5', background: C.forest, color: C.sand })}
+          onMouseEnter={cardHover} onMouseLeave={cardUnhover}>
+          <div style={{ padding: '36px 34px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <span style={tag(true)}>Multi-tenant SaaS</span>
+            <h4 style={{ ...cardH4, color: '#fff' }}>Your farm. Your data. Your door key.</h4>
+            <p style={{ color: 'rgba(255,247,236,.75)', fontSize: 15, lineHeight: 1.55 }}>
+              Strict row-level tenant isolation. Auditable writes. Soft deletes. Role-based dashboards for owners, managers, and workers.
+            </p>
+            <div style={{ display: 'flex', gap: 24, marginTop: 'auto', paddingTop: 22 }}>
+              {[['3', 'Roles built in'], ['100%', 'Audit coverage'], ['0', 'Shared-row leaks']].map(([num, lbl]) => (
+                <div key={lbl} style={{ flex: 1 }}>
+                  <div style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 42, letterSpacing: '-.02em', color: C.amber }}>{num}</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,247,236,.7)', textTransform: 'uppercase', letterSpacing: '.08em', marginTop: 2 }}>{lbl}</div>
                 </div>
-                <p style={{ fontSize: 14, color: C.ink2, lineHeight: 1.7, marginBottom: 16, fontStyle: 'italic' }}>"{t.text}"</p>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{t.name}</div>
-                  <div style={{ fontSize: 12, color: C.ink3 }}>{t.role}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 3 warm gradient card */}
+        <div style={card({
+          gridColumn: mobile ? undefined : 'span 4',
+          background: `linear-gradient(135deg, ${C.amber}, ${C.terra})`,
+          color: '#fff',
+        })}
+          onMouseEnter={cardHover} onMouseLeave={cardUnhover}>
+          <div style={{ padding: '34px 30px', flex: 1 }}>
+            <span style={tag(false, true)}>Payments</span>
+            <h4 style={{ ...cardH4, color: '#fff' }}>Pesepay. EcoCash. Paynow. Card.</h4>
+            <p style={{ color: 'rgba(255,255,255,.88)', fontSize: 15, lineHeight: 1.55 }}>
+              One checkout flow, every rail Zimbabweans actually use. Multi-currency ledger that balances itself.
+            </p>
+          </div>
+        </div>
+
+        {/* 4 Retail POS */}
+        <div style={card({ gridColumn: mobile ? undefined : 'span 4' })}
+          onMouseEnter={cardHover} onMouseLeave={cardUnhover}>
+          <div style={{ overflow: 'hidden' }}>
+            <img
+              src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=900&q=75&auto=format&fit=crop"
+              alt="Shop"
+              style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
+              onError={e => { e.currentTarget.parentElement.style.background = C.sand2; e.currentTarget.remove(); }}
+            />
+          </div>
+          <div style={{ padding: '26px 28px 30px' }}>
+            <span style={tag()}>Retail POS</span>
+            <h4 style={cardH4}>Till, printer, barcode — done.</h4>
+            <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.55 }}>
+              From farm gate to shop shelf, one inventory truth.
+            </p>
+          </div>
+        </div>
+
+        {/* 5 AI */}
+        <div style={card({ gridColumn: mobile ? undefined : 'span 4' })}
+          onMouseEnter={cardHover} onMouseLeave={cardUnhover}>
+          <div style={{ overflow: 'hidden' }}>
+            <img
+              src="https://images.unsplash.com/photo-1560493676-04071c5f467b?w=900&q=75&auto=format&fit=crop"
+              alt="AI"
+              style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
+              onError={e => { e.currentTarget.parentElement.style.background = C.sand2; e.currentTarget.remove(); }}
+            />
+          </div>
+          <div style={{ padding: '26px 28px 30px' }}>
+            <span style={tag()}>AI Copilot</span>
+            <h4 style={cardH4}>The quiet assistant at your side.</h4>
+            <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.55 }}>
+              Pewil reads your patterns and whispers when something's off — a spike in feed, a missing receipt, a field that should've been logged yesterday.
+            </p>
+          </div>
+        </div>
+
+        {/* 6 Offline-first big */}
+        <div style={card({ gridColumn: mobile ? undefined : 'span 8', background: C.sand2 })}
+          onMouseEnter={cardHover} onMouseLeave={cardUnhover}>
+          <div style={{ padding: '34px 34px 36px' }}>
+            <span style={tag()}>Offline-first</span>
+            <h4 style={cardH4}>Loads in the dip. Syncs when the tower wakes up.</h4>
+            <p style={{ color: C.muted, fontSize: 15.5, lineHeight: 1.6, maxWidth: '58ch' }}>
+              Service workers and queued writes mean your team can keep working in Murehwa, Binga, or Beitbridge — with or without bars. Everything reconciles the moment the signal comes back.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // ==== STORY ====
+  const story = (
+    <section id="customers" style={{ background: C.sand2, padding: mobile ? '60px 0' : '100px 0' }}>
+      <div style={{
+        maxWidth: 1280, margin: '0 auto', padding: mobile ? '0 18px' : '0 28px',
+        display: 'grid',
+        gridTemplateColumns: mobile ? '1fr' : '1fr 1.05fr',
+        gap: mobile ? 30 : 60,
+        alignItems: 'center',
+      }}>
+        <div style={{
+          borderRadius: RLG, overflow: 'hidden',
+          boxShadow: '0 30px 60px -25px rgba(177,59,23,.25)',
+          aspectRatio: mobile ? '16/10' : '4/5',
+        }}>
+          <img
+            src="https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=1200&q=75&auto=format&fit=crop"
+            alt="Customer"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            onError={e => {
+              e.currentTarget.parentElement.style.background = `linear-gradient(135deg, ${C.amber}, ${C.terra})`;
+              e.currentTarget.remove();
+            }}
+          />
+        </div>
+        <div>
+          <SecKicker>Made with real farmers</SecKicker>
+          <h3 style={{
+            fontFamily: SERIF, fontWeight: 700,
+            fontSize: mobile ? 32 : 'clamp(32px, 4vw, 56px)',
+            lineHeight: 1.05, letterSpacing: '-.02em', color: C.ink,
+            maxWidth: '20ch',
+          }}>
+            From a notebook on the kitchen table to{' '}
+            <em style={{ color: C.clay, fontStyle: 'italic', fontWeight: 600 }}>real-time dashboards</em>.
+          </h3>
+          <p style={{
+            marginTop: 24,
+            fontFamily: SERIF, fontSize: mobile ? 19 : 22, fontStyle: 'italic',
+            lineHeight: 1.5, color: '#3a3024', maxWidth: '52ch',
+          }}>
+            We used to reconcile stock with four separate notebooks and one very tired aunt. Now the foreman enters stock from the shed and I watch it appear on my phone in Harare. Pewil paid for itself the first month.
+          </p>
+          <div style={{ marginTop: 26, display: 'flex', gap: 14, alignItems: 'center' }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: '50%',
+              background: `linear-gradient(135deg, ${C.amber}, ${C.terra})`,
+              display: 'grid', placeItems: 'center',
+              color: '#fff', fontFamily: SERIF, fontWeight: 700, fontSize: 18,
+            }}>W</div>
+            <div>
+              <b style={{ display: 'block', color: C.ink, fontSize: 15 }}>Wilbert</b>
+              <small style={{ color: C.muted, fontSize: 13 }}>Owner — Tomato and tobacco farm, Chivhu</small>
+            </div>
+          </div>
+          <div style={{ marginTop: 30 }}>
+            <button
+              style={btnPrimary}
+              onClick={() => navigate('/register')}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
+            >Read more stories →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // ==== PRICING ====
+  const plans = [
+    {
+      name: 'Starter', price: 'Free', unit: 'forever',
+      desc: 'For solo operators taking their records out of WhatsApp.',
+      features: ['1 user, 1 tenant', 'Fields & stock basics', 'Email support'],
+      btn: 'outline', cta: 'Start free',
+    },
+    {
+      name: 'Growth', price: '$29', unit: '/ mo · per business',
+      desc: 'Growing farms and retail shops that need real workflows.',
+      features: ['Up to 10 users', 'Full finance + retail', 'WhatsApp + Pesepay + Paynow', 'AI anomaly alerts', 'Priority support'],
+      btn: 'warm', cta: 'Start 14-day trial', hl: true, badge: 'Most chosen',
+    },
+    {
+      name: 'Scale', price: '$89', unit: '/ mo · per business',
+      desc: 'Multi-site operators, coops, and processors.',
+      features: ['Unlimited users', 'Multi-site & multi-currency', 'SLA + account lead', 'Custom ZIMRA/donor reports'],
+      btn: 'outline', cta: 'Talk to sales',
+    },
+  ];
+
+  const pricing = (
+    <section id="pricing" style={{
+      padding: mobile ? '60px 0' : '100px 0',
+    }}>
+      <div style={{
+        maxWidth: 1280, margin: '0 auto', padding: mobile ? '0 18px' : '0 28px',
+      }}>
+        <div style={{
+          background: C.forest, color: '#fff',
+          borderRadius: RLG, padding: mobile ? '46px 24px' : '72px 56px',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          <div style={{
+            position: 'absolute', top: -80, right: -80,
+            width: 280, height: 280, borderRadius: '50%',
+            background: `radial-gradient(circle, rgba(244,167,67,.18), transparent 65%)`,
+            pointerEvents: 'none',
+          }} />
+          <SecKicker light>Pricing</SecKicker>
+          <h2 style={{
+            fontFamily: SERIF, fontWeight: 700,
+            fontSize: mobile ? 36 : 'clamp(36px, 5vw, 64px)',
+            lineHeight: 1.05, letterSpacing: '-.025em',
+            maxWidth: '18ch', color: '#fff',
+          }}>
+            Made for Zimbabwean{' '}
+            <em style={{ color: C.amber, fontStyle: 'italic', fontWeight: 600 }}>cashflow</em>.
+          </h2>
+          <p style={{
+            marginTop: 18, maxWidth: '58ch',
+            color: 'rgba(255,247,236,.75)', fontSize: 17, lineHeight: 1.6,
+          }}>
+            Pay in USD or ZWL. Month-to-month. Cancel any time. No "call us" theatre — the price on this page is the price you pay.
+          </p>
+
+          <div style={{
+            marginTop: 56,
+            display: 'grid',
+            gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)',
+            gap: 20,
+          }}>
+            {plans.map(plan => {
+              const hl = plan.hl;
+              return (
+                <div key={plan.name} style={{
+                  background: hl ? C.cream : 'rgba(255,247,236,.07)',
+                  color: hl ? C.ink : '#fff',
+                  border: hl ? `1px solid ${C.amber}` : '1px solid rgba(255,247,236,.14)',
+                  borderRadius: 22, padding: 30,
+                  backdropFilter: hl ? 'none' : 'blur(10px)',
+                  transform: !mobile && hl ? 'translateY(-10px)' : 'none',
+                  boxShadow: hl ? '0 30px 60px -20px rgba(0,0,0,.4)' : 'none',
+                  display: 'flex', flexDirection: 'column',
+                }}>
+                  {plan.badge && (
+                    <span style={{
+                      display: 'inline-block', padding: '4px 10px', borderRadius: 999,
+                      background: C.amber, color: C.ink,
+                      fontSize: 11, fontWeight: 700, letterSpacing: '.06em',
+                      textTransform: 'uppercase', alignSelf: 'flex-start', marginBottom: 12,
+                    }}>{plan.badge}</span>
+                  )}
+                  <h4 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 22, letterSpacing: '-.01em' }}>{plan.name}</h4>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '14px 0 8px' }}>
+                    <span style={{
+                      fontFamily: SERIF, fontWeight: 700, fontSize: 54,
+                      letterSpacing: '-.03em', lineHeight: 1,
+                    }}>{plan.price}</span>
+                    <span style={{ opacity: 0.7, fontSize: 14 }}>{plan.unit}</span>
+                  </div>
+                  <p style={{ opacity: 0.75, fontSize: 14, marginBottom: 24, minHeight: 42 }}>{plan.desc}</p>
+                  <ul style={{ listStyle: 'none', display: 'grid', gap: 11, fontSize: 14.5, flex: 1, padding: 0, margin: 0 }}>
+                    {plan.features.map(f => (
+                      <li key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                        <span style={{ color: hl ? C.clay : C.amber, fontWeight: 700, marginTop: -1 }}>✓</span>
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => navigate('/register')}
+                    style={
+                      plan.btn === 'warm'
+                        ? { ...btnWarm, marginTop: 24, width: '100%' }
+                        : {
+                            ...btnOutline, marginTop: 24, width: '100%',
+                            borderColor: hl ? C.ink : 'rgba(255,247,236,.35)',
+                            color: hl ? C.ink : '#fff',
+                          }
+                    }
+                  >{plan.cta}</button>
                 </div>
-              </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // ==== CTA STRIP ====
+  const ctaStrip = (
+    <section style={{
+      padding: mobile ? '0 18px 60px' : '0 28px 100px',
+      textAlign: 'center',
+    }}>
+      <div style={{
+        maxWidth: 1280, margin: '0 auto',
+        background: `linear-gradient(135deg, ${C.amber}, ${C.terra})`,
+        borderRadius: RLG,
+        padding: mobile ? '56px 24px' : '80px 40px',
+        color: '#fff',
+      }}>
+        <h2 style={{
+          fontFamily: SERIF, fontWeight: 700,
+          fontSize: mobile ? 34 : 'clamp(34px, 5vw, 60px)',
+          lineHeight: 1.05, letterSpacing: '-.025em',
+          color: '#fff', margin: '0 auto', maxWidth: '18ch',
+        }}>
+          Let's grow something{' '}
+          <em style={{
+            fontStyle: 'italic', fontWeight: 600,
+            borderBottom: `4px solid ${C.forest}`,
+            paddingBottom: 2,
+          }}>good</em>, together.
+        </h2>
+        <p style={{
+          marginTop: 18, maxWidth: '52ch', marginLeft: 'auto', marginRight: 'auto',
+          fontSize: 17, opacity: 0.95, lineHeight: 1.55,
+        }}>
+          14-day free trial. No card required. Your data leaves with you if you ever want to go.
+        </p>
+        <div style={{ marginTop: 30, display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            style={{ ...btnBase, ...btnLg, background: '#fff', color: C.clay }}
+            onClick={() => navigate('/register')}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
+          >Start free →</button>
+          <Link
+            to="/login"
+            style={{ ...btnBase, ...btnLg, background: 'transparent', color: '#fff', border: '1.5px solid #fff' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+          >Log in</Link>
+        </div>
+      </div>
+    </section>
+  );
+
+  // ==== FOOTER ====
+  const footLinks = (title, items) => (
+    <div>
+      <h5 style={{
+        fontSize: 12, fontWeight: 700, color: C.amber,
+        textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 14,
+      }}>{title}</h5>
+      <ul style={{ listStyle: 'none', display: 'grid', gap: 10, padding: 0, margin: 0 }}>
+        {items.map(([label, href]) => (
+          <li key={label}>
+            <Link to={href} style={{
+              color: 'rgba(255,247,236,.75)', textDecoration: 'none', fontSize: 14.5,
+            }}
+              onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,247,236,.75)'}
+            >{label}</Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  const footer = (
+    <footer style={{
+      background: C.forest, color: C.sand,
+      padding: mobile ? '54px 18px 30px' : '80px 28px 40px',
+    }}>
+      <div style={{
+        maxWidth: 1280, margin: '0 auto',
+        display: 'grid',
+        gridTemplateColumns: mobile ? '1fr' : '1.4fr repeat(3, 1fr)',
+        gap: mobile ? 32 : 40,
+      }}>
+        <div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            fontWeight: 700, fontSize: 20, color: '#fff', marginBottom: 16,
+          }}>
+            <LogoMark />
+            Pewil
+          </div>
+          <p style={{ opacity: 0.7, fontSize: 14.5, maxWidth: '34ch', lineHeight: 1.55 }}>
+            The operating system for African agribusiness. Built in Harare. Shipped with love across borders.
+          </p>
+          <div style={{ marginTop: 18, display: 'flex', gap: 10 }}>
+            {['𝕏', 'in', 'f'].map(s => (
+              <a key={s} href="#" style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: 'rgba(244,167,67,.15)',
+                display: 'grid', placeItems: 'center',
+                color: C.amber, textDecoration: 'none', fontSize: 14, fontWeight: 600,
+              }}>{s}</a>
             ))}
           </div>
         </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" style={{ padding: '64px 24px', maxWidth: 1100, margin: '0 auto' }}>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, textAlign: 'center', marginBottom: 12, color: C.ink }}>Simple, Fair Pricing</h2>
-        <p style={{ textAlign: 'center', color: C.ink3, fontSize: 15, marginBottom: 48 }}>No hidden fees. Extra seats are just $5/month each.</p>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, marginBottom: 48 }}>
-          {Object.entries(plans).map(([name, plan]) => (
-            <div key={name} style={{
-              border: plan.mostPopular ? `3px solid ${C.green}` : `1px solid ${C.border}`,
-              borderRadius: 14, overflow: 'hidden', background: '#fff', position: 'relative',
-              boxShadow: plan.mostPopular ? '0 10px 30px rgba(26,107,58,0.1)' : '0 1px 3px rgba(0,0,0,0.06)',
-            }}>
-              {plan.mostPopular && (
-                <div style={{ background: C.green, color: '#fff', textAlign: 'center', padding: '8px', fontWeight: 700, fontSize: 12, letterSpacing: '0.05em' }}>MOST POPULAR</div>
-              )}
-              <div style={{ padding: '28px 24px' }}>
-                <h3 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: C.ink }}>{name}</h3>
-                <div style={{ marginBottom: 20 }}>
-                  <span style={{ fontSize: 40, fontWeight: 800, color: C.green }}>${plan.price}</span>
-                  <span style={{ color: C.ink3, fontSize: 15 }}>/month</span>
-                </div>
-                <ul style={{ listStyle: 'none', padding: 0, marginBottom: 20 }}>
-                  {plan.features.map((f, i) => (
-                    <li key={i} style={{ padding: '6px 0', color: C.ink2, fontSize: 14 }}>{'\u2713'} {f}</li>
-                  ))}
-                  {plan.disabled && plan.disabled.map((f, i) => (
-                    <li key={`d${i}`} style={{ padding: '6px 0', color: C.ink3, fontSize: 14, opacity: 0.5 }}>{'\u2717'} {f}</li>
-                  ))}
-                </ul>
-                {plan.addon && (
-                  <p style={{ fontSize: 13, color: C.amber, marginBottom: 16, fontWeight: 600 }}>AI add-on: +${plan.addon}/mo</p>
-                )}
-                <button onClick={() => navigate('/register')} style={{
-                  width: '100%', padding: '12px', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 15,
-                  border: plan.mostPopular ? 'none' : `2px solid ${C.green}`,
-                  background: plan.mostPopular ? C.green : 'transparent',
-                  color: plan.mostPopular ? '#fff' : C.green,
-                }}>
-                  {name === 'Enterprise' ? 'Contact Sales' : 'Start Free Trial'}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Calculator */}
-        <div style={{ background: C.green3, padding: '28px 32px', borderRadius: 14, maxWidth: 560, margin: '0 auto' }}>
-          <h3 style={{ color: C.ink, marginBottom: 18, fontSize: 18, fontWeight: 700 }}>Calculate Your Cost</h3>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 6, color: C.ink2, fontWeight: 600, fontSize: 13 }}>Select Plan</label>
-            <select value={selectedPlan} onChange={e => { setSelectedPlan(e.target.value); if (e.target.value === 'Growth') setUserCount(10); }}
-              style={{ width: '100%', padding: '10px', border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14 }}>
-              {Object.keys(plans).map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 6, color: C.ink2, fontWeight: 600, fontSize: 13 }}>Number of Users: {userCount}</label>
-            <input type="range" min="1" max="50" value={userCount} onChange={e => setUserCount(parseInt(e.target.value))} style={{ width: '100%' }} />
-          </div>
-          {selectedPlan === 'Starter' && (
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                <input type="checkbox" checked={includeAI} onChange={e => setIncludeAI(e.target.checked)} />
-                <span style={{ color: C.ink2, fontWeight: 600, fontSize: 13 }}>Add AI ($10/month)</span>
-              </label>
-            </div>
-          )}
-          <div style={{ background: '#fff', padding: '14px', borderRadius: 8, textAlign: 'center' }}>
-            <p style={{ color: C.ink3, fontSize: 13, marginBottom: 4 }}>Estimated monthly cost</p>
-            <p style={{ fontSize: 32, fontWeight: 800, color: C.green }}>${calculateTotal()}/mo</p>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section id="faq" style={{ background: '#fff', padding: '64px 24px', borderTop: `1px solid ${C.border}` }}>
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, textAlign: 'center', marginBottom: 12, color: C.ink }}>Frequently Asked Questions</h2>
-          <p style={{ textAlign: 'center', color: C.ink3, fontSize: 15, marginBottom: 40 }}>Everything you need to know about Pewil.</p>
-          {faqs.map((faq, i) => (
-            <div key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
-              <button onClick={() => setFaqOpen(faqOpen === i ? null : i)} style={{
-                width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '18px 0', background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 15, fontWeight: 600, color: C.ink, textAlign: 'left',
-              }}>
-                <span>{faq.q}</span>
-                <span style={{ fontSize: 18, color: C.ink3, transition: 'transform 0.2s', transform: faqOpen === i ? 'rotate(180deg)' : 'none' }}>{'\u25BC'}</span>
-              </button>
-              {faqOpen === i && (
-                <p style={{ fontSize: 14, color: C.ink2, lineHeight: 1.7, padding: '0 0 18px', margin: 0 }}>{faq.a}</p>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section style={{
-        background: `linear-gradient(135deg, ${C.greenDark}, ${C.green}, ${C.green2})`,
-        color: '#fff', padding: '72px 24px', textAlign: 'center',
+        {footLinks('Product', [['Farm', '/'], ['Retail', '/'], ['Finance', '/'], ['AI Copilot', '/']])}
+        {footLinks('Company', [['About', '/'], ['Stories', '/'], ['Careers', '/'], ['Contact', '/']])}
+        {footLinks('Legal', [['Terms', '/terms'], ['Privacy', '/privacy'], ['Refunds', '/refunds'], ['Security', '/']])}
+      </div>
+      <div style={{
+        maxWidth: 1280, margin: '40px auto 0',
+        paddingTop: 24, borderTop: '1px solid rgba(255,247,236,.12)',
+        display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap',
+        gap: 12, fontSize: 13, color: 'rgba(255,247,236,.55)',
       }}>
-        <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, marginBottom: 12 }}>Ready to Grow Your Business?</h2>
-          <p style={{ fontSize: 16, marginBottom: 28, opacity: 0.92, lineHeight: 1.7 }}>
-            Join hundreds of farm and retail owners across Zimbabwe who manage their operations with Pewil.
-          </p>
-          <button onClick={() => navigate('/register')} style={{
-            background: C.amber, color: C.ink, border: 'none', padding: '16px 36px',
-            borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 16,
-          }}>Get Started Free</button>
-        </div>
-      </section>
+        <div>© 2026 Pewil Technologies Pvt Ltd · Harare, Zimbabwe 🌍</div>
+        <div>Made with care in Africa</div>
+      </div>
+    </footer>
+  );
 
-      {/* Footer */}
-      <footer style={{ background: C.greenDark, color: '#fff', padding: '36px 24px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 32 }}>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 20, color: C.amber, marginBottom: 8 }}>PEWIL</div>
-            <p style={{ fontSize: 13, opacity: 0.7, maxWidth: 280, lineHeight: 1.6 }}>
-              Farm management and retail POS built for African businesses. Based in Zimbabwe.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 40, fontSize: 13 }}>
-            <div>
-              <div style={{ fontWeight: 700, marginBottom: 10, opacity: 0.6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Product</div>
-              <a href="#features" style={{ display: 'block', color: '#fff', textDecoration: 'none', opacity: 0.8, marginBottom: 6 }}>Features</a>
-              <a href="#pricing" style={{ display: 'block', color: '#fff', textDecoration: 'none', opacity: 0.8, marginBottom: 6 }}>Pricing</a>
-              <a href="#faq" style={{ display: 'block', color: '#fff', textDecoration: 'none', opacity: 0.8 }}>FAQ</a>
-            </div>
-            <div>
-              <div style={{ fontWeight: 700, marginBottom: 10, opacity: 0.6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Legal</div>
-              <Link to="/terms" style={{ display: 'block', color: '#fff', textDecoration: 'none', opacity: 0.8, marginBottom: 6 }}>Terms of Service</Link>
-              <Link to="/privacy" style={{ display: 'block', color: '#fff', textDecoration: 'none', opacity: 0.8, marginBottom: 6 }}>Privacy Policy</Link>
-              <Link to="/refunds" style={{ display: 'block', color: '#fff', textDecoration: 'none', opacity: 0.8 }}>Refund Policy</Link>
-            </div>
-            <div>
-              <div style={{ fontWeight: 700, marginBottom: 10, opacity: 0.6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Support</div>
-              <a href="mailto:support@pewil.org" style={{ display: 'block', color: '#fff', textDecoration: 'none', opacity: 0.8, marginBottom: 6 }}>support@pewil.org</a>
-            </div>
-          </div>
-        </div>
-        <div style={{ maxWidth: 1100, margin: '24px auto 0', paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.15)', textAlign: 'center', fontSize: 12, opacity: 0.5 }}>
-          {'\u00A9'} 2026 Pewil. All rights reserved.
-        </div>
-      </footer>
+  return (
+    <div style={{
+      background: C.cream, color: C.ink,
+      fontFamily: SANS, fontSize: 16, lineHeight: 1.55,
+      WebkitFontSmoothing: 'antialiased', overflowX: 'hidden',
+    }}>
+      {navBar}
+      {hero}
+      {features}
+      {story}
+      {pricing}
+      {ctaStrip}
+      {footer}
     </div>
   );
 };
