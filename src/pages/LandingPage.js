@@ -153,7 +153,7 @@ const LandingPage = () => {
             onClick={() => navigate('/register')}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 14px 30px -8px rgba(217,86,44,.7)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 10px 24px -8px rgba(217,86,44,.6)'; }}
-          >Start free</button>
+          >Start trial</button>
           {mobile && (
             <button
               aria-label="Menu"
@@ -614,24 +614,49 @@ const LandingPage = () => {
   );
 
   // ==== PRICING ====
+  // Source of truth: makonese_backend/billing/migrations/0005_seed_per_module_plans.py
+  // and src/pages/Pricing.js. Landing shows Farm tier prices; Retail note below. Full grid at /pricing.
   const plans = [
     {
-      name: 'Starter', price: 'Free', unit: 'forever',
-      desc: 'For solo operators taking their records out of WhatsApp.',
-      features: ['1 user, 1 tenant', 'Fields & stock basics', 'Email support'],
-      btn: 'outline', cta: 'Start free',
+      name: 'Starter', price: '$10', unit: '/ mo · Farm',
+      retailNote: 'Retail: $15 / mo',
+      yearlyHint: 'or $100 / year — save 2 months',
+      desc: 'For small farms and single-till shops just getting started.',
+      features: [
+        'Up to 2 users',
+        '5 fields · 10 workers · 50 livestock',
+        'Costs, stock, sales & reports',
+        'Email support',
+      ],
+      btn: 'outline', cta: 'Start 14-day trial',
     },
     {
-      name: 'Growth', price: '$29', unit: '/ mo · per business',
-      desc: 'Growing farms and retail shops that need real workflows.',
-      features: ['Up to 10 users', 'Full finance + retail', 'WhatsApp + Pesepay + Paynow', 'AI anomaly alerts', 'Priority support'],
-      btn: 'warm', cta: 'Start 14-day trial', hl: true, badge: 'Most chosen',
+      name: 'Growth', price: '$25', unit: '/ mo · Farm',
+      retailNote: 'Retail: $35 / mo',
+      yearlyHint: 'or $250 / year — save 2 months',
+      desc: 'Most popular — growing farms and multi-cashier shops.',
+      features: [
+        'Up to 5 users',
+        '20 fields · 30 workers · 500 livestock',
+        'Basic AI insights + WhatsApp alerts',
+        'Multi-currency + ZIMRA fiscal (retail)',
+        'Priority email support',
+      ],
+      btn: 'warm', cta: 'Start 14-day trial', hl: true, badge: 'Most popular',
     },
     {
-      name: 'Scale', price: '$89', unit: '/ mo · per business',
-      desc: 'Multi-site operators, coops, and processors.',
-      features: ['Unlimited users', 'Multi-site & multi-currency', 'SLA + account lead', 'Custom ZIMRA/donor reports'],
-      btn: 'outline', cta: 'Talk to sales',
+      name: 'Enterprise', price: '$60', unit: '/ mo · Farm',
+      retailNote: 'Retail: $80 / mo',
+      yearlyHint: 'or $600 / year — save 2 months',
+      desc: 'Large estates, chains, and multi-site operators.',
+      features: [
+        'Unlimited users, fields, products',
+        'Advanced AI insights',
+        'White-label branding',
+        'Dedicated account manager',
+        'Phone support',
+      ],
+      btn: 'outline', cta: 'Start 14-day trial',
     },
   ];
 
@@ -664,10 +689,10 @@ const LandingPage = () => {
             <em style={{ color: C.amber, fontStyle: 'italic', fontWeight: 600 }}>cashflow</em>.
           </h2>
           <p style={{
-            marginTop: 18, maxWidth: '58ch',
+            marginTop: 18, maxWidth: '62ch',
             color: 'rgba(255,247,236,.75)', fontSize: 17, lineHeight: 1.6,
           }}>
-            Pay in USD or ZWL. Month-to-month. Cancel any time. No "call us" theatre — the price on this page is the price you pay.
+            Per-module pricing in USD. 14-day free trial, no card up front. Month-to-month or yearly (10 × monthly — 2 months free). Cancel any time from your Billing page.
           </p>
 
           <div style={{
@@ -698,13 +723,28 @@ const LandingPage = () => {
                     }}>{plan.badge}</span>
                   )}
                   <h4 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 22, letterSpacing: '-.01em' }}>{plan.name}</h4>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '14px 0 8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '14px 0 4px' }}>
                     <span style={{
                       fontFamily: SERIF, fontWeight: 700, fontSize: 54,
                       letterSpacing: '-.03em', lineHeight: 1,
                     }}>{plan.price}</span>
                     <span style={{ opacity: 0.7, fontSize: 14 }}>{plan.unit}</span>
                   </div>
+                  {plan.retailNote && (
+                    <div style={{
+                      fontSize: 12.5, fontWeight: 600,
+                      color: hl ? C.clay : C.amber,
+                      opacity: hl ? 1 : 0.9,
+                      marginBottom: 4,
+                    }}>{plan.retailNote}</div>
+                  )}
+                  {plan.yearlyHint && (
+                    <div style={{
+                      fontSize: 12, fontStyle: 'italic',
+                      color: hl ? C.muted : 'rgba(255,247,236,.6)',
+                      marginBottom: 14,
+                    }}>{plan.yearlyHint}</div>
+                  )}
                   <p style={{ opacity: 0.75, fontSize: 14, marginBottom: 24, minHeight: 42 }}>{plan.desc}</p>
                   <ul style={{ listStyle: 'none', display: 'grid', gap: 11, fontSize: 14.5, flex: 1, padding: 0, margin: 0 }}>
                     {plan.features.map(f => (
@@ -729,6 +769,21 @@ const LandingPage = () => {
                 </div>
               );
             })}
+          </div>
+
+          <div style={{
+            marginTop: 32, display: 'flex', gap: 24, flexWrap: 'wrap',
+            alignItems: 'center', justifyContent: 'center',
+            fontSize: 14.5, color: 'rgba(255,247,236,.75)',
+          }}>
+            <span>Farm + Retail are priced per-module — combine any tier.</span>
+            <Link to="/pricing" style={{
+              color: C.amber, fontWeight: 700, textDecoration: 'none',
+              borderBottom: `1px solid ${C.amber}`, paddingBottom: 2,
+            }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >See the full pricing grid →</Link>
           </div>
         </div>
       </div>
@@ -765,7 +820,7 @@ const LandingPage = () => {
           marginTop: 18, maxWidth: '52ch', marginLeft: 'auto', marginRight: 'auto',
           fontSize: 17, opacity: 0.95, lineHeight: 1.55,
         }}>
-          14-day free trial. No card required. Your data leaves with you if you ever want to go.
+          14-day free trial. No card required. Full access from day one. Your data leaves with you if you ever want to go.
         </p>
         <div style={{ marginTop: 30, display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
@@ -773,7 +828,7 @@ const LandingPage = () => {
             onClick={() => navigate('/register')}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
-          >Start free →</button>
+          >Start 14-day trial →</button>
           <Link
             to="/login"
             style={{ ...btnBase, ...btnLg, background: 'transparent', color: '#fff', border: '1.5px solid #fff' }}
