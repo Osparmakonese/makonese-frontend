@@ -153,7 +153,7 @@ export default function FieldModal({ field, isOpen, onClose }) {
 
   return (
     <div style={S.overlay} onClick={onClose}>
-      <div style={S.card} onClick={e => e.stopPropagation()}>
+      <div style={S.card} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
         {/* Hero */}
         <div style={{ ...S.hero(field.crop), position: 'relative', overflow: 'hidden' }}>
           <img src={cropImage(field?.crop)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />

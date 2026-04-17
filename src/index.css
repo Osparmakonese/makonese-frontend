@@ -144,7 +144,91 @@ input, select, textarea, button {
   .topbar-desktop { display: none !important; }
 
   /* Mobile main area takes full width */
-  .main-content { margin-left: 0 !important; }
+  .main-content {
+    margin-left: 0 !important;
+    /* iOS safe-area on the left/right (notched phones in landscape) */
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  /* ── GLOBAL MOBILE SAFETY NET ───────────────────────
+     Most pages were authored for desktop with inline styles
+     (fixed table columns, 11-13px fonts, fixed-width modals).
+     These rules scope horizontal overflow to the offending
+     element instead of letting it blow past the viewport. */
+
+  /* 1. Main content: shrink padding, clip horizontal overflow */
+  main.page-content-mobile {
+    padding: 14px 12px 72px !important;
+    max-width: 100vw;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* 2. Every raw <table> inside main becomes independently scrollable. */
+  main.page-content-mobile table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  main.page-content-mobile table > thead,
+  main.page-content-mobile table > tbody,
+  main.page-content-mobile table > tfoot {
+    display: table;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  /* 3. Bump tiny inline table text up to legible mobile sizes */
+  main.page-content-mobile table th { font-size: 10px !important; }
+  main.page-content-mobile table td {
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+  }
+
+  /* 4. Prevent iOS zoom-on-focus — every text input needs >=16px */
+  main.page-content-mobile input:not([type=checkbox]):not([type=radio]):not([type=range]),
+  main.page-content-mobile select,
+  main.page-content-mobile textarea {
+    font-size: 16px !important;
+  }
+
+  /* 5. Touch targets: min 44x44 for buttons and button-like links */
+  main.page-content-mobile button:not(.bn-tab),
+  main.page-content-mobile a[role="button"] {
+    min-height: 44px;
+  }
+
+  /* 6. Cap any direct child of main at the viewport width */
+  main.page-content-mobile > *,
+  main.page-content-mobile > * > * {
+    max-width: 100%;
+  }
+
+  /* 7. Modals: constrain anything tagged as a dialog to fit the viewport */
+  [role="dialog"],
+  .modal,
+  .modal-card {
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - 32px) !important;
+    overflow-y: auto !important;
+  }
+
+  /* 8. Form grids collapse to 1 column on narrow phones */
+  .form-grid-2,
+  .form-grid-3,
+  .form-grid-4 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* 9. Content that pins itself to the top should clear the mobile header */
+  .content-sticky-top,
+  [data-sticky-top] {
+    top: 52px !important;
+  }
 
   /* Mobile header */
   .mobile-header {
@@ -276,4 +360,14 @@ body.pewil-pos-focus .main-content {
 }
 body.pewil-pos-focus main.page-content-mobile {
   padding: 0 !important;
+}
+
+/* ── VERY NARROW PHONES (≤360px, common Android budget devices) ── */
+@media (max-width: 360px) {
+  main.page-content-mobile {
+    padding: 10px 8px 72px !important;
+  }
+  main.page-content-mobile table td {
+    padding: 6px 8px !important;
+  }
 }
