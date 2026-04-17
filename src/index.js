@@ -25,6 +25,7 @@ if (SENTRY_DSN) {
     environment: process.env.REACT_APP_SENTRY_ENVIRONMENT || 'production',
     // Only send traces for API calls to our backend
     tracePropagationTargets: [
+      /^https:\/\/api\.pewil\.org\/api/,
       /^https:\/\/pewil-production\.up\.railway\.app\/api/,
     ],
     // Scrub sensitive data

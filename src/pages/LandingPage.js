@@ -317,7 +317,8 @@ const LandingPage = () => {
             <div>
               <div style={{ fontWeight: 700, marginBottom: 10, opacity: 0.6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Legal</div>
               <Link to="/terms" style={{ display: 'block', color: '#fff', textDecoration: 'none', opacity: 0.8, marginBottom: 6 }}>Terms of Service</Link>
-              <Link to="/privacy" style={{ display: 'block', color: '#fff', textDecoration: 'none', opacity: 0.8 }}>Privacy Policy</Link>
+              <Link to="/privacy" style={{ display: 'block', color: '#fff', textDecoration: 'none', opacity: 0.8, marginBottom: 6 }}>Privacy Policy</Link>
+              <Link to="/refunds" style={{ display: 'block', color: '#fff', textDecoration: 'none', opacity: 0.8 }}>Refund Policy</Link>
             </div>
             <div>
               <div style={{ fontWeight: 700, marginBottom: 10, opacity: 0.6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Support</div>
