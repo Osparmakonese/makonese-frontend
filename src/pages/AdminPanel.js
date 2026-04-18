@@ -117,6 +117,7 @@ function Toggle({ on, onChange }) {
 export default function AdminPanel() {
   const { user } = useAuth();
   const role = user?.role || 'worker';
+  const isSuperAdmin = !!user?.is_super_admin;
   const qc = useQueryClient();
 
   // Module-aware permission list. Retail-only tenants won't see Costs /
@@ -218,10 +219,18 @@ export default function AdminPanel() {
       <div style={S.header}>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={S.headerTitle}>🔐 Super Admin Panel</span>
-            <span style={S.superBadge}>SUPER ADMIN</span>
+            <span style={S.headerTitle}>
+              {isSuperAdmin ? '🔐 Super Admin Panel' : '🛡 Team & Access'}
+            </span>
+            <span style={isSuperAdmin ? S.superBadge : { ...S.superBadge, background: '#1a6b3a' }}>
+              {isSuperAdmin ? 'SUPER ADMIN' : 'OWNER'}
+            </span>
           </div>
-          <div style={S.headerSub}>System administration — visible to you only</div>
+          <div style={S.headerSub}>
+            {isSuperAdmin
+              ? 'Platform administration — visible across every tenant'
+              : 'Your team, permissions, and audit log — scoped to your organisation'}
+          </div>
         </div>
       </div>
 

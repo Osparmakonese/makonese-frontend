@@ -186,7 +186,7 @@ const NAV_ITEMS = [
   ]},
   // Admin Panel is cross-module. Available to owners in either module.
   { section: 'ADMINISTRATION', module: 'any', ownerOnly: true, collapsible: false, items: [
-    { key: 'Admin Panel', emoji: '\u{1F510}', label: 'Admin Panel' },
+    { key: 'Admin Panel', emoji: '\u{1F6E1}', label: 'Team & Access' },
   ]},
   // Help is available to everyone in any module
   { section: 'SUPPORT', module: 'any', collapsible: false, items: [
