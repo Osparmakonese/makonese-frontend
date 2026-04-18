@@ -151,6 +151,24 @@ const S = {
     textAlign: 'center', fontSize: 14, color: C.muted, marginTop: 24,
   },
   switchLink: { color: C.clay, fontWeight: 700, textDecoration: 'none' },
+  /* ── Design 5: 2FA callout card (shows on the creds step) ── */
+  twofaNote: {
+    marginTop: 18,
+    padding: '12px 14px',
+    background: C.sand2,
+    borderLeft: `3px solid ${C.amber}`,
+    borderRadius: 8,
+    display: 'flex', gap: 10, alignItems: 'flex-start',
+  },
+  twofaNoteIcon: {
+    fontSize: 16, color: C.clay, flexShrink: 0, lineHeight: 1,
+  },
+  twofaNoteText: {
+    fontSize: 11.5, color: C.ink, lineHeight: 1.5, fontFamily: SANS,
+  },
+  twofaNoteStrong: {
+    color: C.clay, fontWeight: 700,
+  },
 };
 
 export default function Login() {
@@ -350,6 +368,15 @@ export default function Login() {
             >
               {loading ? 'Signing in\u2026' : 'Sign in to Pewil \u2192'}
             </button>
+
+            {/* Design 5: amber 2FA callout */}
+            <div style={S.twofaNote}>
+              <div style={S.twofaNoteIcon}>{'\u{1F510}'}</div>
+              <div style={S.twofaNoteText}>
+                <span style={S.twofaNoteStrong}>2FA enabled.</span>{' '}
+                If you{'\u2019'}ve turned it on, you{'\u2019'}ll be asked for your authenticator code after this step.
+              </div>
+            </div>
 
             <div style={S.switch}>
               New to Pewil?{' '}

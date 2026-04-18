@@ -100,6 +100,9 @@ export default function Layout({
   const ac = avatarColor(user?.username || '');
   const BOTTOM_PRIMARY = activeModule === 'retail' ? RETAIL_BOTTOM_PRIMARY : FARM_BOTTOM_PRIMARY;
   const DRAWER_SECTIONS = activeModule === 'retail' ? RETAIL_DRAWER_SECTIONS : FARM_DRAWER_SECTIONS;
+  const moduleAccent = activeModule === 'retail' ? '#c97d1a' : '#1a6b3a';
+  const moduleAccentBg = activeModule === 'retail' ? '#fdeedd' : '#e8f5ee';
+  const moduleAccentRing = activeModule === 'retail' ? 'rgba(201,125,26,0.15)' : 'rgba(26,107,58,0.15)';
   const isMore = !BOTTOM_PRIMARY.includes(activeTab);
   const goTab = (tab) => {
     onTabChange(tab);
@@ -152,7 +155,7 @@ export default function Layout({
       <QuickCapture activeModule={activeModule} onTabChange={onTabChange} />
 
       {/* Bottom nav — Hick's Law: only 5 primary choices */}
-      <div className="bottom-nav">
+      <div className="bottom-nav" style={{ '--bn-active': moduleAccent }}>
         {activeModule === 'farm' ? (
           <>
             <button className={`bn-tab${activeTab === 'Dashboard' ? ' active' : ''}`} onClick={() => goTab('Dashboard')}>
@@ -253,17 +256,31 @@ export default function Layout({
                           onClick={() => goTab(t.key)}
                           style={{
                             /* Von Restorff: active item visually distinct */
-                            background: isActive ? '#e8f5ee' : '#fff',
-                            border: `1.5px solid ${isActive ? '#1a6b3a' : '#e5e7eb'}`,
+                            background: isActive ? moduleAccentBg : '#fff',
+                            border: `1.5px solid ${isActive ? moduleAccent : '#e5e7eb'}`,
                             borderRadius: 12, padding: '12px 8px', textAlign: 'center',
                             cursor: 'pointer', display: 'flex', flexDirection: 'column',
                             alignItems: 'center', gap: 3,
-                            boxShadow: isActive ? '0 0 0 2px rgba(26,107,58,0.15)' : 'none',
+                            boxShadow: isActive ? `0 0 0 2px ${moduleAccentRing}` : 'none',
                             transition: 'all 0.15s ease',
                           }}
                         >
                           <span style={{ fontSize: 26 }}>{t.emoji}</span>
-                          <span style={{ fontSize: 12, fontWeight: isActive ? 700 : 600, color: isActive ? '#1a6b3a' : '#111827' }}>{t.label}</span>
+                          <span style={{ fontSize: 12, fontWeight: isActive ? 700 : 600, color: isActive ? moduleAccent : '#111827' }}>{t.label}</span>
+                          <span style={{ fontSize: 9, color: '#6b7280' }}>{t.sub}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
                           <span style={{ fontSize: 9, color: '#6b7280' }}>{t.sub}</span>
                         </button>
                       );

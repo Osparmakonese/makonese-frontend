@@ -213,41 +213,63 @@ export default function Dashboard({ activeModule = 'farm' }) {
 
       {/* ═══ ROW 3: INSIGHT STRIP — Health Score | Briefing | Achievements ═══ */}
       <div style={S.insightStrip} className="insight-strip">
-        {/* Farm Health Score */}
+        {/* Design 5: Farm Health — full conic-gradient ring + 2-col dimensions */}
         {healthScore && (
-          <div style={{ ...card, padding: '14px 12px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={sectionLabel}>Farm Health</div>
-            <div style={{ position: 'relative', width: 110, height: 65, margin: '0 auto 6px' }}>
-              <svg viewBox="0 0 130 80" style={{ width: '100%', height: '100%' }}>
-                <path d="M 15 75 A 55 55 0 0 1 115 75" fill="none" stroke={TOKENS.line2} strokeWidth="10" strokeLinecap="round" />
-                <path d="M 15 75 A 55 55 0 0 1 115 75" fill="none"
-                  stroke={hsColor} strokeWidth="10" strokeLinecap="round"
-                  strokeDasharray={`${(healthScore.score / 100) * 157} 157`}
-                />
-              </svg>
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, textAlign: 'center' }}>
-                <div style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 700, color: hsColor, lineHeight: 1, letterSpacing: '-0.01em' }}>
+          <div style={{ ...card, padding: '14px 14px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...sectionLabel, marginBottom: 12 }}>Farm Health</div>
+            {/* Ring + grade row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+              <div
+                style={{
+                  width: 70, height: 70,
+                  flexShrink: 0,
+                  borderRadius: '50%',
+                  background: `conic-gradient(${hsColor} 0deg ${(healthScore.score / 100) * 360}deg, ${TOKENS.line2} ${(healthScore.score / 100) * 360}deg 360deg)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
+                <div style={{
+                  position: 'absolute', width: 56, height: 56,
+                  background: '#fff', borderRadius: '50%',
+                }} />
+                <div style={{
+                  fontFamily: SERIF, fontSize: 22, fontWeight: 700,
+                  color: hsColor, position: 'relative', zIndex: 2,
+                  letterSpacing: '-0.01em', lineHeight: 1,
+                }}>
                   {healthScore.score}
                 </div>
               </div>
-            </div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: hsColor, marginBottom: 8, fontFamily: SANS, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {healthScore.grade}
-            </div>
-            {healthScore.breakdown && Object.entries(healthScore.breakdown).map(([key, val]) => {
-              const max = healthScore.max_scores?.[key] || 20;
-              const pct = (val / max) * 100;
-              const labels = { debt_ratio: 'Debt', field_utilization: 'Fields', profitability: 'Profit', record_keeping: 'Records', water_consistency: 'Water', budget_discipline: 'Budget', diversification: 'Diverse' };
-              return (
-                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                  <span style={{ fontSize: 7, color: TOKENS.muted, width: 36, flexShrink: 0, textAlign: 'left', fontFamily: SANS }}>{labels[key] || key}</span>
-                  <div style={{ flex: 1, height: 3, background: TOKENS.line2, borderRadius: 2, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: pct >= 70 ? TOKENS.forest : pct >= 40 ? TOKENS.terra : TOKENS.clay, borderRadius: 2 }} />
-                  </div>
-                  <span style={{ fontSize: 7, color: TOKENS.muted, width: 16, textAlign: 'right', fontFamily: SANS }}>{Math.round(val)}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontFamily: SERIF, fontSize: 15, fontWeight: 700,
+                  color: TOKENS.ink, marginBottom: 2, lineHeight: 1.1,
+                }}>
+                  {healthScore.grade}
                 </div>
-              );
-            })}
+                <div style={{ fontSize: 10, color: hsColor, fontWeight: 600, fontFamily: SANS, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  7 dimensions tracked
+                </div>
+              </div>
+            </div>
+            {/* Dimensions: 2-column grid with colored dots */}
+            {healthScore.breakdown && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 14px' }}>
+                {Object.entries(healthScore.breakdown).map(([key, val]) => {
+                  const max = healthScore.max_scores?.[key] || 20;
+                  const pct = (val / max) * 100;
+                  const labels = { debt_ratio: 'Debt ratio', field_utilization: 'Fields', profitability: 'Profit', record_keeping: 'Records', water_consistency: 'Water', budget_discipline: 'Budget', diversification: 'Diversity' };
+                  const dotColor = pct >= 70 ? TOKENS.forest : pct >= 40 ? TOKENS.terra : TOKENS.clay;
+                  return (
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: TOKENS.muted, fontFamily: SANS }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+                      <span>{labels[key] || key}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

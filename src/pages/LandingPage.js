@@ -475,8 +475,8 @@ const LandingPage = () => {
         gridTemplateColumns: mobile ? '1fr' : 'repeat(12, 1fr)',
         gap: mobile ? 18 : 22,
       }}>
-        {/* 1 big photo */}
-        <div style={card({ gridColumn: mobile ? undefined : 'span 7' })}
+        {/* 1 big photo — FARM MODULE (Design 5 accent) */}
+        <div style={card({ gridColumn: mobile ? undefined : 'span 7', borderLeft: `3px solid ${C.forest}` })}
           onMouseEnter={cardHover} onMouseLeave={cardUnhover}>
           <div style={{ position: 'relative', overflow: 'hidden' }}>
             <img
@@ -487,7 +487,7 @@ const LandingPage = () => {
             />
           </div>
           <div style={{ padding: '26px 28px 30px' }}>
-            <span style={tag()}>Fields &amp; livestock</span>
+            <span style={{ ...tag(), background: 'rgba(31,61,38,0.1)', color: C.forest }}>Farm module {'\u2022'} Fields &amp; livestock</span>
             <h4 style={cardH4}>Track the field from the field.</h4>
             <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.55 }}>
               Your foreman enters readings from a phone by the gate. Even if the network drops, Pewil keeps the data and syncs when signal returns. Every field, every crop, every cow gets a living record.
@@ -531,8 +531,8 @@ const LandingPage = () => {
           </div>
         </div>
 
-        {/* 4 Retail POS */}
-        <div style={card({ gridColumn: mobile ? undefined : 'span 4' })}
+        {/* 4 Retail POS — RETAIL MODULE (Design 5 accent) */}
+        <div style={card({ gridColumn: mobile ? undefined : 'span 4', borderLeft: `3px solid ${C.amber}` })}
           onMouseEnter={cardHover} onMouseLeave={cardUnhover}>
           <div style={{ overflow: 'hidden' }}>
             <img
@@ -543,7 +543,7 @@ const LandingPage = () => {
             />
           </div>
           <div style={{ padding: '26px 28px 30px' }}>
-            <span style={tag()}>Retail POS</span>
+            <span style={{ ...tag(), background: 'rgba(244,167,67,0.16)', color: C.clay }}>Retail module {'\u2022'} POS</span>
             <h4 style={cardH4}>Till, printer, barcode — done.</h4>
             <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.55 }}>
               From farm gate to shop shelf, one inventory truth.

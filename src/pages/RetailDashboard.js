@@ -25,47 +25,128 @@ function Skeleton({ w, h, r, mb }) {
 /* ─── Styles ─── */
 const S = {
   page: { maxWidth: 1200, margin: '0 auto', padding: '20px' },
+  /* ── Design 5: amber today's-revenue hero strip ── */
   banner: {
-    height: 120,
-    borderRadius: 14,
-    padding: '0 28px',
-    marginBottom: 20,
-    background: 'linear-gradient(135deg, #1e3a5f, #2563eb)',
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  bannerLeft: {
+    borderRadius: 16,
+    padding: '22px 24px',
+    marginBottom: 16,
+    background: 'linear-gradient(135deg, #c97d1a 0%, #e09a3f 100%)',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
-    flex: 1,
+    position: 'relative',
+    overflow: 'hidden',
+    color: '#fff',
+    boxShadow: '0 4px 20px rgba(201, 125, 26, 0.18)',
+  },
+  bannerDecor: {
+    position: 'absolute',
+    top: -60, right: -60,
+    width: 180, height: 180,
+    background: 'rgba(255,255,255,0.10)',
+    borderRadius: '50%',
+    pointerEvents: 'none',
+  },
+  bannerTop: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 18,
+    position: 'relative',
+    zIndex: 1,
+  },
+  bannerGreet: {
+    fontSize: 13,
+    opacity: 0.85,
+    marginBottom: 2,
   },
   bannerTitle: {
-    fontFamily: "'Playfair Display', serif",
-    fontSize: 26,
+    fontFamily: "'Playfair Display', 'Fraunces', serif",
+    fontSize: 20,
     fontWeight: 700,
     color: '#fff',
-    margin: '0 0 4px 0',
+    margin: 0,
+    letterSpacing: '-0.01em',
+  },
+  bannerTag: {
+    background: 'rgba(255,255,255,0.18)',
+    border: '1px solid rgba(255,255,255,0.3)',
+    borderRadius: 20,
+    padding: '5px 12px',
+    fontSize: 11,
+    fontWeight: 600,
+    color: '#fff',
+    backdropFilter: 'blur(8px)',
+  },
+  bannerLabel: {
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    opacity: 0.85,
+    marginBottom: 6,
+    position: 'relative',
+    zIndex: 1,
+  },
+  bannerValue: {
+    fontFamily: "'Playfair Display', 'Fraunces', serif",
+    fontSize: 38,
+    fontWeight: 700,
+    letterSpacing: '-0.02em',
+    margin: '0 0 8px 0',
+    position: 'relative',
+    zIndex: 1,
+    lineHeight: 1.05,
   },
   bannerSub: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(255,255,255,0.92)',
     margin: 0,
     display: 'flex',
-    gap: 16,
+    gap: 14,
+    position: 'relative',
+    zIndex: 1,
   },
   bannerSubItem: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(255,255,255,0.92)',
   },
-  bannerIcon: {
-    fontSize: 48,
-    opacity: 0.25,
-    marginLeft: 'auto',
+  /* ── Design 5: quick-action 4-button row ── */
+  quickActionsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: 10,
+    marginBottom: 16,
+  },
+  quickAction: {
+    background: '#fff',
+    border: '1px solid #e5e7eb',
+    borderRadius: 12,
+    padding: '14px 8px',
+    textAlign: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 6,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+  },
+  qaIcon: (bg, color) => ({
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    background: bg,
+    color: color,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 16,
+  }),
+  qaLabel: {
+    fontSize: 10,
+    fontWeight: 600,
+    color: '#374151',
+    letterSpacing: '0.02em',
   },
   metricsGrid: {
     display: 'grid',
@@ -169,9 +250,10 @@ const S = {
   bar: (h) => ({
     width: '100%',
     height: h,
-    background: 'linear-gradient(180deg, #1e3a5f, #2563eb)',
+    background: 'linear-gradient(180deg, #c97d1a 0%, #e09a3f 100%)',
     borderRadius: '4px 4px 0 0',
     position: 'relative',
+    boxShadow: '0 -2px 8px rgba(201, 125, 26, 0.15)',
   }),
   barValue: {
     fontSize: 9,
@@ -384,17 +466,69 @@ export default function RetailDashboard() {
 
   return (
     <div style={S.page}>
-      {/* Hero Banner */}
+      {/* Design 5: amber today's-revenue hero strip */}
       <div style={S.banner}>
-        <div style={S.bannerLeft}>
-          <h1 style={S.bannerTitle}>{new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}, {username}</h1>
-          <div style={S.bannerSub}>
-            <span style={S.bannerSubItem}>{user?.tenant_name || 'Retail'}</span>
-            <span style={S.bannerSubItem}>{productCount} products</span>
-            <span style={S.bannerSubItem}>{lowStock.length} low stock alerts</span>
+        <div style={S.bannerDecor} />
+        <div style={S.bannerTop}>
+          <div>
+            <div style={S.bannerGreet}>
+              {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}
+            </div>
+            <h1 style={S.bannerTitle}>{username}</h1>
+          </div>
+          <div style={S.bannerTag}>
+            {user?.tenant_name || 'Retail'}
           </div>
         </div>
-        <div style={S.bannerIcon}>{'\u{1F6D2}'}</div>
+        <div style={S.bannerLabel}>Today{'\u2019'}s revenue</div>
+        <div style={S.bannerValue}>{fmt(dashboard?.today_revenue || 0, 'zwd')}</div>
+        <div style={S.bannerSub}>
+          <span style={S.bannerSubItem}>{productCount} products</span>
+          <span style={S.bannerSubItem}>{'\u2022'}</span>
+          <span style={S.bannerSubItem}>{lowStock.length} low-stock alerts</span>
+          <span style={S.bannerSubItem}>{'\u2022'}</span>
+          <span style={S.bannerSubItem}>{recentActivityData.length} tx today</span>
+        </div>
+      </div>
+
+      {/* Design 5: Quick-action row */}
+      <div style={S.quickActionsGrid}>
+        <div
+          style={S.quickAction}
+          onClick={() => window.dispatchEvent(new CustomEvent('pewil:navigate', { detail: { tab: 'pos' } }))}
+          role="button"
+          tabIndex={0}
+        >
+          <div style={S.qaIcon('#fef3e2', '#c97d1a')}>{'\u{1F4B5}'}</div>
+          <div style={S.qaLabel}>New sale</div>
+        </div>
+        <div
+          style={S.quickAction}
+          onClick={() => window.dispatchEvent(new CustomEvent('pewil:navigate', { detail: { tab: 'purchase-orders' } }))}
+          role="button"
+          tabIndex={0}
+        >
+          <div style={S.qaIcon('#e0f2fe', '#0369a1')}>{'\u{1F4E6}'}</div>
+          <div style={S.qaLabel}>Receive</div>
+        </div>
+        <div
+          style={S.quickAction}
+          onClick={() => window.dispatchEvent(new CustomEvent('pewil:navigate', { detail: { tab: 'products' } }))}
+          role="button"
+          tabIndex={0}
+        >
+          <div style={S.qaIcon('#e8f5ee', '#1a6b3a')}>{'\u{1F3F7}'}</div>
+          <div style={S.qaLabel}>Price</div>
+        </div>
+        <div
+          style={S.quickAction}
+          onClick={() => window.dispatchEvent(new CustomEvent('pewil:navigate', { detail: { tab: 'customers' } }))}
+          role="button"
+          tabIndex={0}
+        >
+          <div style={S.qaIcon('#f3e8ff', '#7c3aed')}>{'\u{1F465}'}</div>
+          <div style={S.qaLabel}>Loyalty</div>
+        </div>
       </div>
 
       {/* Metrics Cards */}
@@ -427,16 +561,16 @@ export default function RetailDashboard() {
           </div>
         </div>
 
-        {/* Today Revenue Card */}
+        {/* Transactions Card (Design 5 — today's revenue now lives in hero) */}
         <div style={S.metricCard}>
           <div style={S.iconCircle('#c97d1a')}>
-            {'\u{1F4B3}'}
+            {'\u{1F9FE}'}
           </div>
-          <div style={S.metricLabel}>Today Revenue</div>
-          <div style={S.metricValue}>{fmt(dashboard?.today_revenue || 0, 'zwd')}</div>
-          <div style={S.metricTrend}>{(dashboard?.today_revenue || 0) > 0 ? 'Today so far' : 'No sales today'}</div>
+          <div style={S.metricLabel}>Transactions</div>
+          <div style={S.metricValue}>{recentActivityData.length}</div>
+          <div style={S.metricTrend}>{recentActivityData.length > 0 ? 'Today so far' : 'None yet today'}</div>
           <div style={S.progressBar}>
-            <div style={S.progressFill(dashboard?.today_revenue ? 38 : 0, '#c97d1a')} />
+            <div style={S.progressFill(recentActivityData.length > 0 ? Math.min(100, recentActivityData.length * 10) : 0, '#c97d1a')} />
           </div>
         </div>
 
