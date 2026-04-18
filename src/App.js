@@ -339,7 +339,7 @@ function FarmApp() {
     >
       <DemoBanner />
       <Suspense fallback={<PageLoader />}>
-        <Page onTabChange={setActiveTab} />
+        <Page onTabChange={setActiveTab} activeModule={activeModule} />
       </Suspense>
       <PWAInstallPrompt />
       <OfflineBanner />

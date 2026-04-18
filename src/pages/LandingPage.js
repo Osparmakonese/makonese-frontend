@@ -923,7 +923,7 @@ const LandingPage = () => {
             The operating system for African agribusiness. Built in Harare. Shipped with love across borders.
           </p>
           <div style={{ marginTop: 18, display: 'flex', gap: 10 }}>
-            {['𝕏', 'in', 'f'].map(s => (
+            {['X', 'in', 'f'].map(s => (
               <a key={s} href="#" style={{
                 width: 36, height: 36, borderRadius: '50%',
                 background: 'rgba(244,167,67,.15)',
@@ -943,7 +943,7 @@ const LandingPage = () => {
         display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap',
         gap: 12, fontSize: 13, color: 'rgba(255,247,236,.55)',
       }}>
-        <div>© 2026 Pewil Technologies Pvt Ltd · Harare, Zimbabwe 🌍</div>
+        <div>&copy; 2026 Pewil Technologies Pvt Ltd &middot; Harare, Zimbabwe</div>
         <div>Made with care in Africa</div>
       </div>
     </footer>

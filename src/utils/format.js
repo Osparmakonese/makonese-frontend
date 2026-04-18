@@ -12,6 +12,35 @@ import teaImg from '../assets/images/tanganda-tea-farm-golden-hour-260nw-2470209
 
 export const IMAGES = { dam: damImg, tomato: tomatoImg, tobacco: tobaccoImg, maize: maizeImg, truck: truckImg, workers: workersImg, cost: costImg, report: reportImg, hours: hoursImg, stock: stockImg, tea: teaImg };
 
+/**
+ * Hero images for the Dashboard — module-aware, tenant-neutral.
+ * Sourced from Unsplash's free CDN. Each URL is fronted by a stable photo ID
+ * and requests a 1600-wide variant — safe for hero banners. If a photo is
+ * ever deprecated swap the ID here; no other file changes needed.
+ */
+export const HERO_IMAGES = {
+  // Green farmland at golden hour — neutral, not tied to any region
+  farm: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1600&q=80&auto=format&fit=crop',
+  // Bright, clean retail shop interior with stocked shelves
+  retail: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=1600&q=80&auto=format&fit=crop',
+  // Fallback / neutral sunrise landscape for tenants with both modules
+  neutral: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1600&q=80&auto=format&fit=crop',
+  // Market-trip / logistics banner replacement
+  logistics: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=1200&q=80&auto=format&fit=crop',
+  // Generic water / irrigation banner replacement
+  water: 'https://images.unsplash.com/photo-1589995186011-a7b485edc4bf?w=1200&q=80&auto=format&fit=crop',
+};
+
+/**
+ * Pick the right hero image for the current module.
+ * Falls back to the neutral landscape if the caller passes something unknown.
+ */
+export function getHeroImage(activeModule) {
+  if (activeModule === 'retail') return HERO_IMAGES.retail;
+  if (activeModule === 'farm') return HERO_IMAGES.farm;
+  return HERO_IMAGES.neutral;
+}
+
 export function cropImage(crop) {
   const c = (crop || '').toLowerCase();
   if (c.includes('tomato')) return tomatoImg;

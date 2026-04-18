@@ -2,62 +2,73 @@ import React, { useState, useEffect, useRef } from 'react';
 import { initials, avatarColor } from '../utils/format';
 import Logo from './Logo';
 
+/* ─── Design 3 — Living Africa tokens ─── */
+const TOKENS = {
+  amber: '#f4a743', terra: '#d9562c', forest: '#1f3d26', forest2: '#2d5a37',
+  sand: '#fff7ec', sand2: '#fdeedd', cream: '#fffcf7',
+  ink: '#1b1b1b', muted: '#6b5d50',
+  line: 'rgba(27,27,27,.10)', line2: 'rgba(27,27,27,.06)',
+  danger: '#b1291b',
+};
+const SANS = "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+
 const S = {
   sidebar: {
     position: 'fixed', top: 0, left: 0, width: 220, height: '100vh',
-    background: '#ffffff', borderRight: '1px solid #e5e7eb',
+    background: TOKENS.cream, borderRight: `1px solid ${TOKENS.line}`,
     display: 'flex', flexDirection: 'column', zIndex: 60,
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: SANS,
   },
   brand: {
-    padding: '16px 14px 12px', borderBottom: '1px solid #e5e7eb',
+    padding: '16px 14px 12px', borderBottom: `1px solid ${TOKENS.line}`,
     display: 'flex', alignItems: 'center', gap: 10,
   },
   /* Tenant switcher */
   tsw: {
     margin: '8px 8px 4px', padding: '9px 11px',
-    border: '1px solid #e5e7eb', borderRadius: 8,
+    border: `1px solid ${TOKENS.line}`, borderRadius: 10,
+    background: '#fff',
     cursor: 'pointer', transition: 'all 0.15s',
   },
-  tswName: { fontWeight: 700, fontSize: 12, color: '#111827' },
-  tswPlan: { fontSize: 9, color: '#6b7280', marginTop: 1 },
-  tswLabel: { fontSize: 8, color: '#1a6b3a', fontWeight: 600, marginTop: 2 },
+  tswName: { fontWeight: 700, fontSize: 12, color: TOKENS.ink },
+  tswPlan: { fontSize: 9, color: TOKENS.muted, marginTop: 1 },
+  tswLabel: { fontSize: 8, color: TOKENS.forest, fontWeight: 600, marginTop: 2 },
   /* Tenant dropdown */
   tdd: (open) => ({
     display: open ? 'block' : 'none',
     position: 'absolute', left: 8, top: 118, width: 204,
-    background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.1)', zIndex: 200, overflow: 'hidden',
+    background: '#fff', border: `1px solid ${TOKENS.line}`, borderRadius: 12,
+    boxShadow: '0 12px 28px rgba(27,27,27,0.10)', zIndex: 200, overflow: 'hidden',
   }),
   tdo: (active) => ({
     padding: '10px 14px', cursor: 'pointer', transition: 'background 0.15s',
-    borderBottom: '1px solid #f3f4f6',
-    background: active ? '#e8f5ee' : 'transparent',
-    borderLeft: active ? '3px solid #1a6b3a' : '3px solid transparent',
+    borderBottom: `1px solid ${TOKENS.line2}`,
+    background: active ? TOKENS.sand : 'transparent',
+    borderLeft: active ? `3px solid ${TOKENS.terra}` : '3px solid transparent',
   }),
-  tdoName: { fontWeight: 600, fontSize: 11, color: '#111827' },
-  tdoType: { fontSize: 9, color: '#6b7280' },
+  tdoName: { fontWeight: 600, fontSize: 11, color: TOKENS.ink },
+  tdoType: { fontSize: 9, color: TOKENS.muted },
   nav: { flex: 1, overflowY: 'auto', padding: '4px 8px' },
   sectionGroup: { marginBottom: 2, paddingBottom: 2 },
-  sectionDivider: { height: 1, background: '#f3f4f6', margin: '4px 10px' },
+  sectionDivider: { height: 1, background: TOKENS.line2, margin: '4px 10px' },
   sectionHeader: (isCollapsible) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '10px 10px 3px', cursor: isCollapsible ? 'pointer' : 'default',
     userSelect: 'none', borderRadius: 4, transition: 'background 0.15s',
-    fontSize: 8, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase',
+    fontSize: 8, fontWeight: 700, color: TOKENS.muted, textTransform: 'uppercase',
     letterSpacing: '0.08em',
   }),
   sectionChevron: (expanded) => ({
-    fontSize: 10, color: '#9ca3af', transition: 'transform 0.2s',
+    fontSize: 10, color: TOKENS.muted, transition: 'transform 0.2s',
     transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
   }),
   sectionCount: {
-    fontSize: 8, fontWeight: 600, color: '#fff', background: '#d1d5db',
+    fontSize: 8, fontWeight: 600, color: '#fff', background: TOKENS.muted,
     borderRadius: 8, padding: '1px 5px', marginLeft: 4, minWidth: 14,
     textAlign: 'center', lineHeight: '14px',
   },
   sectionActiveDot: {
-    width: 6, height: 6, borderRadius: '50%', background: '#1a6b3a', marginLeft: 4,
+    width: 6, height: 6, borderRadius: '50%', background: TOKENS.terra, marginLeft: 4,
   },
   sectionItems: (expanded) => ({
     overflow: 'hidden', maxHeight: expanded ? 500 : 0,
@@ -65,22 +76,22 @@ const S = {
   }),
   navItem: (active) => ({
     display: 'flex', alignItems: 'center', gap: 7,
-    padding: '6px 10px', borderRadius: 7, fontSize: 11,
-    fontWeight: active ? 600 : 500, cursor: 'pointer',
-    background: active ? '#e8f5ee' : 'transparent',
-    color: active ? '#1a6b3a' : '#374151',
+    padding: '6px 10px', borderRadius: 8, fontSize: 11,
+    fontWeight: active ? 700 : 500, cursor: 'pointer',
+    background: active ? TOKENS.sand : 'transparent',
+    color: active ? TOKENS.forest : TOKENS.ink,
     transition: 'all 0.15s', border: 'none', width: '100%', textAlign: 'left',
     position: 'relative', fontFamily: 'inherit', margin: '1px 0',
-    borderLeft: active ? '3px solid #1a6b3a' : '3px solid transparent',
+    borderLeft: active ? `3px solid ${TOKENS.terra}` : '3px solid transparent',
   }),
   navEmoji: { width: 16, textAlign: 'center', fontSize: 13 },
   badge: {
-    position: 'absolute', right: 8, background: '#c0392b', color: '#fff',
+    position: 'absolute', right: 8, background: TOKENS.terra, color: '#fff',
     fontSize: 7, fontWeight: 700, padding: '1px 5px', borderRadius: 10,
     animation: 'badgePulse 2s infinite',
   },
   userSection: {
-    borderTop: '1px solid #e5e7eb', padding: '10px 14px',
+    borderTop: `1px solid ${TOKENS.line}`, padding: '10px 14px',
     display: 'flex', alignItems: 'center', gap: 8,
   },
   avatar: (bg) => ({
@@ -88,10 +99,10 @@ const S = {
     color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: 10, fontWeight: 700, flexShrink: 0,
   }),
-  userName: { fontSize: 11, fontWeight: 600, color: '#111827' },
-  userRole: { fontSize: 9, color: '#9ca3af', textTransform: 'capitalize' },
+  userName: { fontSize: 11, fontWeight: 600, color: TOKENS.ink },
+  userRole: { fontSize: 9, color: TOKENS.muted, textTransform: 'capitalize' },
   logoutBtn: {
-    background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer',
+    background: 'none', border: 'none', color: TOKENS.muted, cursor: 'pointer',
     fontSize: 16, padding: 4, lineHeight: 1, flexShrink: 0, transition: 'color 0.15s',
   },
 };
@@ -199,6 +210,13 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
   const modules = user?.modules || ['farm'];
   const hasFarm = modules.includes('farm');
   const hasRetail = modules.includes('retail');
+  // Super admins can preview both modules in the switcher even if the tenant
+  // only has one module enabled — lets Osy verify the retail UI without
+  // upgrading the tenant. Does NOT affect section filtering below.
+  const isSuperAdmin = !!user?.is_super_admin;
+  const showFarmOption = hasFarm || isSuperAdmin;
+  const showRetailOption = hasRetail || isSuperAdmin;
+  const showSwitcher = showFarmOption && showRetailOption;
 
   // Module-based section filtering using the `module` property on each section
   // Each section declares which module it belongs to (farm or retail)
@@ -251,32 +269,32 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
         <div
           style={S.tsw}
           onClick={() => setDdOpen(!ddOpen)}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = '#1a6b3a'; e.currentTarget.style.background = '#e8f5ee'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.background = 'transparent'; }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = TOKENS.terra; e.currentTarget.style.background = TOKENS.sand; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = TOKENS.line; e.currentTarget.style.background = '#fff'; }}
         >
           <div style={S.tswName}>{switcherName}</div>
           <div style={S.tswPlan}>{switcherType} {'\u2022'} {planLabel}</div>
-          {hasFarm && hasRetail && (
+          {showSwitcher && (
             <div style={S.tswLabel}>{'\u25BE'} Switch module</div>
           )}
         </div>
         <div style={S.tdd(ddOpen)}>
-          {hasFarm && (
+          {showFarmOption && (
             <div
               style={S.tdo(activeModule === 'farm')}
               onClick={() => { if (onModuleChange) onModuleChange('farm'); setDdOpen(false); }}
-              onMouseEnter={e => { if (activeModule !== 'farm') e.currentTarget.style.background = '#f9fafb'; }}
+              onMouseEnter={e => { if (activeModule !== 'farm') e.currentTarget.style.background = TOKENS.line2; }}
               onMouseLeave={e => { if (activeModule !== 'farm') e.currentTarget.style.background = 'transparent'; }}
             >
               <div style={S.tdoName}>{'\u{1F33E}'} {tenantName}</div>
               <div style={S.tdoType}>Agriculture {'\u2022'} {planLabel}</div>
             </div>
           )}
-          {hasRetail && (
+          {showRetailOption && (
             <div
               style={S.tdo(activeModule === 'retail')}
               onClick={() => { if (onModuleChange) onModuleChange('retail'); setDdOpen(false); }}
-              onMouseEnter={e => { if (activeModule !== 'retail') e.currentTarget.style.background = '#f9fafb'; }}
+              onMouseEnter={e => { if (activeModule !== 'retail') e.currentTarget.style.background = TOKENS.line2; }}
               onMouseLeave={e => { if (activeModule !== 'retail') e.currentTarget.style.background = 'transparent'; }}
             >
               <div style={S.tdoName}>{'\u{1F6D2}'} {tenantName.replace(' Farm', '')} Retail</div>
@@ -303,7 +321,7 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
                 <div
                   style={S.sectionHeader(isCollapsible)}
                   onClick={isCollapsible ? () => toggleSection(section.section) : undefined}
-                  onMouseEnter={e => { if (isCollapsible) e.currentTarget.style.background = '#f3f4f6'; }}
+                  onMouseEnter={e => { if (isCollapsible) e.currentTarget.style.background = TOKENS.line2; }}
                   onMouseLeave={e => { if (isCollapsible) e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span style={{ display: 'flex', alignItems: 'center' }}>
@@ -325,9 +343,10 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
                       key={item.key}
                       style={S.navItem(activeTab === item.key)}
                       onClick={() => onTabChange(item.key)}
-                      onMouseEnter={e => { if (activeTab !== item.key) e.currentTarget.style.background = '#f3f4f6'; }}
+                      onMouseEnter={e => { if (activeTab !== item.key) e.currentTarget.style.background = TOKENS.line2; }}
                       onMouseLeave={e => { if (activeTab !== item.key) e.currentTarget.style.background = 'transparent'; }}
                     >
+                      <span style={S.navEmoji}>{item.emoji}</span>
                       <span style={S.navEmoji}>{item.emoji}</span>
                       {item.label}
                       {item.showBadge && lowStockCount > 0 && (
@@ -353,8 +372,8 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
           style={S.logoutBtn}
           onClick={onLogout}
           title="Logout"
-          onMouseEnter={e => { e.currentTarget.style.color = '#c0392b'; }}
-          onMouseLeave={e => { e.currentTarget.style.color = '#9ca3af'; }}
+          onMouseEnter={e => { e.currentTarget.style.color = TOKENS.danger; }}
+          onMouseLeave={e => { e.currentTarget.style.color = TOKENS.muted; }}
         >
           {'\u21E5'}
         </button>

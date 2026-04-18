@@ -5,8 +5,140 @@ import { getVapidKey, subscribePush, unsubscribePush, sendTestPush } from '../ap
 import { getAIBudget } from '../api/aiApi';
 import { useQuery } from '@tanstack/react-query';
 
+/* ─── Design 3 — Living Africa tokens (shared with Landing/Login/Register) ─── */
+const C = {
+  amber: '#f4a743',
+  terra: '#d9562c',
+  clay: '#b13b17',
+  forest: '#1f3d26',
+  forest2: '#2d5a37',
+  sand: '#fff7ec',
+  sand2: '#fdeedd',
+  cream: '#fffcf7',
+  ink: '#1b1b1b',
+  muted: '#6b5d50',
+  line: 'rgba(27,27,27,.12)',
+  line2: 'rgba(27,27,27,.06)',
+  danger: '#b1291b',
+  dangerBg: '#fdecea',
+};
+const SERIF = "'Fraunces', Georgia, serif";
+const SANS = "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+
+/* ─── Shared style objects ─── */
+const pageShell = {
+  fontFamily: SANS, color: C.ink, background: C.cream,
+  padding: '24px 28px', minHeight: '100%',
+};
+const heroRow = { marginBottom: 20 };
+const pageTitle = {
+  fontFamily: SERIF, fontSize: 30, fontWeight: 700, color: C.forest,
+  margin: '0 0 6px 0', letterSpacing: '-0.01em',
+};
+const pageSub = { fontSize: 14, color: C.muted, margin: 0 };
+
+const twoCol = {
+  display: 'grid', gridTemplateColumns: '240px 1fr', gap: 20,
+  alignItems: 'start',
+};
+const leftRail = {
+  display: 'flex', flexDirection: 'column', gap: 2,
+  background: '#fff', border: `1px solid ${C.line}`, borderRadius: 14,
+  padding: 8, position: 'sticky', top: 16,
+};
+const tabButton = (active) => ({
+  textAlign: 'left', padding: '10px 14px', borderRadius: 10,
+  fontSize: 14, fontWeight: active ? 700 : 500,
+  fontFamily: SANS, cursor: 'pointer', border: 0,
+  background: active ? C.sand : 'transparent',
+  color: active ? C.forest : C.ink,
+  transition: 'background .12s, color .12s',
+});
+const dangerTab = (active) => ({
+  ...tabButton(active),
+  color: active ? C.clay : C.danger,
+  background: active ? C.dangerBg : 'transparent',
+  marginTop: 8, borderTop: `1px solid ${C.line2}`, borderRadius: 10,
+});
+
+const rightPane = { display: 'flex', flexDirection: 'column', gap: 20 };
+
+const sectionCard = {
+  background: '#fff', border: `1px solid ${C.line}`, borderRadius: 16,
+  padding: '22px 24px', boxShadow: '0 1px 3px rgba(27,27,27,.04)',
+};
+const sectionHead = { marginBottom: 16 };
+const sectionTitle = {
+  fontFamily: SERIF, fontSize: 20, fontWeight: 700, color: C.forest,
+  margin: '0 0 4px 0',
+};
+const sectionSub = { fontSize: 13, color: C.muted, margin: 0 };
+
+const grid2 = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 };
+const grid3 = { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 };
+
+const fieldBlock = { display: 'flex', flexDirection: 'column', gap: 6 };
+const fieldLabel = {
+  fontSize: 11, fontWeight: 700, color: C.muted,
+  textTransform: 'uppercase', letterSpacing: '0.05em',
+};
+const input = {
+  width: '100%', padding: '11px 14px', border: `1.5px solid ${C.line}`,
+  borderRadius: 12, background: '#fff', fontSize: 14,
+  fontFamily: SANS, color: C.ink, outline: 'none', boxSizing: 'border-box',
+  transition: 'border .15s, box-shadow .15s',
+};
+const select = { ...input, appearance: 'none', backgroundImage: 'none' };
+
+const btnBase = {
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+  padding: '11px 20px', borderRadius: 999, fontWeight: 600, fontSize: 14,
+  border: 0, cursor: 'pointer', fontFamily: SANS, whiteSpace: 'nowrap',
+  transition: 'transform .12s, box-shadow .15s, background .15s',
+};
+const btnPrimary = {
+  ...btnBase,
+  background: `linear-gradient(135deg, ${C.amber}, ${C.terra})`,
+  color: '#fff',
+  boxShadow: '0 10px 22px -10px rgba(217,86,44,.55)',
+};
+const btnForest = { ...btnBase, background: C.forest, color: '#fff' };
+const btnOutline = {
+  ...btnBase, background: 'transparent', color: C.ink,
+  border: `1.5px solid ${C.line}`,
+};
+const btnDanger = {
+  ...btnBase, background: '#fff', color: C.danger,
+  border: `1.5px solid ${C.danger}`,
+};
+
+const toggleS = (on) => ({
+  width: 44, height: 24, borderRadius: 999, position: 'relative',
+  cursor: 'pointer', transition: 'background .2s',
+  background: on ? C.forest : 'rgba(27,27,27,.2)',
+  border: 0, padding: 0, flexShrink: 0,
+});
+const toggleK = (on) => ({
+  width: 18, height: 18, borderRadius: '50%', background: '#fff',
+  position: 'absolute', top: 3, left: on ? 23 : 3,
+  transition: 'left .18s', boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+});
+const toggleRow = {
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+  padding: '14px 16px', border: `1px solid ${C.line2}`, borderRadius: 12,
+  background: C.cream,
+};
+const toggleLabel = { fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 2 };
+const toggleDesc = { fontSize: 12.5, color: C.muted, lineHeight: 1.4 };
+
+const savedBadge = (type) => ({
+  fontSize: 12, fontWeight: 600, marginTop: 10,
+  color: type === 'error' ? C.danger : C.forest,
+});
+
+/* ─── Utilities ─── */
 function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
@@ -14,40 +146,80 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-const card = { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '18px 20px', marginBottom: 16 };
-const cardTitle = { fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 };
-const fl = { display: 'block', fontSize: 9, fontWeight: 600, color: '#6b7280', marginBottom: 2, marginTop: 8 };
-const fi = { width: '100%', padding: '7px 9px', border: '1px solid #e5e7eb', borderRadius: 7, fontSize: 11, outline: 'none', color: '#111827', transition: 'border-color 0.15s' };
-const btnP = { padding: '8px 16px', background: '#1a6b3a', color: '#fff', border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', marginTop: 10 };
-const toggleS = (on) => ({ width: 36, height: 20, borderRadius: 99, position: 'relative', cursor: 'pointer', transition: 'background 0.15s', background: on ? '#1a6b3a' : '#d1d5db', border: 'none', padding: 0 });
-const toggleK = (on) => ({ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'left 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' });
-const permRow = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 7, marginBottom: 5 };
+/* ─── Tab definitions (retail/farm entries appear only if the module is enabled) ─── */
+function buildTabs({ farmOn, retailOn }) {
+  const tabs = [
+    { key: 'general', label: 'General' },
+    { key: 'branding', label: 'Branding' },
+  ];
+  if (farmOn) tabs.push({ key: 'farm', label: 'Farm' });
+  if (retailOn) tabs.push({ key: 'retail', label: 'Retail' });
+  tabs.push({ key: 'payments', label: 'Payments' });
+  if (retailOn) tabs.push({ key: 'zimra', label: 'ZIMRA & Tax' });
+  tabs.push(
+    { key: 'notifications', label: 'Notifications' },
+    { key: 'security', label: 'Security' },
+    { key: 'api', label: 'API & Webhooks' },
+    { key: 'billing', label: 'Billing & Plan' },
+  );
+  return tabs;
+}
 
+/* ─── Main component ─── */
 export default function Settings() {
   const { user } = useAuth();
   const role = user?.role || 'owner';
+  const [activeTab, setActiveTab] = useState('general');
 
-  // Tenant details
+  /* ── Tenant details ── */
   const tenantName = user?.tenant_name || 'Makonese Farm';
   const [bizName, setBizName] = useState(tenantName);
+  const [tradingName, setTradingName] = useState(() => localStorage.getItem('trading_name') || '');
+  const [tin, setTin] = useState(() => localStorage.getItem('zimra_tin') || '');
+  const [vat, setVat] = useState(() => localStorage.getItem('zimra_vat') || '');
+  const [primaryEmail, setPrimaryEmail] = useState(() => localStorage.getItem('primary_email') || user?.email || '');
+  const [primaryPhone, setPrimaryPhone] = useState(() => localStorage.getItem('primary_phone') || '');
   const [country, setCountry] = useState('ZW');
   const [currency, setCurrency] = useState(() => localStorage.getItem('currency') || 'USD');
   const [timezone, setTimezone] = useState('Africa/Harare');
   const [saved, setSaved] = useState('');
 
-  // Modules
+  /* ── Shared operational preferences ── */
+  const [eodDigest, setEodDigest] = useState(() => localStorage.getItem('eod_digest') === 'true');
+
+  /* ── Retail-only preferences ── */
+  const [offlineFirst, setOfflineFirst] = useState(() => localStorage.getItem('offline_first') !== 'false');
+  const [lowStockWA, setLowStockWA] = useState(() => localStorage.getItem('low_stock_wa') === 'true');
+  const [autoFiscal, setAutoFiscal] = useState(() => localStorage.getItem('auto_fiscal') !== 'false');
+  const [lowStockThreshold, setLowStockThreshold] = useState(() => localStorage.getItem('low_stock_threshold') || '5');
+  const [cashRound, setCashRound] = useState(() => localStorage.getItem('cash_round') || 'none');
+  const [showChange, setShowChange] = useState(() => localStorage.getItem('pos_show_change') !== 'false');
+  const [receiptCopies, setReceiptCopies] = useState(() => localStorage.getItem('receipt_copies') || '1');
+
+  /* ── Farm-only preferences ── */
+  const [fieldUnit, setFieldUnit] = useState(() => localStorage.getItem('field_unit') || 'hectares');
+  const [harvestUnit, setHarvestUnit] = useState(() => localStorage.getItem('harvest_unit') || 'kg');
+  const [waterUnit, setWaterUnit] = useState(() => localStorage.getItem('water_unit') || 'L');
+  const [weeklyDigestDay, setWeeklyDigestDay] = useState(() => localStorage.getItem('weekly_digest_day') || 'sunday');
+  const [weeklyDigestTime, setWeeklyDigestTime] = useState(() => localStorage.getItem('weekly_digest_time') || '18:00');
+  const [livestockOn, setLivestockOn] = useState(() => localStorage.getItem('livestock_on') === 'true');
+  const [autoAIAnalysis, setAutoAIAnalysis] = useState(() => localStorage.getItem('auto_ai_analysis') === 'true');
+  const [weatherAlerts, setWeatherAlerts] = useState(() => localStorage.getItem('weather_alerts') !== 'false');
+  const [rainLogReminder, setRainLogReminder] = useState(() => localStorage.getItem('rain_log_reminder') === 'true');
+
+  /* ── Modules ── */
   const modules = user?.modules || ['farm', 'retail'];
   const [farmOn, setFarmOn] = useState(modules.includes('farm'));
   const [retailOn, setRetailOn] = useState(modules.includes('retail'));
 
-  // Cashier permissions
+  /* ── Cashier permissions ── */
   const [permViewProducts, setPermViewProducts] = useState(true);
   const [permAddProducts, setPermAddProducts] = useState(false);
   const [permEditProducts, setPermEditProducts] = useState(false);
   const [permPOS, setPermPOS] = useState(true);
   const [permViewReports, setPermViewReports] = useState(false);
 
-  // WhatsApp + Push
+  /* ── Notifications ── */
   const [phone1, setPhone1] = useState(() => localStorage.getItem('wa_phone_1') || '');
   const [phone2, setPhone2] = useState(() => localStorage.getItem('wa_phone_2') || '');
   const [reminder, setReminder] = useState(() => localStorage.getItem('reminder_9pm') === 'true');
@@ -55,23 +227,51 @@ export default function Settings() {
   const [pushBusy, setPushBusy] = useState(false);
   const [pushMsg, setPushMsg] = useState('');
 
-  // AI Budget
+  /* ── AI Budget ── */
   const { data: aiBudget, isLoading: aiLoading } = useQuery({
     queryKey: ['ai-budget'],
     queryFn: getAIBudget,
     staleTime: 30000,
   });
 
+  /* ── Push registration probe ── */
   useEffect(() => {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
-      navigator.serviceWorker.ready.then(reg =>
-        reg.pushManager.getSubscription().then(sub => setPushOn(!!sub))
+      navigator.serviceWorker.ready.then((reg) =>
+        reg.pushManager.getSubscription().then((sub) => setPushOn(!!sub))
       ).catch(() => {});
     }
   }, []);
 
+  /* ── Persist local-state toggles to localStorage ── */
+  useEffect(() => { localStorage.setItem('currency', currency); }, [currency]);
+  useEffect(() => { localStorage.setItem('reminder_9pm', String(reminder)); }, [reminder]);
+  useEffect(() => { localStorage.setItem('offline_first', String(offlineFirst)); }, [offlineFirst]);
+  useEffect(() => { localStorage.setItem('low_stock_wa', String(lowStockWA)); }, [lowStockWA]);
+  useEffect(() => { localStorage.setItem('auto_fiscal', String(autoFiscal)); }, [autoFiscal]);
+  useEffect(() => { localStorage.setItem('eod_digest', String(eodDigest)); }, [eodDigest]);
+  useEffect(() => { localStorage.setItem('low_stock_threshold', lowStockThreshold); }, [lowStockThreshold]);
+  useEffect(() => { localStorage.setItem('cash_round', cashRound); }, [cashRound]);
+  useEffect(() => { localStorage.setItem('pos_show_change', String(showChange)); }, [showChange]);
+  useEffect(() => { localStorage.setItem('receipt_copies', receiptCopies); }, [receiptCopies]);
+  useEffect(() => { localStorage.setItem('field_unit', fieldUnit); }, [fieldUnit]);
+  useEffect(() => { localStorage.setItem('harvest_unit', harvestUnit); }, [harvestUnit]);
+  useEffect(() => { localStorage.setItem('water_unit', waterUnit); }, [waterUnit]);
+  useEffect(() => { localStorage.setItem('weekly_digest_day', weeklyDigestDay); }, [weeklyDigestDay]);
+  useEffect(() => { localStorage.setItem('weekly_digest_time', weeklyDigestTime); }, [weeklyDigestTime]);
+  useEffect(() => { localStorage.setItem('livestock_on', String(livestockOn)); }, [livestockOn]);
+  useEffect(() => { localStorage.setItem('auto_ai_analysis', String(autoAIAnalysis)); }, [autoAIAnalysis]);
+  useEffect(() => { localStorage.setItem('weather_alerts', String(weatherAlerts)); }, [weatherAlerts]);
+  useEffect(() => { localStorage.setItem('rain_log_reminder', String(rainLogReminder)); }, [rainLogReminder]);
+
+  /* ── Compute visible tabs from enabled modules ── */
+  const TABS = buildTabs({ farmOn, retailOn });
+
+  /* ── Handlers ── */
   const togglePush = async () => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { setPushMsg('Browser push not supported.'); return; }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setPushMsg('Browser push not supported.'); return;
+    }
     setPushBusy(true); setPushMsg('');
     try {
       const reg = await navigator.serviceWorker.ready;
@@ -84,26 +284,35 @@ export default function Settings() {
         if (perm !== 'granted') { setPushMsg('Permission denied.'); setPushBusy(false); return; }
         const { public_key } = await getVapidKey();
         if (!public_key) { setPushMsg('Server not configured.'); setPushBusy(false); return; }
-        const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(public_key) });
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(public_key),
+        });
         const json = sub.toJSON();
-        await subscribePush({ endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth, user_agent: navigator.userAgent.slice(0, 280) });
+        await subscribePush({
+          endpoint: json.endpoint,
+          p256dh: json.keys.p256dh,
+          auth: json.keys.auth,
+          user_agent: navigator.userAgent.slice(0, 280),
+        });
         setPushOn(true); setPushMsg('Push enabled.');
       }
     } catch (e) { setPushMsg('Error: ' + (e.message || 'unknown')); }
     setPushBusy(false);
   };
-
   const testPush = async () => {
     try { await sendTestPush(); setPushMsg('Test sent.'); } catch { setPushMsg('Test failed.'); }
   };
-
-  useEffect(() => { localStorage.setItem('currency', currency); }, [currency]);
-  useEffect(() => { localStorage.setItem('reminder_9pm', String(reminder)); }, [reminder]);
 
   const saveTenant = async () => {
     try {
       await updateMyTenant({ name: bizName, country, currency, timezone });
       localStorage.setItem('currency', currency);
+      localStorage.setItem('trading_name', tradingName);
+      localStorage.setItem('zimra_tin', tin);
+      localStorage.setItem('zimra_vat', vat);
+      localStorage.setItem('primary_email', primaryEmail);
+      localStorage.setItem('primary_phone', primaryPhone);
       setSaved('Changes saved!');
     } catch (e) {
       setSaved('Error saving: ' + (e?.response?.data?.detail || e.message));
@@ -116,221 +325,928 @@ export default function Settings() {
     try {
       await updateMyTenant({ whatsapp_phone_1: phone1, whatsapp_phone_2: phone2 });
       setSaved('Numbers saved!');
-    } catch (e) {
-      // Fallback: save locally if backend doesn't support these fields yet
+    } catch {
       setSaved('Numbers saved locally!');
     }
     setTimeout(() => setSaved(''), 3000);
   };
 
+  /* ── Role gate ── */
   if (role !== 'owner') {
-    return <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}><div style={{ fontSize: 32 }}>{'\u{1F512}'}</div><p>Settings are owner-only.</p></div>;
+    return (
+      <div style={{ ...pageShell, textAlign: 'center', padding: 60 }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>{'\u{1F512}'}</div>
+        <h2 style={{ ...pageTitle, fontSize: 22, margin: 0 }}>Owner-only area</h2>
+        <p style={{ ...pageSub, marginTop: 8 }}>Settings are reserved for the organization owner.</p>
+      </div>
+    );
   }
 
+  /* ── Render ── */
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-      {/* Column 1: Tenant Details */}
-      <div>
-        <div style={card}>
-          <div style={cardTitle}>Tenant Details</div>
-          <label style={fl}>Business Name</label>
-          <input style={fi} value={bizName} onChange={e => setBizName(e.target.value)} />
-          <label style={fl}>Country</label>
-          <select style={fi} value={country} onChange={e => setCountry(e.target.value)}>
-            <option value="ZW">Zimbabwe</option>
-            <option value="ZA">South Africa</option>
-            <option value="KE">Kenya</option>
-            <option value="NG">Nigeria</option>
-            <option value="US">United States</option>
-            <option value="GB">United Kingdom</option>
-          </select>
-          <label style={fl}>Currency</label>
-          <select style={fi} value={currency} onChange={e => setCurrency(e.target.value)}>
-            <option value="USD">USD ($)</option>
-            <option value="ZWG">ZWG</option>
-            <option value="ZAR">ZAR (R)</option>
-            <option value="KES">KES (KSh)</option>
-            <option value="GBP">GBP</option>
-          </select>
-          <label style={fl}>Timezone</label>
-          <select style={fi} value={timezone} onChange={e => setTimezone(e.target.value)}>
-            <option value="Africa/Harare">Africa/Harare (CAT)</option>
-            <option value="Africa/Johannesburg">Africa/Johannesburg (SAST)</option>
-            <option value="Africa/Nairobi">Africa/Nairobi (EAT)</option>
-            <option value="Europe/London">Europe/London (GMT)</option>
-            <option value="America/New_York">America/New_York (EST)</option>
-          </select>
-          <button style={btnP} onClick={saveTenant}>Save Changes</button>
-          {saved === 'Changes saved!' && <div style={{ fontSize: 11, color: '#1a6b3a', fontWeight: 600, marginTop: 6 }}>{'\u2713'} {saved}</div>}
-        </div>
+    <div style={pageShell}>
+      {/* Page hero */}
+      <header style={heroRow}>
+        <h1 style={pageTitle}>Settings</h1>
+        <p style={pageSub}>
+          Configure your organization, branding, and operational preferences.
+        </p>
+      </header>
 
-        {/* WhatsApp */}
-        <div style={card}>
-          <div style={cardTitle}>{'\u{1F4F1}'} WhatsApp Recipients</div>
-          <label style={fl}>Owner Number 1</label>
-          <input style={fi} type="tel" value={phone1} onChange={e => setPhone1(e.target.value)} placeholder="+263..." />
-          <label style={fl}>Owner Number 2</label>
-          <input style={fi} type="tel" value={phone2} onChange={e => setPhone2(e.target.value)} placeholder="+263..." />
-          <button style={btnP} onClick={savePhones}>Save Numbers</button>
-          {(saved === 'Numbers saved!' || saved === 'Numbers saved locally!') && <div style={{ fontSize: 11, color: '#1a6b3a', fontWeight: 600, marginTop: 6 }}>{'\u2713'} {saved}</div>}
-        </div>
+      <div style={twoCol}>
+        {/* Left rail — tabs */}
+        <nav style={leftRail} aria-label="Settings sections">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              style={tabButton(activeTab === t.key)}
+              onClick={() => setActiveTab(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+          <button
+            style={dangerTab(activeTab === 'danger')}
+            onClick={() => setActiveTab('danger')}
+          >
+            Danger zone
+          </button>
+        </nav>
 
-        {/* AI Usage */}
-        <div style={card}>
-          <div style={cardTitle}>{'\u{1F916}'} Pewil AI Usage</div>
-          {aiLoading ? (
-            <div style={{ fontSize: 11, color: '#6b7280' }}>Loading usage...</div>
-          ) : aiBudget ? (
+        {/* Right pane — content */}
+        <div style={rightPane}>
+          {activeTab === 'general' && (
             <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                <span style={{ fontSize: 11, color: '#6b7280' }}>Plan</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#1a6b3a', textTransform: 'capitalize' }}>{aiBudget.plan}</span>
-              </div>
-              {/* Credits bar */}
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginBottom: 3 }}>
-                  <span>{aiBudget.credits_used} / {aiBudget.credits_total} credits used</span>
-                  <span>{aiBudget.credits_remaining} left</span>
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>General settings</h2>
+                  <p style={sectionSub}>
+                    Basic information about your organization as it appears on invoices,
+                    receipts, and reports.
+                  </p>
                 </div>
-                <div style={{ height: 8, background: '#e5e7eb', borderRadius: 99, overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%', borderRadius: 99, transition: 'width 0.3s',
-                    width: `${Math.min(aiBudget.usage_percent, 100)}%`,
-                    background: aiBudget.usage_percent > 80 ? '#c0392b' : aiBudget.usage_percent > 50 ? '#c97d1a' : '#1a6b3a',
-                  }} />
+                <div style={grid2}>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Organization name</label>
+                    <input style={input} value={bizName} onChange={(e) => setBizName(e.target.value)} />
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Trading name</label>
+                    <input
+                      style={input}
+                      value={tradingName}
+                      onChange={(e) => setTradingName(e.target.value)}
+                      placeholder="Optional doing-business-as name"
+                    />
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>TIN (ZIMRA)</label>
+                    <input
+                      style={input}
+                      value={tin}
+                      onChange={(e) => setTin(e.target.value)}
+                      placeholder="e.g. 1234567"
+                    />
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>VAT number</label>
+                    <input
+                      style={input}
+                      value={vat}
+                      onChange={(e) => setVat(e.target.value)}
+                      placeholder="e.g. 10001234"
+                    />
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Primary email</label>
+                    <input
+                      style={input}
+                      type="email"
+                      value={primaryEmail}
+                      onChange={(e) => setPrimaryEmail(e.target.value)}
+                    />
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Primary phone</label>
+                    <input
+                      style={input}
+                      type="tel"
+                      value={primaryPhone}
+                      onChange={(e) => setPrimaryPhone(e.target.value)}
+                      placeholder="+263 77 123 4567"
+                    />
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Country / region</label>
+                    <select style={select} value={country} onChange={(e) => setCountry(e.target.value)}>
+                      <option value="ZW">Zimbabwe</option>
+                      <option value="ZA">South Africa</option>
+                      <option value="KE">Kenya</option>
+                      <option value="NG">Nigeria</option>
+                      <option value="US">United States</option>
+                      <option value="GB">United Kingdom</option>
+                    </select>
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Timezone</label>
+                    <select style={select} value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+                      <option value="Africa/Harare">Africa/Harare (CAT)</option>
+                      <option value="Africa/Johannesburg">Africa/Johannesburg (SAST)</option>
+                      <option value="Africa/Nairobi">Africa/Nairobi (EAT)</option>
+                      <option value="Europe/London">Europe/London (GMT)</option>
+                      <option value="America/New_York">America/New_York (EST)</option>
+                    </select>
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Reporting currency</label>
+                    <select style={select} value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                      <option value="USD">USD ($)</option>
+                      <option value="ZWG">ZWG</option>
+                      <option value="ZAR">ZAR (R)</option>
+                      <option value="KES">KES (KSh)</option>
+                      <option value="GBP">GBP</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-              {/* Cost */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginBottom: 10 }}>
-                <span>API cost this month</span>
-                <span style={{ fontWeight: 600, color: '#111827' }}>${parseFloat(aiBudget.cost_usd || 0).toFixed(4)}</span>
-              </div>
-              {/* Resets info */}
-              <div style={{ fontSize: 9, color: '#6b7280', marginBottom: 10 }}>Credits reset on the 1st of each month.</div>
-              {/* Usage breakdown */}
-              {aiBudget.usage_by_feature?.length > 0 && (
-                <div>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Usage Breakdown</div>
-                  {aiBudget.usage_by_feature.map((f, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid #f3f4f6' }}>
-                      <span style={{ fontSize: 10, color: '#374151' }}>{f.description}</span>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: '#111827' }}>{f.count}x</span>
+                <div style={{ marginTop: 18, display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <button style={btnPrimary} onClick={saveTenant}>Save changes</button>
+                  {saved && (
+                    <div style={savedBadge(saved.startsWith('Error') ? 'error' : 'ok')}>
+                      {saved.startsWith('Error') ? '' : '\u2713 '}{saved}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-              {aiBudget.usage_by_feature?.length === 0 && (
-                <div style={{ fontSize: 10, color: '#9ca3af', fontStyle: 'italic' }}>No AI analyses used yet this month.</div>
-              )}
+              </section>
+
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Operational preferences</h2>
+                  <p style={sectionSub}>
+                    Org-wide preferences. Farm-specific and Retail-specific settings live in their own tabs.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <ToggleItem
+                    label="Daily end-of-day email digest"
+                    desc="06:00 summary to owners & managers."
+                    on={eodDigest}
+                    onToggle={() => setEodDigest(!eodDigest)}
+                  />
+                </div>
+              </section>
+
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Enabled modules</h2>
+                  <p style={sectionSub}>Turn off modules you don't use to simplify the app for your team.</p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <ToggleItem
+                    label="Farm module"
+                    desc="Fields, stock, workers, livestock, AI analysis."
+                    on={farmOn}
+                    onToggle={() => setFarmOn(!farmOn)}
+                  />
+                  <ToggleItem
+                    label="Retail module"
+                    desc="Point of sale, products, cashiers, sales history."
+                    on={retailOn}
+                    onToggle={() => setRetailOn(!retailOn)}
+                  />
+                </div>
+              </section>
             </>
-          ) : (
-            <div style={{ fontSize: 10, color: '#9ca3af' }}>AI usage data unavailable.</div>
+          )}
+
+          {activeTab === 'branding' && (
+            <section style={sectionCard}>
+              <div style={sectionHead}>
+                <h2 style={sectionTitle}>Branding</h2>
+                <p style={sectionSub}>
+                  Logo, colors, and tone shown on customer-facing receipts and invoices.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 20, alignItems: 'center', padding: '18px 0' }}>
+                <div
+                  style={{
+                    width: 96, height: 96, borderRadius: 20,
+                    background: `linear-gradient(135deg, ${C.amber}, ${C.terra})`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', fontFamily: SERIF, fontSize: 36, fontWeight: 700,
+                    boxShadow: '0 10px 22px -10px rgba(217,86,44,.55)',
+                  }}
+                >
+                  {(bizName || 'P').slice(0, 1).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginBottom: 4 }}>
+                    Upload your logo
+                  </div>
+                  <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>
+                    PNG or SVG, at least 256x256, under 1 MB.
+                  </div>
+                  <button style={btnOutline}>Choose file...</button>
+                </div>
+              </div>
+              <div style={{ ...grid2, marginTop: 8 }}>
+                <div style={fieldBlock}>
+                  <label style={fieldLabel}>Receipt footer line 1</label>
+                  <input style={input} placeholder="Thank you for shopping with us" />
+                </div>
+                <div style={fieldBlock}>
+                  <label style={fieldLabel}>Receipt footer line 2</label>
+                  <input style={input} placeholder="Returns accepted within 7 days" />
+                </div>
+              </div>
+              <div style={{ marginTop: 16 }}>
+                <button style={btnPrimary}>Save branding</button>
+              </div>
+            </section>
+          )}
+
+          {activeTab === 'farm' && (
+            <>
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Farm preferences</h2>
+                  <p style={sectionSub}>
+                    How the Farm module behaves - units, livestock, and AI analysis.
+                  </p>
+                </div>
+                <div style={grid2}>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Field size unit</label>
+                    <select style={select} value={fieldUnit} onChange={(e) => setFieldUnit(e.target.value)}>
+                      <option value="hectares">Hectares (ha)</option>
+                      <option value="acres">Acres</option>
+                      <option value="sqm">Square metres</option>
+                    </select>
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Harvest yield unit</label>
+                    <select style={select} value={harvestUnit} onChange={(e) => setHarvestUnit(e.target.value)}>
+                      <option value="kg">Kilograms (kg)</option>
+                      <option value="tonnes">Tonnes (t)</option>
+                      <option value="bags">Bags (50 kg)</option>
+                    </select>
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Water volume unit</label>
+                    <select style={select} value={waterUnit} onChange={(e) => setWaterUnit(e.target.value)}>
+                      <option value="L">Litres (L)</option>
+                      <option value="m3">Cubic metres</option>
+                      <option value="gal">Gallons (gal)</option>
+                    </select>
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Default rainy-season start</label>
+                    <select style={select} defaultValue="october">
+                      <option value="october">October</option>
+                      <option value="november">November</option>
+                      <option value="december">December</option>
+                    </select>
+                  </div>
+                </div>
+              </section>
+
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Farm features</h2>
+                  <p style={sectionSub}>Turn on modules that match how you farm.</p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <ToggleItem
+                    label="Livestock tracking"
+                    desc="Enable cattle, goats, chickens, and pigs with health logs and breeding records."
+                    on={livestockOn}
+                    onToggle={() => setLivestockOn(!livestockOn)}
+                  />
+                  <ToggleItem
+                    label="Auto AI analysis on month close"
+                    desc="Claude generates a P&L insight summary on the 1st of every month."
+                    on={autoAIAnalysis}
+                    onToggle={() => setAutoAIAnalysis(!autoAIAnalysis)}
+                  />
+                  <ToggleItem
+                    label="Weather & rainfall alerts"
+                    desc="WhatsApp heads-up before storms, frost, or heavy rain."
+                    on={weatherAlerts}
+                    onToggle={() => setWeatherAlerts(!weatherAlerts)}
+                  />
+                  <ToggleItem
+                    label="Rain-log reminder"
+                    desc="Morning nudge after rain to record the amount in each field."
+                    on={rainLogReminder}
+                    onToggle={() => setRainLogReminder(!rainLogReminder)}
+                  />
+                  <ToggleItem
+                    label="9 PM daily farm reminder (WhatsApp)"
+                    desc="Evening nudge to log today's harvest, costs, and attendance."
+                    on={reminder}
+                    onToggle={() => setReminder(!reminder)}
+                  />
+                </div>
+              </section>
+
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Weekly farm digest</h2>
+                  <p style={sectionSub}>
+                    Owners get a single WhatsApp summary of the week.
+                  </p>
+                </div>
+                <div style={grid2}>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Day of week</label>
+                    <select style={select} value={weeklyDigestDay} onChange={(e) => setWeeklyDigestDay(e.target.value)}>
+                      <option value="sunday">Sunday</option>
+                      <option value="monday">Monday</option>
+                      <option value="friday">Friday</option>
+                      <option value="saturday">Saturday</option>
+                    </select>
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Delivery time</label>
+                    <input
+                      style={input}
+                      type="time"
+                      value={weeklyDigestTime}
+                      onChange={(e) => setWeeklyDigestTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <button style={btnPrimary}>Save farm settings</button>
+                </div>
+              </section>
+            </>
+          )}
+
+          {activeTab === 'retail' && (
+            <>
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Point of Sale</h2>
+                  <p style={sectionSub}>How cashiers ring up orders and how receipts print.</p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <ToggleItem
+                    label="Offline-first mode"
+                    desc="Cashiers can keep selling when the network drops; orders sync when back online."
+                    on={offlineFirst}
+                    onToggle={() => setOfflineFirst(!offlineFirst)}
+                  />
+                  <ToggleItem
+                    label="Auto-print ZIMRA fiscal receipt"
+                    desc="Every successful POS charge prints a ZIMRA-compliant paper receipt."
+                    on={autoFiscal}
+                    onToggle={() => setAutoFiscal(!autoFiscal)}
+                  />
+                  <ToggleItem
+                    label="Show change calculator"
+                    desc="Pop up a tender/change pad when the cashier selects cash."
+                    on={showChange}
+                    onToggle={() => setShowChange(!showChange)}
+                  />
+                </div>
+                <div style={{ ...grid2, marginTop: 16 }}>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Cash rounding</label>
+                    <select style={select} value={cashRound} onChange={(e) => setCashRound(e.target.value)}>
+                      <option value="none">No rounding</option>
+                      <option value="0.05">Nearest $0.05</option>
+                      <option value="0.10">Nearest $0.10</option>
+                      <option value="0.25">Nearest $0.25</option>
+                    </select>
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Receipt copies per sale</label>
+                    <select style={select} value={receiptCopies} onChange={(e) => setReceiptCopies(e.target.value)}>
+                      <option value="1">1 (customer only)</option>
+                      <option value="2">2 (customer + merchant)</option>
+                      <option value="0">None (digital receipt only)</option>
+                    </select>
+                  </div>
+                </div>
+              </section>
+
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Stock & inventory</h2>
+                  <p style={sectionSub}>Low-stock thresholds and restock alerts.</p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <ToggleItem
+                    label="Low-stock WhatsApp alerts"
+                    desc="Send the manager a WhatsApp when any SKU crosses its reorder threshold."
+                    on={lowStockWA}
+                    onToggle={() => setLowStockWA(!lowStockWA)}
+                  />
+                </div>
+                <div style={{ ...grid2, marginTop: 16 }}>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Default low-stock threshold</label>
+                    <input
+                      style={input}
+                      type="number"
+                      min="0"
+                      value={lowStockThreshold}
+                      onChange={(e) => setLowStockThreshold(e.target.value)}
+                      placeholder="5"
+                    />
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Stock count frequency</label>
+                    <select style={select} defaultValue="weekly">
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                  </div>
+                </div>
+              </section>
+
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Cashier permissions</h2>
+                  <p style={sectionSub}>
+                    Control what workers with the cashier role can see and do in the POS.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <ToggleItem
+                    label="View products"
+                    desc="See the product list and current prices."
+                    on={permViewProducts}
+                    onToggle={() => setPermViewProducts(!permViewProducts)}
+                  />
+                  <ToggleItem
+                    label="Add products"
+                    desc="Create new products in the catalog."
+                    on={permAddProducts}
+                    onToggle={() => setPermAddProducts(!permAddProducts)}
+                  />
+                  <ToggleItem
+                    label="Edit products"
+                    desc="Modify price and stock; mark stolen or damaged."
+                    on={permEditProducts}
+                    onToggle={() => setPermEditProducts(!permEditProducts)}
+                  />
+                  <ToggleItem
+                    label="Process sales (POS)"
+                    desc="Use point of sale to ring up items and accept payment."
+                    on={permPOS}
+                    onToggle={() => setPermPOS(!permPOS)}
+                  />
+                  <ToggleItem
+                    label="View reports"
+                    desc="Access financial reports and daily summaries."
+                    on={permViewReports}
+                    onToggle={() => setPermViewReports(!permViewReports)}
+                  />
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <button style={btnPrimary}>Save retail settings</button>
+                </div>
+              </section>
+            </>
+          )}
+
+          {activeTab === 'payments' && (
+            <section style={sectionCard}>
+              <div style={sectionHead}>
+                <h2 style={sectionTitle}>Payments</h2>
+                <p style={sectionSub}>
+                  Accept cards, EcoCash, and mobile money through your Pewil POS.
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <ProviderRow
+                  name="Pesepay"
+                  desc="Cards (Visa/Mastercard) + EcoCash - the default primary rail."
+                  status="Connected"
+                  statusOk
+                />
+                <ProviderRow
+                  name="Paynow"
+                  desc="EcoCash, OneMoney, Telecash - mobile money fallback."
+                  status="Not connected"
+                />
+                <ProviderRow
+                  name="Paystack"
+                  desc="Legacy card rail - kept for historical accounts."
+                  status="Legacy"
+                />
+              </div>
+            </section>
+          )}
+
+          {activeTab === 'zimra' && (
+            <section style={sectionCard}>
+              <div style={sectionHead}>
+                <h2 style={sectionTitle}>ZIMRA &amp; Tax</h2>
+                <p style={sectionSub}>
+                  Tax registration numbers and fiscal device configuration for ZIMRA compliance.
+                </p>
+              </div>
+              <div style={grid2}>
+                <div style={fieldBlock}>
+                  <label style={fieldLabel}>TIN (ZIMRA)</label>
+                  <input style={input} value={tin} onChange={(e) => setTin(e.target.value)} />
+                </div>
+                <div style={fieldBlock}>
+                  <label style={fieldLabel}>VAT number</label>
+                  <input style={input} value={vat} onChange={(e) => setVat(e.target.value)} />
+                </div>
+                <div style={fieldBlock}>
+                  <label style={fieldLabel}>Fiscal device serial</label>
+                  <input style={input} placeholder="FDMS-XXXXXX" />
+                </div>
+                <div style={fieldBlock}>
+                  <label style={fieldLabel}>VAT rate (%)</label>
+                  <input style={input} defaultValue="15" />
+                </div>
+              </div>
+              <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <ToggleItem
+                  label="Auto-submit fiscal receipts"
+                  desc="Every POS sale is transmitted to the ZIMRA FDMS within 5 seconds."
+                  on={autoFiscal}
+                  onToggle={() => setAutoFiscal(!autoFiscal)}
+                />
+              </div>
+              <div style={{ marginTop: 18 }}>
+                <button style={btnPrimary} onClick={saveTenant}>Save tax settings</button>
+              </div>
+            </section>
+          )}
+
+          {activeTab === 'notifications' && (
+            <>
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>WhatsApp recipients</h2>
+                  <p style={sectionSub}>
+                    Who gets the 9 PM reminder and low-stock pings.
+                  </p>
+                </div>
+                <div style={grid2}>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Owner number 1</label>
+                    <input
+                      style={input}
+                      type="tel"
+                      value={phone1}
+                      onChange={(e) => setPhone1(e.target.value)}
+                      placeholder="+263..."
+                    />
+                  </div>
+                  <div style={fieldBlock}>
+                    <label style={fieldLabel}>Owner number 2</label>
+                    <input
+                      style={input}
+                      type="tel"
+                      value={phone2}
+                      onChange={(e) => setPhone2(e.target.value)}
+                      placeholder="+263..."
+                    />
+                  </div>
+                </div>
+                <div style={{ marginTop: 16, display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <button style={btnPrimary} onClick={savePhones}>Save numbers</button>
+                  {(saved === 'Numbers saved!' || saved === 'Numbers saved locally!') && (
+                    <div style={savedBadge('ok')}>{'\u2713 '}{saved}</div>
+                  )}
+                </div>
+              </section>
+
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Alert channels</h2>
+                  <p style={sectionSub}>Choose how Pewil reaches you.</p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={toggleRow}>
+                    <div style={{ flex: 1 }}>
+                      <div style={toggleLabel}>Browser push alerts</div>
+                      <div style={toggleDesc}>
+                        Low stock, wages due, livestock health - delivered via your browser.
+                      </div>
+                      {pushMsg && <div style={{ ...savedBadge('ok'), marginTop: 8 }}>{pushMsg}</div>}
+                      {pushOn && (
+                        <button
+                          style={{ ...btnOutline, marginTop: 10, padding: '8px 14px', fontSize: 13 }}
+                          onClick={testPush}
+                        >
+                          Send test push
+                        </button>
+                      )}
+                    </div>
+                    <button style={toggleS(pushOn)} onClick={togglePush} disabled={pushBusy}>
+                      <div style={toggleK(pushOn)} />
+                    </button>
+                  </div>
+                  <ToggleItem
+                    label="Daily end-of-day email digest"
+                    desc="06:00 summary to owners & managers."
+                    on={eodDigest}
+                    onToggle={() => setEodDigest(!eodDigest)}
+                  />
+                </div>
+                <p style={{ ...sectionSub, marginTop: 14 }}>
+                  Farm-specific reminders (9 PM log nudge, rain-log, weather) live under the Farm tab.
+                  {retailOn ? ' Low-stock alerts live under the Retail tab.' : ''}
+                </p>
+              </section>
+            </>
+          )}
+
+          {activeTab === 'security' && (
+            <>
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Role reference</h2>
+                  <p style={sectionSub}>How each role works across the app.</p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <RolePill
+                    role="Owner"
+                    tone={C.forest}
+                    bg="#e7f2ea"
+                    desc="Full access - all tabs, reports, settings, billing, AI."
+                  />
+                  <RolePill
+                    role="Manager"
+                    tone="#1d4ed8"
+                    bg="#e6efff"
+                    desc="Logs expenses, stock, attendance, trips. No reports or settings."
+                  />
+                  <RolePill
+                    role="Cashier / Worker"
+                    tone={C.clay}
+                    bg={C.sand2}
+                    desc="POS access or view-only for their own hours."
+                  />
+                </div>
+              </section>
+
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Sign-in</h2>
+                  <p style={sectionSub}>Account lockout and two-factor authentication.</p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <StaticRow label="Failed-login lockout" value="5 attempts / 1 hour" />
+                  <StaticRow label="Two-factor authentication" value="Not enabled" />
+                  <StaticRow label="Session expiry" value="30 minutes idle" />
+                </div>
+              </section>
+            </>
+          )}
+
+          {activeTab === 'api' && (
+            <section style={sectionCard}>
+              <div style={sectionHead}>
+                <h2 style={sectionTitle}>API &amp; webhooks</h2>
+                <p style={sectionSub}>
+                  Programmatic access for integrations - accounting, BI tools, custom dashboards.
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <StaticRow
+                  label="API base URL"
+                  value="https://api.pewil.org/api/"
+                  mono
+                />
+                <div style={fieldBlock}>
+                  <label style={fieldLabel}>API key</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      style={{ ...input, fontFamily: 'ui-monospace, monospace' }}
+                      readOnly
+                      value="sk_live_****************"
+                    />
+                    <button style={btnOutline}>Rotate</button>
+                  </div>
+                </div>
+                <div style={fieldBlock}>
+                  <label style={fieldLabel}>Webhook endpoint</label>
+                  <input style={input} placeholder="https://your-app.example.com/webhooks/pewil" />
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button style={btnPrimary}>Save webhook</button>
+                  <button style={btnOutline}>Send test event</button>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {activeTab === 'billing' && (
+            <>
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>Billing &amp; plan</h2>
+                  <p style={sectionSub}>Your subscription, invoices, and next charge.</p>
+                </div>
+                <div
+                  style={{
+                    background: `linear-gradient(135deg, ${C.sand}, ${C.sand2})`,
+                    border: `1px solid ${C.line}`, borderRadius: 14,
+                    padding: '18px 20px', display: 'grid',
+                    gridTemplateColumns: '1fr auto', gap: 14, alignItems: 'center',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                      Current plan
+                    </div>
+                    <div style={{ fontFamily: SERIF, fontSize: 24, fontWeight: 700, color: C.forest, marginTop: 4 }}>
+                      {aiBudget?.plan ? aiBudget.plan[0].toUpperCase() + aiBudget.plan.slice(1) : 'Starter'}
+                    </div>
+                    <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>
+                      Next charge on the 1st.
+                    </div>
+                  </div>
+                  <button style={btnForest}>Change plan</button>
+                </div>
+              </section>
+
+              <section style={sectionCard}>
+                <div style={sectionHead}>
+                  <h2 style={sectionTitle}>AI usage this month</h2>
+                  <p style={sectionSub}>Credits are included with your plan and reset on the 1st.</p>
+                </div>
+                {aiLoading ? (
+                  <div style={{ fontSize: 13, color: C.muted }}>Loading usage...</div>
+                ) : aiBudget ? (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.muted, marginBottom: 6 }}>
+                      <span>
+                        {aiBudget.credits_used} / {aiBudget.credits_total} credits used
+                      </span>
+                      <span>{aiBudget.credits_remaining} left</span>
+                    </div>
+                    <div style={{ height: 10, background: C.line2, borderRadius: 99, overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          height: '100%', borderRadius: 99, transition: 'width .3s',
+                          width: `${Math.min(aiBudget.usage_percent, 100)}%`,
+                          background:
+                            aiBudget.usage_percent > 80
+                              ? C.clay
+                              : aiBudget.usage_percent > 50
+                              ? C.amber
+                              : C.forest,
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.muted, marginTop: 12 }}>
+                      <span>API cost this month</span>
+                      <span style={{ fontWeight: 600, color: C.ink }}>
+                        ${parseFloat(aiBudget.cost_usd || 0).toFixed(4)}
+                      </span>
+                    </div>
+                    {aiBudget.usage_by_feature?.length > 0 && (
+                      <div style={{ marginTop: 16 }}>
+                        <div style={{ ...fieldLabel, marginBottom: 8 }}>Usage breakdown</div>
+                        {aiBudget.usage_by_feature.map((f, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              display: 'flex', justifyContent: 'space-between',
+                              padding: '8px 0', borderBottom: `1px solid ${C.line2}`,
+                              fontSize: 13,
+                            }}
+                          >
+                            <span style={{ color: C.ink }}>{f.description}</span>
+                            <span style={{ fontWeight: 600, color: C.ink }}>{f.count}x</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ fontSize: 13, color: C.muted }}>AI usage data unavailable.</div>
+                )}
+              </section>
+            </>
+          )}
+
+          {activeTab === 'danger' && (
+            <section style={{ ...sectionCard, borderColor: C.danger, background: '#fff' }}>
+              <div style={sectionHead}>
+                <h2 style={{ ...sectionTitle, color: C.danger }}>Danger zone</h2>
+                <p style={sectionSub}>
+                  These actions are irreversible. Proceed with care.
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <DangerRow
+                  title="Cancel subscription"
+                  desc="Your plan will stay active until the end of the billing period, then downgrade to read-only."
+                  cta="Cancel subscription"
+                />
+                <DangerRow
+                  title="Delete account"
+                  desc="Permanently removes your organization, users, and all data after a 14-day grace period."
+                  cta="Delete account"
+                />
+              </div>
+            </section>
           )}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Column 2: Role Permissions */}
-      <div>
-        <div style={card}>
-          <div style={cardTitle}>Role Permissions</div>
-          <div style={{ fontSize: 9, color: '#6b7280', marginBottom: 8 }}>Configure what each role can do</div>
-
-          <div style={{ fontWeight: 600, fontSize: 10, color: '#1a6b3a', marginBottom: 6, marginTop: 4 }}>CASHIER PERMISSIONS</div>
-
-          <div style={permRow}>
-            <div><div style={{ fontWeight: 600, fontSize: 11 }}>View Products</div><div style={{ fontSize: 9, color: '#6b7280' }}>See product list and prices</div></div>
-            <button style={toggleS(permViewProducts)} onClick={() => setPermViewProducts(!permViewProducts)}><div style={toggleK(permViewProducts)} /></button>
-          </div>
-          <div style={permRow}>
-            <div><div style={{ fontWeight: 600, fontSize: 11 }}>Add Products</div><div style={{ fontSize: 9, color: '#6b7280' }}>Create new products in catalog</div></div>
-            <button style={toggleS(permAddProducts)} onClick={() => setPermAddProducts(!permAddProducts)}><div style={toggleK(permAddProducts)} /></button>
-          </div>
-          <div style={permRow}>
-            <div><div style={{ fontWeight: 600, fontSize: 11 }}>Edit Products</div><div style={{ fontSize: 9, color: '#6b7280' }}>Modify price, stock, mark stolen/damaged</div></div>
-            <button style={toggleS(permEditProducts)} onClick={() => setPermEditProducts(!permEditProducts)}><div style={toggleK(permEditProducts)} /></button>
-          </div>
-          <div style={permRow}>
-            <div><div style={{ fontWeight: 600, fontSize: 11 }}>Process Sales (POS)</div><div style={{ fontSize: 9, color: '#6b7280' }}>Use point of sale to ring up items</div></div>
-            <button style={toggleS(permPOS)} onClick={() => setPermPOS(!permPOS)}><div style={toggleK(permPOS)} /></button>
-          </div>
-          <div style={permRow}>
-            <div><div style={{ fontWeight: 600, fontSize: 11 }}>View Reports</div><div style={{ fontSize: 9, color: '#6b7280' }}>See financial reports</div></div>
-            <button style={toggleS(permViewReports)} onClick={() => setPermViewReports(!permViewReports)}><div style={toggleK(permViewReports)} /></button>
-          </div>
-
-          <button style={{ ...btnP, fontSize: 10, padding: '4px 9px' }}>Save Permissions</button>
-        </div>
-
-        {/* Roles info */}
-        <div style={card}>
-          <div style={cardTitle}>{'\u{1F465}'} Roles</div>
-          <div style={{ background: '#e8f5ee', borderRadius: 8, padding: '10px 14px', marginBottom: 6 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#1a6b3a' }}>OWNER</div>
-            <div style={{ fontSize: 10, color: '#374151', marginTop: 2 }}>Full access: all tabs, reports, settings, billing, AI.</div>
-          </div>
-          <div style={{ background: '#EFF6FF', borderRadius: 8, padding: '10px 14px', marginBottom: 6 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#1d4ed8' }}>MANAGER</div>
-            <div style={{ fontSize: 10, color: '#374151', marginTop: 2 }}>Can log expenses, stock, attendance, trips. No reports or settings.</div>
-          </div>
-          <div style={{ background: '#fef3e2', borderRadius: 8, padding: '10px 14px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#c97d1a' }}>CASHIER / WORKER</div>
-            <div style={{ fontSize: 10, color: '#374151', marginTop: 2 }}>POS access or view-only for their own hours.</div>
-          </div>
-        </div>
+/* Small presentational helpers */
+function ToggleItem({ label, desc, on, onToggle }) {
+  return (
+    <div style={toggleRow}>
+      <div style={{ flex: 1, paddingRight: 14 }}>
+        <div style={toggleLabel}>{label}</div>
+        <div style={toggleDesc}>{desc}</div>
       </div>
+      <button style={toggleS(on)} onClick={onToggle} aria-pressed={on}>
+        <div style={toggleK(on)} />
+      </button>
+    </div>
+  );
+}
 
-      {/* Column 3: Modules + Alerts */}
-      <div>
-        <div style={card}>
-          <div style={cardTitle}>Enabled Modules</div>
-          {[
-            { label: 'Farm Module', desc: 'Fields, stock, workers, livestock, AI', on: farmOn, toggle: () => setFarmOn(!farmOn) },
-            { label: 'Retail Module', desc: 'POS, products, cashier, sales', on: retailOn, toggle: () => setRetailOn(!retailOn) },
-          ].map((m, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 8, border: '1px solid #e5e7eb', borderRadius: 7, marginBottom: 5 }}>
-              <div>
-                <span style={{ fontWeight: 600, fontSize: 11 }}>{m.label}</span>
-                <div style={{ fontSize: 9, color: '#6b7280' }}>{m.desc}</div>
-              </div>
-              <button style={toggleS(m.on)} onClick={m.toggle}><div style={toggleK(m.on)} /></button>
-            </div>
-          ))}
-        </div>
-
-        {/* Push alerts */}
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ flex: 1 }}>
-              <div style={cardTitle}>{'\u{1F514}'} Browser Push Alerts</div>
-              <p style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>Get alerts for low stock, wages, livestock health.</p>
-              {pushMsg && <div style={{ fontSize: 10, color: '#1a6b3a', fontWeight: 600 }}>{pushMsg}</div>}
-              {pushOn && <button style={{ ...btnP, marginTop: 6, background: '#2d9e58', fontSize: 10 }} onClick={testPush}>Send test push</button>}
-            </div>
-            <button style={toggleS(pushOn)} onClick={togglePush} disabled={pushBusy}><div style={toggleK(pushOn)} /></button>
-          </div>
-        </div>
-
-        {/* 9PM Reminder */}
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={cardTitle}>{'\u{1F559}'} 9PM Daily Reminder</div>
-              <p style={{ fontSize: 10, color: '#6b7280' }}>WhatsApp reminder to log daily data.</p>
-            </div>
-            <button style={toggleS(reminder)} onClick={() => setReminder(!reminder)}><div style={toggleK(reminder)} /></button>
-          </div>
-        </div>
-
-        {/* Danger Zone */}
-        <div style={{ ...card, borderColor: '#c0392b' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#c0392b', marginBottom: 8 }}>Danger Zone</div>
-          <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 12 }}>These actions are irreversible.</p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button style={{ padding: '6px 12px', border: '1px solid #c0392b', borderRadius: 7, background: '#fff', color: '#c0392b', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Cancel Subscription</button>
-            <button style={{ padding: '6px 12px', border: '1px solid #c0392b', borderRadius: 7, background: '#fff', color: '#c0392b', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Delete Account</button>
-          </div>
-        </div>
+function ProviderRow({ name, desc, status, statusOk }) {
+  return (
+    <div style={toggleRow}>
+      <div style={{ flex: 1, paddingRight: 14 }}>
+        <div style={toggleLabel}>{name}</div>
+        <div style={toggleDesc}>{desc}</div>
       </div>
+      <span
+        style={{
+          fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 999,
+          background: statusOk ? '#e7f2ea' : C.sand2,
+          color: statusOk ? C.forest : C.muted,
+        }}
+      >
+        {status}
+      </span>
+    </div>
+  );
+}
+
+function RolePill({ role, tone, bg, desc }) {
+  return (
+    <div
+      style={{
+        background: bg, borderRadius: 12, padding: '12px 16px',
+        border: `1px solid ${C.line2}`,
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 700, color: tone, letterSpacing: '.02em' }}>
+        {role.toUpperCase()}
+      </div>
+      <div style={{ fontSize: 13, color: C.ink, marginTop: 4, lineHeight: 1.45 }}>{desc}</div>
+    </div>
+  );
+}
+
+function StaticRow({ label, value, mono }) {
+  return (
+    <div
+      style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '12px 16px', border: `1px solid ${C.line2}`, borderRadius: 12,
+        background: C.cream,
+      }}
+    >
+      <span style={{ fontSize: 13, color: C.muted }}>{label}</span>
+      <span
+        style={{
+          fontSize: 13.5, fontWeight: 600, color: C.ink,
+          fontFamily: mono ? 'ui-monospace, monospace' : SANS,
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function DangerRow({ title, desc, cta }) {
+  return (
+    <div
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 16px', border: `1px solid ${C.danger}`, borderRadius: 12,
+        background: C.dangerBg, gap: 16,
+      }}
+    >
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.danger }}>{title}</div>
+        <div style={{ fontSize: 12.5, color: C.muted, marginTop: 4 }}>{desc}</div>
+      </div>
+      <button style={btnDanger}>{cta}</button>
     </div>
   );
 }

@@ -3,33 +3,45 @@ import { fmt, qty } from '../utils/format';
 import { getDailySummary } from '../api/farmApi';
 import NotificationBell from './NotificationBell';
 
+/* ─── Design 3 — Living Africa tokens ─── */
+const TOKENS = {
+  amber: '#f4a743', terra: '#d9562c', forest: '#1f3d26', forest2: '#2d5a37',
+  sand: '#fff7ec', cream: '#fffcf7', ink: '#1b1b1b', muted: '#6b5d50',
+  line: 'rgba(27,27,27,.10)',
+};
+const SERIF = "'Fraunces', Georgia, serif";
+const SANS = "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+
 const S = {
   bar: {
     position: 'sticky', top: 0, zIndex: 50,
-    background: '#ffffff', borderBottom: '1px solid #e5e7eb',
+    background: TOKENS.cream, borderBottom: `1px solid ${TOKENS.line}`,
     padding: '12px 24px', display: 'flex', alignItems: 'center',
     justifyContent: 'space-between', minHeight: 56,
+    fontFamily: SANS,
   },
   left: { display: 'flex', flexDirection: 'column' },
   title: {
-    fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700,
-    color: '#111827', lineHeight: 1.2,
+    fontFamily: SERIF, fontSize: 20, fontWeight: 700,
+    color: TOKENS.forest, lineHeight: 1.2, letterSpacing: '-0.01em',
   },
-  sub: { fontSize: 11, color: '#6b7280', marginTop: 1 },
+  sub: { fontSize: 12, color: TOKENS.muted, marginTop: 2 },
   right: { display: 'flex', alignItems: 'center', gap: 8 },
   dateChip: {
-    background: '#f3f4f6', fontSize: 11, padding: '5px 10px', borderRadius: 6,
-    color: '#374151', fontWeight: 500,
+    background: TOKENS.sand, fontSize: 11, padding: '6px 12px', borderRadius: 999,
+    color: TOKENS.forest, fontWeight: 600, border: `1px solid ${TOKENS.line}`,
   },
   waBtn: {
-    background: '#25D366', color: '#fff', border: 'none', borderRadius: 7,
-    padding: '7px 14px', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+    background: '#25D366', color: '#fff', border: 'none', borderRadius: 999,
+    padding: '8px 16px', fontSize: 11, fontWeight: 600, cursor: 'pointer',
     display: 'flex', alignItems: 'center', gap: 6, transition: 'opacity 0.15s',
   },
   primaryBtn: {
-    background: '#1a6b3a', color: '#fff', border: 'none', borderRadius: 7,
-    padding: '7px 14px', fontSize: 11, fontWeight: 600, cursor: 'pointer',
-    transition: 'background 0.15s',
+    background: `linear-gradient(135deg, ${TOKENS.amber}, ${TOKENS.terra})`,
+    color: '#fff', border: 'none', borderRadius: 999,
+    padding: '8px 18px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+    transition: 'transform 0.12s, box-shadow 0.15s',
+    boxShadow: '0 6px 14px -6px rgba(217,86,44,.55)',
   },
 };
 
@@ -53,8 +65,9 @@ export default function Topbar({ pageTitle, pageSub, primaryAction, onPrimaryAct
     const today = new Date();
     const dateStr = today.toISOString().split('T')[0];
     const dayName = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const orgName = (localStorage.getItem('tenant_name') || 'PEWIL').toUpperCase();
 
-    let msg = `🌱 *MAKONESE FARM — Daily Update*\n📅 ${dayName}\n`;
+    let msg = `🌱 *${orgName} — Daily Update*\n📅 ${dayName}\n`;
 
     try {
       const summary = await getDailySummary(dateStr);
@@ -130,7 +143,7 @@ export default function Topbar({ pageTitle, pageSub, primaryAction, onPrimaryAct
       }
     }
 
-    msg += `\n— Makonese Farm System`;
+    msg += `\n— ${orgName} on Pewil`;
     return msg;
   }
 
@@ -171,8 +184,8 @@ export default function Topbar({ pageTitle, pageSub, primaryAction, onPrimaryAct
           <button
             style={S.primaryBtn}
             onClick={onPrimaryAction}
-            onMouseEnter={e => { e.currentTarget.style.background = '#2d9e58'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#1a6b3a'; }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
           >
             {primaryAction}
           </button>

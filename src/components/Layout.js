@@ -143,7 +143,7 @@ export default function Layout({
             dashboardData={dashboardData}
           />
         </div>
-        <main className="page-content-mobile" style={{ flex: 1, padding: '20px 24px', background: '#f9fafb' }}>
+        <main className="page-content-mobile" style={{ flex: 1, padding: '20px 24px', background: '#fffcf7' }}>
           {children}
         </main>
       </div>
