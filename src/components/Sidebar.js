@@ -347,7 +347,6 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
                       onMouseLeave={e => { if (activeTab !== item.key) e.currentTarget.style.background = 'transparent'; }}
                     >
                       <span style={S.navEmoji}>{item.emoji}</span>
-                      <span style={S.navEmoji}>{item.emoji}</span>
                       {item.label}
                       {item.showBadge && lowStockCount > 0 && (
                         <span style={S.badge}>{lowStockCount}</span>
