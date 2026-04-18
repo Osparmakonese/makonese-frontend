@@ -261,7 +261,7 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
     <div style={S.sidebar}>
       {/* Brand */}
       <div style={S.brand}>
-        <Logo size={36} showText={true} />
+        <Logo size={36} showText={false} />
       </div>
 
       {/* Module Switcher */}
