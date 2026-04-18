@@ -944,7 +944,7 @@ const LandingPage = () => {
         </div>
         {footLinks('Product', [['Farm', '/'], ['Retail', '/'], ['Finance', '/'], ['AI Copilot', '/']])}
         {footLinks('Company', [['About', '/'], ['Stories', '/'], ['Careers', '/'], ['Contact', '/']])}
-        {footLinks('Legal', [['Terms', '/terms'], ['Privacy', '/privacy'], ['Refunds', '/refunds'], ['Security', '/']])}
+        {footLinks('Legal', [['Terms', '/terms'], ['Privacy', '/privacy'], ['Refunds', '/refunds'], ['Status', '/status']])}
       </div>
       <div style={{
         maxWidth: 1280, margin: '40px auto 0',

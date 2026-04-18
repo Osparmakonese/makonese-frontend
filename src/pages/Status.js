@@ -103,6 +103,13 @@ function ComponentRow({ name, description, status, latencyMs, link }) {
   );
 }
 
+/** Banner treatment palette. Keyed on STATUS_BANNER_SEVERITY from the API. */
+const BANNER_META = {
+  info:     { bg: '#e8f5ee', border: '#1a6b3a', color: '#0D4A22', icon: 'i' },
+  warning:  { bg: '#fef3c7', border: '#c97d1a', color: '#92400e', icon: '!' },
+  critical: { bg: '#fee2e2', border: '#b91c1c', color: '#7f1d1d', icon: '!' },
+};
+
 export default function Status() {
   const [apiStatus, setApiStatus] = useState(UNKNOWN);
   const [dbStatus, setDbStatus] = useState(UNKNOWN);
@@ -110,6 +117,7 @@ export default function Status() {
   const [lastChecked, setLastChecked] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [banner, setBanner] = useState(null);
 
   const poll = useCallback(async () => {
     setLoading(true);
@@ -143,6 +151,15 @@ export default function Status() {
       // didn't surface db_latency_ms (keeps display honest).
       if (typeof checks.db_latency_ms !== 'number') {
         setDbLatency(Date.now() - started);
+      }
+      // Ops banner — backend returns { message, severity } when env var is set.
+      if (data.banner && typeof data.banner.message === 'string' && data.banner.message.trim()) {
+        setBanner({
+          message: data.banner.message,
+          severity: BANNER_META[data.banner.severity] ? data.banner.severity : 'info',
+        });
+      } else {
+        setBanner(null);
       }
     } catch (e) {
       setApiStatus(DOWN);
@@ -210,6 +227,34 @@ export default function Status() {
           </nav>
         </div>
       </header>
+
+      {/* Ops banner — driven by STATUS_BANNER_MESSAGE env var on the API */}
+      {banner && (() => {
+        const meta = BANNER_META[banner.severity] || BANNER_META.info;
+        return (
+          <div style={{
+            background: meta.bg,
+            borderBottom: `1px solid ${meta.border}`,
+            color: meta.color,
+            padding: '14px 24px',
+          }}>
+            <div style={{
+              maxWidth: 1080, margin: '0 auto',
+              display: 'flex', alignItems: 'center', gap: 12,
+              fontSize: 14, fontWeight: 500,
+              fontFamily: "'Inter', system-ui, sans-serif",
+            }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 24, height: 24, borderRadius: '50%',
+                background: meta.border, color: '#fff',
+                fontSize: 13, fontWeight: 700, flexShrink: 0,
+              }}>{meta.icon}</span>
+              <span style={{ lineHeight: 1.5 }}>{banner.message}</span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Hero / overall status banner */}
       <section style={{
