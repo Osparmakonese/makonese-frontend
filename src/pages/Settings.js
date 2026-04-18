@@ -146,17 +146,18 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-/* ─── Tab definitions (retail/farm entries appear only if the module is enabled) ─── */
-function buildTabs({ farmOn, retailOn }) {
+/* ─── Tab definitions — Farm-only.
+   Retail-specific settings (POS preferences, fiscal/tax, hardware, currencies)
+   live under the Retail module's own Settings page; this Settings page is the
+   farm/agriculture hub only. ─── */
+function buildTabs({ farmOn }) {
   const tabs = [
     { key: 'general', label: 'General' },
     { key: 'branding', label: 'Branding' },
   ];
   if (farmOn) tabs.push({ key: 'farm', label: 'Farm' });
-  if (retailOn) tabs.push({ key: 'retail', label: 'Retail' });
-  tabs.push({ key: 'payments', label: 'Payments' });
-  if (retailOn) tabs.push({ key: 'zimra', label: 'ZIMRA & Tax' });
   tabs.push(
+    { key: 'payments', label: 'Payments' },
     { key: 'notifications', label: 'Notifications' },
     { key: 'security', label: 'Security' },
     { key: 'api', label: 'API & Webhooks' },
@@ -207,10 +208,10 @@ export default function Settings() {
   const [weatherAlerts, setWeatherAlerts] = useState(() => localStorage.getItem('weather_alerts') !== 'false');
   const [rainLogReminder, setRainLogReminder] = useState(() => localStorage.getItem('rain_log_reminder') === 'true');
 
-  /* ── Modules ── */
+  /* ── Modules — farm page only cares about farmOn.
+     Retail module toggle lives on the Retail Settings page. ── */
   const modules = user?.modules || ['farm', 'retail'];
-  const [farmOn, setFarmOn] = useState(modules.includes('farm'));
-  const [retailOn, setRetailOn] = useState(modules.includes('retail'));
+  const [farmOn] = useState(modules.includes('farm'));
 
   /* ── Cashier permissions ── */
   const [permViewProducts, setPermViewProducts] = useState(true);
@@ -264,8 +265,8 @@ export default function Settings() {
   useEffect(() => { localStorage.setItem('weather_alerts', String(weatherAlerts)); }, [weatherAlerts]);
   useEffect(() => { localStorage.setItem('rain_log_reminder', String(rainLogReminder)); }, [rainLogReminder]);
 
-  /* ── Compute visible tabs from enabled modules ── */
-  const TABS = buildTabs({ farmOn, retailOn });
+  /* ── Compute visible tabs from enabled modules (farm hub — retail has its own page) ── */
+  const TABS = buildTabs({ farmOn });
 
   /* ── Handlers ── */
   const togglePush = async () => {
@@ -482,7 +483,8 @@ export default function Settings() {
                 <div style={sectionHead}>
                   <h2 style={sectionTitle}>Operational preferences</h2>
                   <p style={sectionSub}>
-                    Org-wide preferences. Farm-specific and Retail-specific settings live in their own tabs.
+                    Org-wide preferences. Farm-specific settings live under the Farm tab; retail
+                    preferences have their own Settings page on the Retail module.
                   </p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -491,27 +493,6 @@ export default function Settings() {
                     desc="06:00 summary to owners & managers."
                     on={eodDigest}
                     onToggle={() => setEodDigest(!eodDigest)}
-                  />
-                </div>
-              </section>
-
-              <section style={sectionCard}>
-                <div style={sectionHead}>
-                  <h2 style={sectionTitle}>Enabled modules</h2>
-                  <p style={sectionSub}>Turn off modules you don't use to simplify the app for your team.</p>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <ToggleItem
-                    label="Farm module"
-                    desc="Fields, stock, workers, livestock, AI analysis."
-                    on={farmOn}
-                    onToggle={() => setFarmOn(!farmOn)}
-                  />
-                  <ToggleItem
-                    label="Retail module"
-                    desc="Point of sale, products, cashiers, sales history."
-                    on={retailOn}
-                    onToggle={() => setRetailOn(!retailOn)}
                   />
                 </div>
               </section>
@@ -682,136 +663,6 @@ export default function Settings() {
             </>
           )}
 
-          {activeTab === 'retail' && (
-            <>
-              <section style={sectionCard}>
-                <div style={sectionHead}>
-                  <h2 style={sectionTitle}>Point of Sale</h2>
-                  <p style={sectionSub}>How cashiers ring up orders and how receipts print.</p>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <ToggleItem
-                    label="Offline-first mode"
-                    desc="Cashiers can keep selling when the network drops; orders sync when back online."
-                    on={offlineFirst}
-                    onToggle={() => setOfflineFirst(!offlineFirst)}
-                  />
-                  <ToggleItem
-                    label="Auto-print ZIMRA fiscal receipt"
-                    desc="Every successful POS charge prints a ZIMRA-compliant paper receipt."
-                    on={autoFiscal}
-                    onToggle={() => setAutoFiscal(!autoFiscal)}
-                  />
-                  <ToggleItem
-                    label="Show change calculator"
-                    desc="Pop up a tender/change pad when the cashier selects cash."
-                    on={showChange}
-                    onToggle={() => setShowChange(!showChange)}
-                  />
-                </div>
-                <div style={{ ...grid2, marginTop: 16 }}>
-                  <div style={fieldBlock}>
-                    <label style={fieldLabel}>Cash rounding</label>
-                    <select style={select} value={cashRound} onChange={(e) => setCashRound(e.target.value)}>
-                      <option value="none">No rounding</option>
-                      <option value="0.05">Nearest $0.05</option>
-                      <option value="0.10">Nearest $0.10</option>
-                      <option value="0.25">Nearest $0.25</option>
-                    </select>
-                  </div>
-                  <div style={fieldBlock}>
-                    <label style={fieldLabel}>Receipt copies per sale</label>
-                    <select style={select} value={receiptCopies} onChange={(e) => setReceiptCopies(e.target.value)}>
-                      <option value="1">1 (customer only)</option>
-                      <option value="2">2 (customer + merchant)</option>
-                      <option value="0">None (digital receipt only)</option>
-                    </select>
-                  </div>
-                </div>
-              </section>
-
-              <section style={sectionCard}>
-                <div style={sectionHead}>
-                  <h2 style={sectionTitle}>Stock & inventory</h2>
-                  <p style={sectionSub}>Low-stock thresholds and restock alerts.</p>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <ToggleItem
-                    label="Low-stock WhatsApp alerts"
-                    desc="Send the manager a WhatsApp when any SKU crosses its reorder threshold."
-                    on={lowStockWA}
-                    onToggle={() => setLowStockWA(!lowStockWA)}
-                  />
-                </div>
-                <div style={{ ...grid2, marginTop: 16 }}>
-                  <div style={fieldBlock}>
-                    <label style={fieldLabel}>Default low-stock threshold</label>
-                    <input
-                      style={input}
-                      type="number"
-                      min="0"
-                      value={lowStockThreshold}
-                      onChange={(e) => setLowStockThreshold(e.target.value)}
-                      placeholder="5"
-                    />
-                  </div>
-                  <div style={fieldBlock}>
-                    <label style={fieldLabel}>Stock count frequency</label>
-                    <select style={select} defaultValue="weekly">
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="monthly">Monthly</option>
-                    </select>
-                  </div>
-                </div>
-              </section>
-
-              <section style={sectionCard}>
-                <div style={sectionHead}>
-                  <h2 style={sectionTitle}>Cashier permissions</h2>
-                  <p style={sectionSub}>
-                    Control what workers with the cashier role can see and do in the POS.
-                  </p>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <ToggleItem
-                    label="View products"
-                    desc="See the product list and current prices."
-                    on={permViewProducts}
-                    onToggle={() => setPermViewProducts(!permViewProducts)}
-                  />
-                  <ToggleItem
-                    label="Add products"
-                    desc="Create new products in the catalog."
-                    on={permAddProducts}
-                    onToggle={() => setPermAddProducts(!permAddProducts)}
-                  />
-                  <ToggleItem
-                    label="Edit products"
-                    desc="Modify price and stock; mark stolen or damaged."
-                    on={permEditProducts}
-                    onToggle={() => setPermEditProducts(!permEditProducts)}
-                  />
-                  <ToggleItem
-                    label="Process sales (POS)"
-                    desc="Use point of sale to ring up items and accept payment."
-                    on={permPOS}
-                    onToggle={() => setPermPOS(!permPOS)}
-                  />
-                  <ToggleItem
-                    label="View reports"
-                    desc="Access financial reports and daily summaries."
-                    on={permViewReports}
-                    onToggle={() => setPermViewReports(!permViewReports)}
-                  />
-                </div>
-                <div style={{ marginTop: 16 }}>
-                  <button style={btnPrimary}>Save retail settings</button>
-                </div>
-              </section>
-            </>
-          )}
-
           {activeTab === 'payments' && (
             <section style={sectionCard}>
               <div style={sectionHead}>
@@ -837,46 +688,6 @@ export default function Settings() {
                   desc="Legacy card rail - kept for historical accounts."
                   status="Legacy"
                 />
-              </div>
-            </section>
-          )}
-
-          {activeTab === 'zimra' && (
-            <section style={sectionCard}>
-              <div style={sectionHead}>
-                <h2 style={sectionTitle}>ZIMRA &amp; Tax</h2>
-                <p style={sectionSub}>
-                  Tax registration numbers and fiscal device configuration for ZIMRA compliance.
-                </p>
-              </div>
-              <div style={grid2}>
-                <div style={fieldBlock}>
-                  <label style={fieldLabel}>TIN (ZIMRA)</label>
-                  <input style={input} value={tin} onChange={(e) => setTin(e.target.value)} />
-                </div>
-                <div style={fieldBlock}>
-                  <label style={fieldLabel}>VAT number</label>
-                  <input style={input} value={vat} onChange={(e) => setVat(e.target.value)} />
-                </div>
-                <div style={fieldBlock}>
-                  <label style={fieldLabel}>Fiscal device serial</label>
-                  <input style={input} placeholder="FDMS-XXXXXX" />
-                </div>
-                <div style={fieldBlock}>
-                  <label style={fieldLabel}>VAT rate (%)</label>
-                  <input style={input} defaultValue="15" />
-                </div>
-              </div>
-              <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <ToggleItem
-                  label="Auto-submit fiscal receipts"
-                  desc="Every POS sale is transmitted to the ZIMRA FDMS within 5 seconds."
-                  on={autoFiscal}
-                  onToggle={() => setAutoFiscal(!autoFiscal)}
-                />
-              </div>
-              <div style={{ marginTop: 18 }}>
-                <button style={btnPrimary} onClick={saveTenant}>Save tax settings</button>
               </div>
             </section>
           )}
@@ -955,7 +766,7 @@ export default function Settings() {
                 </div>
                 <p style={{ ...sectionSub, marginTop: 14 }}>
                   Farm-specific reminders (9 PM log nudge, rain-log, weather) live under the Farm tab.
-                  {retailOn ? ' Low-stock alerts live under the Retail tab.' : ''}
+                  Retail notifications (low-stock alerts, end-of-day) live on the Retail Settings page.
                 </p>
               </section>
             </>

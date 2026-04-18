@@ -166,16 +166,14 @@ const NAV_ITEMS = [
     { key: 'Customer Loyalty', emoji: '\u2B50', label: 'Loyalty Program' },
     { key: 'Cashier Performance', emoji: '\u{1F3C6}', label: 'Cashier Performance' },
   ]},
+  // Retail SYSTEM section is intentionally minimal — everything that used to
+  // live here as a dedicated sidebar entry (Device Config, ZIMRA Fiscal,
+  // Multi-Currency, Receipt Setup, POS Settings, Manager PIN, Tax Config) now
+  // lives as a sub-tab inside the Retail Settings page. This keeps the retail
+  // sidebar focused on daily operations rather than configuration plumbing.
   { section: 'SYSTEM', module: 'retail', collapsible: false, items: [
-    { key: 'Device Config', emoji: '\u{1F50C}', label: 'Device Config' },
-    { key: 'ZIMRA Fiscal', emoji: '\u{1F4CB}', label: 'ZIMRA Fiscal' },
-    { key: 'Multi-Currency', emoji: '\u{1F4B1}', label: 'Multi-Currency' },
-    { key: 'Receipt Setup', emoji: '\u{1F9FE}', label: 'Receipt Setup' },
-    { key: 'POS Settings', emoji: '\u{1F5A5}\uFE0F', label: 'POS Style' },
-    { key: 'Manager PIN', emoji: '\u{1F510}', label: 'Manager PIN' },
-    { key: 'Tax Config', emoji: '\u{1F4DC}', label: 'Tax Config' },
-    { key: 'Retail Billing', emoji: '\u{1F4B3}', label: 'Billing' },
     { key: 'Retail Settings', emoji: '\u2699\uFE0F', label: 'Settings' },
+    { key: 'Retail Billing', emoji: '\u{1F4B3}', label: 'Billing' },
   ]},
   { section: 'OWNER ONLY', module: 'farm', ownerOnly: true, collapsible: false, items: [
     { key: 'Report', emoji: '\u{1F4C8}', label: 'Report' },
