@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import Logo from './Logo';
@@ -267,20 +267,6 @@ export default function Layout({
                         >
                           <span style={{ fontSize: 26 }}>{t.emoji}</span>
                           <span style={{ fontSize: 12, fontWeight: isActive ? 700 : 600, color: isActive ? moduleAccent : '#111827' }}>{t.label}</span>
-                          <span style={{ fontSize: 9, color: '#6b7280' }}>{t.sub}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
                           <span style={{ fontSize: 9, color: '#6b7280' }}>{t.sub}</span>
                         </button>
                       );
