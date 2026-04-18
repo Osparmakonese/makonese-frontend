@@ -74,7 +74,7 @@ export default function DarkSupermarketPOS({
       <div style={styles.side}>
         <div style={styles.brand}>
           <div style={{ color: '#fff', fontWeight: 800, fontSize: 15, letterSpacing: '0.03em' }}>
-            {brandName || 'Makonese Retail'}
+            {brandName || 'Pewil'}
           </div>
           <div style={{ color: C.muted, fontSize: 11, marginTop: 3 }}>
             {laneLabel || 'Lane 01'} · {user?.username || 'Cashier'} · {dateStr} {timeStr}

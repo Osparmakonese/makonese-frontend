@@ -1272,7 +1272,7 @@ export default function POS() {
             pendingCount={pendingCount}
             user={user}
             laneLabel={laneLabel}
-            brandName={user?.tenant_name || 'Makonese Retail'}
+            brandName={user?.tenant_name || 'Pewil'}
           />
         </div>
 
@@ -1350,7 +1350,7 @@ export default function POS() {
             pendingCount={pendingCount}
             user={user}
             laneLabel={laneLabel}
-            brandName={user?.tenant_name || 'Makonese Retail'}
+            brandName={user?.tenant_name || 'Pewil'}
             lastReceiptId={lastReceiptId}
           />
         </div>

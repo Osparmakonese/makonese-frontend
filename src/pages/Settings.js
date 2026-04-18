@@ -174,7 +174,7 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState('general');
 
   /* ── Tenant details ── */
-  const tenantName = user?.tenant_name || 'Makonese Farm';
+  const tenantName = user?.tenant_name || 'Pewil';
   const [bizName, setBizName] = useState(tenantName);
   const [tradingName, setTradingName] = useState(() => localStorage.getItem('trading_name') || '');
   const [tin, setTin] = useState(() => localStorage.getItem('zimra_tin') || '');

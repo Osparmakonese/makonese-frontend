@@ -9,7 +9,7 @@ export default function CustomerDisplay() {
   const [state, setState] = useState({
     items: [], subtotal: 0, discount: 0, tax: 0, total: 0,
     change: 0, tendered: 0, member: null, message: '',
-    storeName: 'Makonese Farm', lastUpdate: 0,
+    storeName: 'Pewil', lastUpdate: 0,
   });
   const lastItemRef = useRef(null);
 

@@ -202,7 +202,7 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
   const ddRef = useRef(null);
 
   // Get tenant info from JWT stored in localStorage
-  const tenantName = user?.tenant_name || 'Makonese Farm';
+  const tenantName = user?.tenant_name || 'Pewil';
   const tenantPlan = user?.plan || 'free';
   const planLabel = tenantPlan.charAt(0).toUpperCase() + tenantPlan.slice(1) + ' Plan';
   const modules = user?.modules || ['farm'];

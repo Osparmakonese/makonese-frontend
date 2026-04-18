@@ -110,7 +110,7 @@ export default function ScannerLanePOS({
               </span>
             </div>
             <div>
-              <div style={styles.brandName}>{brandName || 'Makonese Retail'}</div>
+              <div style={styles.brandName}>{brandName || 'Pewil'}</div>
               <div style={styles.brandSub}>Point of Sale · Scanner Lane</div>
             </div>
           </div>
