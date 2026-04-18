@@ -4,6 +4,7 @@ import { getMyTenant, updateMyTenant } from '../api/coreApi';
 import { getVapidKey, subscribePush, unsubscribePush, sendTestPush } from '../api/farmApi';
 import { getAIBudget } from '../api/aiApi';
 import { useQuery } from '@tanstack/react-query';
+import TwoFactorPanel from '../components/TwoFactorPanel';
 
 /* ─── Design 3 — Living Africa tokens (shared with Landing/Login/Register) ─── */
 const C = {
@@ -801,14 +802,29 @@ export default function Settings() {
                 </div>
               </section>
 
+              <TwoFactorPanel
+                C={C}
+                SERIF={SERIF}
+                SANS={SANS}
+                sectionCard={sectionCard}
+                sectionHead={sectionHead}
+                sectionTitle={sectionTitle}
+                sectionSub={sectionSub}
+                btnPrimary={btnPrimary}
+                btnOutline={btnOutline}
+                btnDanger={btnDanger}
+                input={input}
+                fieldLabel={fieldLabel}
+                fieldBlock={fieldBlock}
+              />
+
               <section style={sectionCard}>
                 <div style={sectionHead}>
-                  <h2 style={sectionTitle}>Sign-in</h2>
-                  <p style={sectionSub}>Account lockout and two-factor authentication.</p>
+                  <h2 style={sectionTitle}>Sign-in safeguards</h2>
+                  <p style={sectionSub}>Lockout and session policy enforced across the app.</p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <StaticRow label="Failed-login lockout" value="5 attempts / 1 hour" />
-                  <StaticRow label="Two-factor authentication" value="Not enabled" />
                   <StaticRow label="Session expiry" value="30 minutes idle" />
                 </div>
               </section>

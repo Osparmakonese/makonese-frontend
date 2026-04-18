@@ -50,21 +50,67 @@ export function AuthProvider({ children }) {
     };
   }
 
+  function _commitSession(res, username) {
+    localStorage.setItem('access_token', res.data.access);
+    localStorage.setItem('refresh_token', res.data.refresh);
+    const userData = _extractUserData(res, username);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+    return userData;
+  }
+
+  /**
+   * Step 1 of login.
+   *
+   * Returns one of:
+   *   { ok: true }                              normal login, session committed
+   *   { ok: false, requires2fa: true,           2FA gate hit - caller must
+   *     pendingToken, username, expiresIn }     prompt for code and call loginWith2fa
+   *   { ok: false }                             error already set on `error`
+   */
   async function login(username, password) {
     setLoading(true);
     setError('');
     try {
       const res = await api.post('/token/', { username, password });
-      localStorage.setItem('access_token', res.data.access);
-      localStorage.setItem('refresh_token', res.data.refresh);
-
-      const userData = _extractUserData(res, username);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-      return true;
+      if (res.data && res.data.requires_2fa) {
+        return {
+          ok: false,
+          requires2fa: true,
+          pendingToken: res.data.pending_token,
+          username: res.data.username,
+          expiresIn: res.data.expires_in_seconds || 300,
+        };
+      }
+      _commitSession(res, username);
+      return { ok: true };
     } catch (err) {
       setError(err.response?.data?.detail || 'Invalid username or password');
-      return false;
+      return { ok: false };
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /**
+   * Step 2 of login. Exchanges the pending token + 6-digit (or recovery)
+   * code for the real JWT and commits the session.
+   */
+  async function loginWith2fa(pendingToken, code) {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.post('/core/auth/login_2fa/', {
+        pending_token: pendingToken,
+        code,
+      });
+      _commitSession(res, res.data.username);
+      return { ok: true, recoveryUsed: !!res.data.recovery_code_used };
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(detail || 'Invalid 2FA code.');
+      const expired = typeof detail === 'string' && /expired|sign in again/i.test(detail);
+      return { ok: false, expired };
     } finally {
       setLoading(false);
     }
@@ -75,17 +121,11 @@ export function AuthProvider({ children }) {
     setError('');
     try {
       const res = await api.post('/core/tenants/register/', formData);
-      localStorage.setItem('access_token', res.data.access);
-      localStorage.setItem('refresh_token', res.data.refresh);
-
-      const userData = _extractUserData(res, formData.username);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
+      _commitSession(res, formData.username);
       return true;
     } catch (err) {
       const detail = err.response?.data;
       if (typeof detail === 'object' && detail !== null) {
-        // DRF validation errors come as { field: [errors] }
         const messages = Object.entries(detail)
           .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
           .join('. ');
@@ -105,12 +145,10 @@ export function AuthProvider({ children }) {
     try {
       const res = await api.post('/core/auth/demo_login/', {});
       localStorage.setItem('access_token', res.data.access);
-      // No refresh token for demo — force a fresh demo-login when the
-      // 30-minute access token expires.
       localStorage.setItem('refresh_token', res.data.refresh || '');
 
       const userData = _extractUserData(res, res.data.username);
-      userData.is_demo = true; // belt + suspenders
+      userData.is_demo = true;
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       return true;
@@ -125,8 +163,34 @@ export function AuthProvider({ children }) {
     }
   }
 
+  /* 2FA management (Settings > Security panel) */
+
+  async function getTotpStatus() {
+    const res = await api.get('/core/auth/totp_status/');
+    return res.data;
+  }
+
+  async function setupTotp() {
+    const res = await api.post('/core/auth/totp_setup/', {});
+    return res.data;
+  }
+
+  async function confirmTotp(code) {
+    const res = await api.post('/core/auth/totp_confirm/', { code });
+    return res.data;
+  }
+
+  async function disableTotp(password) {
+    const res = await api.post('/core/auth/totp_disable/', { password });
+    return res.data;
+  }
+
+  async function regenerateRecoveryCodes(code) {
+    const res = await api.post('/core/auth/totp_regenerate_recovery/', { code });
+    return res.data;
+  }
+
   function switchTenant(tokenData) {
-    // Called after POST /api/core/tenants/switch/ returns new tokens
     localStorage.setItem('access_token', tokenData.access);
     localStorage.setItem('refresh_token', tokenData.refresh);
     const userData = {
@@ -149,7 +213,24 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, demoLogin, switchTenant, logout, loading, error }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        loginWith2fa,
+        register,
+        demoLogin,
+        switchTenant,
+        logout,
+        loading,
+        error,
+        getTotpStatus,
+        setupTotp,
+        confirmTotp,
+        disableTotp,
+        regenerateRecoveryCodes,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -29,7 +29,6 @@ const S = {
     minHeight: '100vh', background: C.cream, fontFamily: SANS,
     display: 'flex', flexDirection: 'column',
   },
-  // ===== left photo side =====
   side: {
     position: 'relative', overflow: 'hidden', padding: 44,
     backgroundImage: 'linear-gradient(180deg,rgba(31,61,38,.15),rgba(177,59,23,.55) 75%), url(https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1400&q=75&auto=format&fit=crop)',
@@ -46,15 +45,6 @@ const S = {
     display: 'flex', alignItems: 'center', gap: 10,
     fontWeight: 700, fontSize: 22, color: '#fff', letterSpacing: '-0.01em',
   },
-  logoMark: {
-    width: 34, height: 34, borderRadius: 12,
-    background: '#fff',
-    position: 'relative', boxShadow: '0 4px 14px rgba(217,86,44,.3)',
-  },
-  logoDot: {
-    position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
-    width: 14, height: 14, borderRadius: '50%', background: C.clay, opacity: 0.9,
-  },
   quoteCard: {
     background: 'rgba(255,255,255,.14)', backdropFilter: 'blur(14px)',
     WebkitBackdropFilter: 'blur(14px)',
@@ -65,20 +55,6 @@ const S = {
     fontFamily: SERIF, fontWeight: 600, fontStyle: 'italic',
     fontSize: 26, lineHeight: 1.25, letterSpacing: '-0.01em',
   },
-  quoteWho: {
-    marginTop: 22, display: 'flex', gap: 12, alignItems: 'center',
-  },
-  quoteAv: {
-    width: 44, height: 44, borderRadius: '50%',
-    background: 'linear-gradient(135deg,#f4a743,#d9562c)',
-    border: '2px solid #fff', display: 'flex',
-    alignItems: 'center', justifyContent: 'center',
-    color: '#fff', fontWeight: 700, fontSize: 15, fontFamily: SERIF,
-  },
-  quoteName: { fontSize: 15, fontWeight: 700 },
-  quoteRole: { fontSize: 13, opacity: 0.8 },
-
-  // ===== right form side =====
   formWrap: {
     padding: '56px 48px', display: 'flex',
     alignItems: 'center', justifyContent: 'center',
@@ -93,7 +69,7 @@ const S = {
   back: {
     display: 'inline-flex', alignItems: 'center', gap: 6,
     color: C.muted, fontSize: 14, marginBottom: 36, fontWeight: 500,
-    textDecoration: 'none',
+    textDecoration: 'none', background: 'transparent', border: 0, cursor: 'pointer', padding: 0,
   },
   title: {
     fontFamily: SERIF, fontWeight: 700, fontSize: 44,
@@ -107,20 +83,25 @@ const S = {
   error: {
     background: '#fce0d6', color: '#a53815', fontSize: 13,
     padding: '12px 14px', borderRadius: 14, marginBottom: 18,
-    borderLeft: `3px solid ${C.terra}`,
+    borderLeft: '3px solid ' + C.terra,
+  },
+  info: {
+    background: '#e7f2ea', color: C.forest, fontSize: 13,
+    padding: '12px 14px', borderRadius: 14, marginBottom: 18,
+    borderLeft: '3px solid ' + C.forest,
   },
   oauth: { display: 'grid', gap: 10, margin: '4px 0 20px' },
   oauthBtn: {
-    width: '100%', padding: '13px', border: `1.5px solid ${C.line}`,
+    width: '100%', padding: '13px', border: '1.5px solid ' + C.line,
     borderRadius: 999,
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
     fontSize: 14.5, fontWeight: 600,
-    background: '#fff', color: C.ink, cursor: 'pointer',
+    background: '#fff', color: C.ink, cursor: 'not-allowed',
     fontFamily: SANS, transition: 'border-color 0.15s, background 0.15s',
+    opacity: 0.7,
   },
-  divider: {
-    textAlign: 'center', color: C.muted, fontSize: 12.5,
-    position: 'relative', margin: '20px 0',
+  oauthNote: {
+    fontSize: 11.5, color: C.muted, textAlign: 'center', marginTop: -4,
   },
   dividerLine: {
     display: 'flex', alignItems: 'center', gap: 12,
@@ -140,9 +121,16 @@ const S = {
     color: C.muted, fontWeight: 500, fontSize: 12.5, textDecoration: 'none',
   },
   input: {
-    width: '100%', padding: '14px 16px', border: `1.5px solid ${C.line}`,
+    width: '100%', padding: '14px 16px', border: '1.5px solid ' + C.line,
     borderRadius: 14, background: '#fff', fontSize: 15.5,
     fontFamily: SANS, color: C.ink, outline: 'none',
+    boxSizing: 'border-box', transition: 'border .15s, box-shadow .15s',
+  },
+  otpInput: {
+    width: '100%', padding: '16px 16px', border: '1.5px solid ' + C.line,
+    borderRadius: 14, background: '#fff', fontSize: 22,
+    fontFamily: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+    color: C.ink, outline: 'none', letterSpacing: 8, textAlign: 'center',
     boxSizing: 'border-box', transition: 'border .15s, box-shadow .15s',
   },
   authRow: {
@@ -155,11 +143,17 @@ const S = {
   checkbox: { width: 16, height: 16, cursor: 'pointer', accentColor: C.terra },
   submit: {
     width: '100%', padding: 15,
-    background: `linear-gradient(135deg, ${C.amber}, ${C.terra})`,
+    background: 'linear-gradient(135deg, ' + C.amber + ', ' + C.terra + ')',
     color: '#fff', borderRadius: 999, fontWeight: 700, fontSize: 15,
     border: 'none', cursor: 'pointer', fontFamily: SANS,
     boxShadow: '0 10px 24px -8px rgba(217,86,44,.6)',
     transition: 'transform .12s, box-shadow .15s',
+  },
+  secondaryLink: {
+    display: 'inline-block', marginTop: 12, fontSize: 13,
+    color: C.clay, fontWeight: 600, cursor: 'pointer',
+    background: 'transparent', border: 0, padding: 0, fontFamily: SANS,
+    textDecoration: 'underline', textUnderlineOffset: 3,
   },
   switch: {
     textAlign: 'center', fontSize: 14, color: C.muted, marginTop: 24,
@@ -168,11 +162,20 @@ const S = {
 };
 
 export default function Login() {
+  // Two-step state machine
+  const [step, setStep] = useState('creds'); // 'creds' | '2fa'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+
+  // 2FA step state
+  const [pendingToken, setPendingToken] = useState('');
+  const [twofaUsername, setTwofaUsername] = useState('');
+  const [code, setCode] = useState('');
+  const [useRecovery, setUseRecovery] = useState(false);
+
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1000);
-  const { login, loading, error } = useAuth();
+  const { login, loginWith2fa, loading, error } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -194,33 +197,70 @@ export default function Login() {
   const fx = e => { e.target.style.borderColor = C.clay; e.target.style.boxShadow = '0 0 0 4px rgba(217,86,44,.1)'; };
   const fb = e => { e.target.style.borderColor = C.line; e.target.style.boxShadow = 'none'; };
 
-  async function handleSubmit(e) {
+  async function handleCredsSubmit(e) {
     e.preventDefault();
-    const ok = await login(username, password);
-    if (ok) navigate('/app');
+    const res = await login(username, password);
+    if (res && res.ok) {
+      navigate('/app');
+      return;
+    }
+    if (res && res.requires2fa) {
+      setPendingToken(res.pendingToken);
+      setTwofaUsername(res.username || username);
+      setCode('');
+      setUseRecovery(false);
+      setStep('2fa');
+    }
   }
+
+  async function handle2faSubmit(e) {
+    e.preventDefault();
+    const cleaned = useRecovery ? code.trim().toUpperCase() : code.replace(/\D/g, '');
+    const res = await loginWith2fa(pendingToken, cleaned);
+    if (res.ok) {
+      navigate('/app');
+      return;
+    }
+    if (res.expired) {
+      // Send them back to step 1 with a helpful error already set by context
+      setStep('creds');
+      setPendingToken('');
+      setCode('');
+    }
+  }
+
+  function cancelTwoFa() {
+    setStep('creds');
+    setPendingToken('');
+    setCode('');
+    setPassword(''); // force re-entry of password \u2014 safer
+  }
+
+  const LogoLink = (
+    <Link to="/" style={{ ...S.logo, textDecoration: 'none', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <svg width="31" height="34" viewBox="0 0 110 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pewil">
+          <path d="M 55 4 C 89 4, 105 28, 105 56 C 105 88, 83 108, 55 108 C 27 108, 5 88, 5 56 C 5 28, 21 4, 55 4 Z" fill="#fff7ec" />
+          <path d="M 55 34 L 55 86" stroke="#1f3d26" strokeWidth="5" strokeLinecap="round" />
+          <path d="M 55 48 C 45 48, 39 40, 39 32" stroke="#1f3d26" strokeWidth="5" strokeLinecap="round" fill="none" />
+          <path d="M 55 60 C 67 60, 75 52, 75 44" stroke="#1f3d26" strokeWidth="5" strokeLinecap="round" fill="none" />
+        </svg>
+        Pewil
+      </span>
+      <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 500, fontSize: 14, opacity: 0.88, letterSpacing: '0.01em' }}>
+        Rooted in the work.
+      </span>
+    </Link>
+  );
 
   return (
     <div style={isMobile ? S.wrapperMobile : S.wrapper}>
       {/* Left photo side */}
       <aside style={isMobile ? S.sideMobile : S.side}>
-        <Link to="/" style={{ ...S.logo, textDecoration: 'none', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <svg width="31" height="34" viewBox="0 0 110 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pewil">
-              <path d="M 55 4 C 89 4, 105 28, 105 56 C 105 88, 83 108, 55 108 C 27 108, 5 88, 5 56 C 5 28, 21 4, 55 4 Z" fill="#fff7ec" />
-              <path d="M 55 34 L 55 86" stroke="#1f3d26" strokeWidth="5" strokeLinecap="round" />
-              <path d="M 55 48 C 45 48, 39 40, 39 32" stroke="#1f3d26" strokeWidth="5" strokeLinecap="round" fill="none" />
-              <path d="M 55 60 C 67 60, 75 52, 75 44" stroke="#1f3d26" strokeWidth="5" strokeLinecap="round" fill="none" />
-            </svg>
-            Pewil
-          </span>
-          <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 500, fontSize: 14, opacity: 0.88, letterSpacing: '0.01em' }}>
-            Rooted in the work.
-          </span>
-        </Link>
+        {LogoLink}
         <div style={S.quoteCard}>
           <div style={S.quoteText}>
-            Welcome back. Your fields, your shop, your team — all waiting exactly where you left them.
+            Welcome back. Your fields, your shop, your team \u2014 all waiting exactly where you left them.
           </div>
           <div style={{ marginTop: 18, fontSize: 14, opacity: 0.88, lineHeight: 1.55 }}>
             Pewil keeps the numbers quiet so you can hear the work.
@@ -230,111 +270,187 @@ export default function Login() {
 
       {/* Right form side */}
       <main style={isMobile ? S.formWrapMobile : S.formWrap}>
-        <form style={S.form} onSubmit={handleSubmit}>
-          <Link to="/" style={S.back}>← Back to home</Link>
-          <h2 style={S.title}>
-            Welcome back, <span style={S.titleEm}>friend</span>.
-          </h2>
-          <p style={S.sub}>Sign in and pick up where the team left off.</p>
+        {step === 'creds' ? (
+          <form style={S.form} onSubmit={handleCredsSubmit}>
+            <Link to="/" style={S.back}>\u2190 Back to home</Link>
+            <h2 style={S.title}>
+              Welcome back, <span style={S.titleEm}>friend</span>.
+            </h2>
+            <p style={S.sub}>Sign in and pick up where the team left off.</p>
 
-          {error && <div style={S.error}>{error}</div>}
+            {error && <div style={S.error}>{error}</div>}
 
-          <div style={S.oauth}>
+            <div style={S.oauth}>
+              <button
+                type="button"
+                style={S.oauthBtn}
+                disabled
+                title="Google sign-in coming soon"
+              >
+                <svg width="16" height="16" viewBox="0 0 48 48">
+                  <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.2 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.9z" />
+                  <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16.2 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.2 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+                  <path fill="#4CAF50" d="M24 44c5.4 0 10.3-2.1 14-5.5l-6.5-5.5c-2 1.4-4.6 2.3-7.5 2.3-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.4 16.2 44 24 44z" />
+                  <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.5 5.5C41.9 35.9 44 30.3 44 24c0-1.3-.1-2.7-.4-3.9z" />
+                </svg>
+                Continue with Google
+              </button>
+              <div style={S.oauthNote}>Google sign-in arrives in the next update.</div>
+            </div>
+
+            <div style={S.dividerLine}>
+              <span style={S.dividerRule} />
+              <span>OR</span>
+              <span style={S.dividerRule} />
+            </div>
+
+            <div style={S.field}>
+              <label style={S.label} htmlFor="username">Username or email</label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                onFocus={fx}
+                onBlur={fb}
+                autoComplete="username"
+                required
+                style={S.input}
+                placeholder="you@farm.co.zw"
+              />
+            </div>
+
+            <div style={S.field}>
+              <div style={S.labelRow}>
+                <label style={S.label} htmlFor="password">Password</label>
+                <Link to="/forgot-password" style={S.forgotLink}>Forgot?</Link>
+              </div>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onFocus={fx}
+                onBlur={fb}
+                autoComplete="current-password"
+                required
+                style={S.input}
+                placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+              />
+            </div>
+
+            <div style={S.authRow}>
+              <label style={S.chk}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                  style={S.checkbox}
+                />
+                Keep me signed in
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                ...S.submit,
+                opacity: loading ? 0.7 : 1,
+                cursor: loading ? 'not-allowed' : 'pointer',
+              }}
+              onMouseEnter={e => {
+                if (loading) return;
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 14px 30px -8px rgba(217,86,44,.7)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = '0 10px 24px -8px rgba(217,86,44,.6)';
+              }}
+            >
+              {loading ? 'Signing in\u2026' : 'Sign in to Pewil \u2192'}
+            </button>
+
+            <div style={S.switch}>
+              New to Pewil?{' '}
+              <Link to="/register" style={S.switchLink}>Create an account \u2192</Link>
+            </div>
+          </form>
+        ) : (
+          /* ─── 2FA step ─── */
+          <form style={S.form} onSubmit={handle2faSubmit}>
+            <button type="button" style={S.back} onClick={cancelTwoFa}>
+              \u2190 Use a different account
+            </button>
+            <h2 style={S.title}>
+              One more step, <span style={S.titleEm}>{twofaUsername || 'there'}</span>.
+            </h2>
+            <p style={S.sub}>
+              {useRecovery
+                ? 'Enter one of the 8-character recovery codes you saved when you enabled 2FA.'
+                : 'Open your authenticator app and enter the 6-digit code for Pewil.'}
+            </p>
+
+            {error && <div style={S.error}>{error}</div>}
+
+            <div style={S.field}>
+              <label style={S.label} htmlFor="code">
+                {useRecovery ? 'Recovery code' : 'Authentication code'}
+              </label>
+              <input
+                id="code"
+                type="text"
+                inputMode={useRecovery ? 'text' : 'numeric'}
+                pattern={useRecovery ? undefined : '[0-9]*'}
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                onFocus={fx}
+                onBlur={fb}
+                autoComplete="one-time-code"
+                autoFocus
+                required
+                maxLength={useRecovery ? 10 : 6}
+                style={S.otpInput}
+                placeholder={useRecovery ? 'A1B2C3D4' : '123456'}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                ...S.submit,
+                opacity: loading ? 0.7 : 1,
+                cursor: loading ? 'not-allowed' : 'pointer',
+              }}
+              onMouseEnter={e => {
+                if (loading) return;
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 14px 30px -8px rgba(217,86,44,.7)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = '0 10px 24px -8px rgba(217,86,44,.6)';
+              }}
+            >
+              {loading ? 'Verifying\u2026' : 'Verify and sign in \u2192'}
+            </button>
+
             <button
               type="button"
-              style={S.oauthBtn}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = C.ink; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = C.line; }}
+              style={S.secondaryLink}
+              onClick={() => { setUseRecovery(!useRecovery); setCode(''); }}
             >
-              <svg width="16" height="16" viewBox="0 0 48 48">
-                <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.2 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.9z" />
-                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16.2 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.2 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
-                <path fill="#4CAF50" d="M24 44c5.4 0 10.3-2.1 14-5.5l-6.5-5.5c-2 1.4-4.6 2.3-7.5 2.3-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.4 16.2 44 24 44z" />
-                <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.5 5.5C41.9 35.9 44 30.3 44 24c0-1.3-.1-2.7-.4-3.9z" />
-              </svg>
-              Continue with Google
+              {useRecovery ? 'Use authenticator app instead' : 'Use a recovery code instead'}
             </button>
-          </div>
 
-          <div style={S.dividerLine}>
-            <span style={S.dividerRule} />
-            <span>OR</span>
-            <span style={S.dividerRule} />
-          </div>
-
-          <div style={S.field}>
-            <label style={S.label} htmlFor="username">Username or email</label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              onFocus={fx}
-              onBlur={fb}
-              autoComplete="username"
-              required
-              style={S.input}
-              placeholder="you@farm.co.zw"
-            />
-          </div>
-
-          <div style={S.field}>
-            <div style={S.labelRow}>
-              <label style={S.label} htmlFor="password">Password</label>
-              <Link to="/forgot-password" style={S.forgotLink}>Forgot?</Link>
+            <div style={S.switch}>
+              Lost your authenticator and recovery codes?{' '}
+              <Link to="/forgot-password" style={S.switchLink}>Reset via email \u2192</Link>
             </div>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              onFocus={fx}
-              onBlur={fb}
-              autoComplete="current-password"
-              required
-              style={S.input}
-              placeholder="••••••••"
-            />
-          </div>
-
-          <div style={S.authRow}>
-            <label style={S.chk}>
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={e => setRememberMe(e.target.checked)}
-                style={S.checkbox}
-              />
-              Keep me signed in
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              ...S.submit,
-              opacity: loading ? 0.7 : 1,
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
-            onMouseEnter={e => {
-              if (loading) return;
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 14px 30px -8px rgba(217,86,44,.7)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 10px 24px -8px rgba(217,86,44,.6)';
-            }}
-          >
-            {loading ? 'Signing in…' : 'Sign in to Pewil →'}
-          </button>
-
-          <div style={S.switch}>
-            New to Pewil?{' '}
-            <Link to="/register" style={S.switchLink}>Create an account →</Link>
-          </div>
-        </form>
+          </form>
+        )}
       </main>
     </div>
   );
