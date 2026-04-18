@@ -67,22 +67,25 @@ const btnOutline = { ...btnBase, border: `1.5px solid ${C.ink}`, color: C.ink, b
 const btnGhost = { ...btnBase, color: C.ink, background: 'transparent', opacity: 0.8 };
 const btnLg = { padding: '16px 28px', fontSize: 16 };
 
-// Logo mark: 34x34 amber→terracotta circle with cream dot center
+// Logo mark: The Kernel — maize kernel silhouette with an amber sprout
 function LogoMark({ size = 34, light = false }) {
+  const shell = light ? C.cream : C.forest;
+  const sprout = light ? C.forest : C.amber;
+  const iconW = Math.round(size * (110 / 120));
   return (
     <span style={{
-      display: 'inline-block', position: 'relative',
-      width: size, height: size, borderRadius: 12,
-      background: light ? '#fff' : `linear-gradient(135deg, ${C.amber} 0%, ${C.terra} 60%, ${C.clay} 100%)`,
-      boxShadow: '0 4px 14px rgba(217,86,44,.3)',
-      flexShrink: 0,
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      width: size, height: size, flexShrink: 0,
     }}>
-      <span style={{
-        position: 'absolute', left: '50%', top: '50%',
-        transform: 'translate(-50%,-50%)',
-        width: size * 0.41, height: size * 0.41, borderRadius: '50%',
-        background: light ? C.clay : C.cream, opacity: 0.9,
-      }} />
+      <svg
+        width={iconW} height={size} viewBox="0 0 110 120"
+        xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pewil"
+      >
+        <path d="M 55 4 C 89 4, 105 28, 105 56 C 105 88, 83 108, 55 108 C 27 108, 5 88, 5 56 C 5 28, 21 4, 55 4 Z" fill={shell} />
+        <path d="M 55 34 L 55 86" stroke={sprout} strokeWidth="5" strokeLinecap="round" />
+        <path d="M 55 48 C 45 48, 39 40, 39 32" stroke={sprout} strokeWidth="5" strokeLinecap="round" fill="none" />
+        <path d="M 55 60 C 67 60, 75 52, 75 44" stroke={sprout} strokeWidth="5" strokeLinecap="round" fill="none" />
+      </svg>
     </span>
   );
 }
@@ -914,10 +917,16 @@ const LandingPage = () => {
         <div>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
-            fontWeight: 700, fontSize: 20, color: '#fff', marginBottom: 16,
+            fontWeight: 700, fontSize: 20, color: '#fff', marginBottom: 6,
           }}>
             <LogoMark />
             Pewil
+          </div>
+          <div style={{
+            fontFamily: SERIF, fontStyle: 'italic', fontWeight: 500,
+            fontSize: 15, color: C.amber, marginBottom: 14, letterSpacing: '0.01em',
+          }}>
+            Rooted in the work.
           </div>
           <p style={{ opacity: 0.7, fontSize: 14.5, maxWidth: '34ch', lineHeight: 1.55 }}>
             The operating system for African agribusiness. Built in Harare. Shipped with love across borders.
@@ -941,6 +950,7 @@ const LandingPage = () => {
         maxWidth: 1280, margin: '40px auto 0',
         paddingTop: 24, borderTop: '1px solid rgba(255,247,236,.12)',
         display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap',
+   
         gap: 12, fontSize: 13, color: 'rgba(255,247,236,.55)',
       }}>
         <div>&copy; 2026 Pewil Technologies Pvt Ltd &middot; Harare, Zimbabwe</div>

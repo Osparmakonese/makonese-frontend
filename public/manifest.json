@@ -10,8 +10,8 @@
   "start_url": "/app",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#0D4A22",
-  "background_color": "#ffffff",
+  "theme_color": "#1f3d26",
+  "background_color": "#fff7ec",
   "scope": "/",
   "categories": ["business", "productivity", "finance"]
 }

@@ -204,9 +204,19 @@ export default function Login() {
     <div style={isMobile ? S.wrapperMobile : S.wrapper}>
       {/* Left photo side */}
       <aside style={isMobile ? S.sideMobile : S.side}>
-        <Link to="/" style={{ ...S.logo, textDecoration: 'none' }}>
-          <span style={S.logoMark}><span style={S.logoDot} /></span>
-          Pewil
+        <Link to="/" style={{ ...S.logo, textDecoration: 'none', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <svg width="31" height="34" viewBox="0 0 110 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pewil">
+              <path d="M 55 4 C 89 4, 105 28, 105 56 C 105 88, 83 108, 55 108 C 27 108, 5 88, 5 56 C 5 28, 21 4, 55 4 Z" fill="#fff7ec" />
+              <path d="M 55 34 L 55 86" stroke="#1f3d26" strokeWidth="5" strokeLinecap="round" />
+              <path d="M 55 48 C 45 48, 39 40, 39 32" stroke="#1f3d26" strokeWidth="5" strokeLinecap="round" fill="none" />
+              <path d="M 55 60 C 67 60, 75 52, 75 44" stroke="#1f3d26" strokeWidth="5" strokeLinecap="round" fill="none" />
+            </svg>
+            Pewil
+          </span>
+          <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 500, fontSize: 14, opacity: 0.88, letterSpacing: '0.01em' }}>
+            Rooted in the work.
+          </span>
         </Link>
         <div style={S.quoteCard}>
           <div style={S.quoteText}>

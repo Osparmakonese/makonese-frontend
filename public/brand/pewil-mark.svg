@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 120" width="110" height="120" role="img" aria-label="Pewil">
+  <title>Pewil</title>
+  <desc>The Kernel — a maize kernel silhouette with a sprouting line inside, symbolising growth from small decisions.</desc>
+  <path d="M 55 4 C 89 4, 105 28, 105 56 C 105 88, 83 108, 55 108 C 27 108, 5 88, 5 56 C 5 28, 21 4, 55 4 Z" fill="#1f3d26"/>
+  <path d="M 55 34 L 55 86" stroke="#f4a743" stroke-width="5" stroke-linecap="round"/>
+  <path d="M 55 48 C 45 48, 39 40, 39 32" stroke="#f4a743" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M 55 60 C 67 60, 75 52, 75 44" stroke="#f4a743" stroke-width="5" stroke-linecap="round" fill="none"/>
+</svg>
