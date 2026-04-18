@@ -277,7 +277,13 @@ const getCategoryEmoji = (category) => {
     canned: '🥫',
     default: '📦',
   };
-  return emojiMap[category?.toLowerCase()] || emojiMap.default;
+  // Sentry MAKONESE-FARM-FRONTEND-2: category came back as something other
+  // than a string (null, number, or object) so ?.toLowerCase() blew up.
+  // Coerce defensively — optional-chaining only guards null/undefined.
+  const key = typeof category === 'string'
+    ? category.toLowerCase()
+    : (category == null ? '' : String(category).toLowerCase());
+  return emojiMap[key] || emojiMap.default;
 };
 
 /* ─── Styles ─── */

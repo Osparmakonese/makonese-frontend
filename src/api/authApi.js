@@ -27,9 +27,20 @@ export const changePassword = (current_password, new_password) =>
 export const exportData = (format = 'json') =>
   api.get(`/core/export/?format=${format}`, { responseType: 'blob' }).then(r => r.data);
 
-// Audit log
-export const getAuditLog = (page = 1, limit = 50) =>
-  api.get(`/core/audit/?page=${page}&limit=${limit}`).then(r => r.data);
+// Audit log — accepts either positional (page, limit) for back-compat OR an
+// options object { page, limit, action }.  Callers used to pass a plain
+// object here by mistake (it rendered as '[object Object]' in the URL and
+// blew up the backend int parse — see Sentry PYTHON-DJANGO-10).
+export const getAuditLog = (pageOrOpts = 1, limit = 50) => {
+  const opts = (pageOrOpts && typeof pageOrOpts === 'object')
+    ? pageOrOpts
+    : { page: pageOrOpts, limit };
+  const page = Number.isFinite(Number(opts.page)) ? Number(opts.page) : 1;
+  const lim = Number.isFinite(Number(opts.limit)) ? Number(opts.limit) : 50;
+  const qs = new URLSearchParams({ page: String(page), limit: String(lim) });
+  if (opts.action) qs.set('action', String(opts.action));
+  return api.get(`/core/audit/?${qs.toString()}`).then(r => r.data);
+};
 
 // Billing extras
 export const cancelSubscription = (module = 'farm') =>

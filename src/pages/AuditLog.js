@@ -32,8 +32,11 @@ export default function AuditLog() {
       const params = { page, limit };
       if (actionFilter) params.action = actionFilter;
       const res = await getAuditLog(params);
-      setEntries(res.data.results || res.data || []);
-      setTotal(res.data.count || res.data.length || 0);
+      // getAuditLog already unwraps axios's .data, so `res` is the JSON body
+      // { count, page, limit, results }.  The previous code (res.data.results)
+      // was double-unwrapping and always resolved to [].
+      setEntries(res.results || []);
+      setTotal(res.count || 0);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load audit log.');
     } finally { setLoading(false); }
