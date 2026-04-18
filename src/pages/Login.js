@@ -133,14 +133,6 @@ const S = {
     color: C.ink, outline: 'none', letterSpacing: 8, textAlign: 'center',
     boxSizing: 'border-box', transition: 'border .15s, box-shadow .15s',
   },
-  authRow: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    fontSize: 13.5, margin: '4px 0 22px',
-  },
-  chk: {
-    display: 'flex', gap: 8, alignItems: 'center', color: C.muted, cursor: 'pointer',
-  },
-  checkbox: { width: 16, height: 16, cursor: 'pointer', accentColor: C.terra },
   submit: {
     width: '100%', padding: 15,
     background: 'linear-gradient(135deg, ' + C.amber + ', ' + C.terra + ')',
@@ -166,7 +158,6 @@ export default function Login() {
   const [step, setStep] = useState('creds'); // 'creds' | '2fa'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
 
   // 2FA step state
   const [pendingToken, setPendingToken] = useState('');
@@ -260,7 +251,7 @@ export default function Login() {
         {LogoLink}
         <div style={S.quoteCard}>
           <div style={S.quoteText}>
-            Welcome back. Your fields, your shop, your team \u2014 all waiting exactly where you left them.
+            Welcome back. Your fields, your shop, your team {'\u2014'} all waiting exactly where you left them.
           </div>
           <div style={{ marginTop: 18, fontSize: 14, opacity: 0.88, lineHeight: 1.55 }}>
             Pewil keeps the numbers quiet so you can hear the work.
@@ -272,7 +263,7 @@ export default function Login() {
       <main style={isMobile ? S.formWrapMobile : S.formWrap}>
         {step === 'creds' ? (
           <form style={S.form} onSubmit={handleCredsSubmit}>
-            <Link to="/" style={S.back}>\u2190 Back to home</Link>
+            <Link to="/" style={S.back}>{'\u2190'} Back to home</Link>
             <h2 style={S.title}>
               Welcome back, <span style={S.titleEm}>friend</span>.
             </h2>
@@ -335,20 +326,8 @@ export default function Login() {
                 autoComplete="current-password"
                 required
                 style={S.input}
-                placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                placeholder={'\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'}
               />
-            </div>
-
-            <div style={S.authRow}>
-              <label style={S.chk}>
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={e => setRememberMe(e.target.checked)}
-                  style={S.checkbox}
-                />
-                Keep me signed in
-              </label>
             </div>
 
             <button
@@ -374,14 +353,14 @@ export default function Login() {
 
             <div style={S.switch}>
               New to Pewil?{' '}
-              <Link to="/register" style={S.switchLink}>Create an account \u2192</Link>
+              <Link to="/register" style={S.switchLink}>Create an account {'\u2192'}</Link>
             </div>
           </form>
         ) : (
           /* ─── 2FA step ─── */
           <form style={S.form} onSubmit={handle2faSubmit}>
             <button type="button" style={S.back} onClick={cancelTwoFa}>
-              \u2190 Use a different account
+              {'\u2190'} Use a different account
             </button>
             <h2 style={S.title}>
               One more step, <span style={S.titleEm}>{twofaUsername || 'there'}</span>.
@@ -447,7 +426,7 @@ export default function Login() {
 
             <div style={S.switch}>
               Lost your authenticator and recovery codes?{' '}
-              <Link to="/forgot-password" style={S.switchLink}>Reset via email \u2192</Link>
+              <Link to="/forgot-password" style={S.switchLink}>Reset via email {'\u2192'}</Link>
             </div>
           </form>
         )}
