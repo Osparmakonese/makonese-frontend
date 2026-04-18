@@ -52,27 +52,24 @@ export function cropImage(crop) {
 /**
  * Format number as currency.
  * Reads preferred currency from localStorage (default USD).
+ * Always renders exactly 2 decimal places — standard currency formatting,
+ * keeps dashboards readable (no long trailing-decimal strings).
  */
 export function fmt(n, currency) {
   if (n == null || isNaN(n)) return '—';
   const num = typeof n === 'string' ? parseFloat(n) : n;
-  // Count actual decimal places in the original value — never round down
-  const str = String(num);
-  const dotIdx = str.indexOf('.');
-  const actualDecimals = dotIdx >= 0 ? str.length - dotIdx - 1 : 0;
-  const fractionDigits = Math.max(2, actualDecimals);
   const cur = currency || localStorage.getItem('currency') || 'USD';
   if (cur === 'ZWG') {
     return 'ZiG' + new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: fractionDigits,
+      maximumFractionDigits: 2,
     }).format(num);
   }
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
-    maximumFractionDigits: fractionDigits,
+    maximumFractionDigits: 2,
   }).format(num);
 }
 
