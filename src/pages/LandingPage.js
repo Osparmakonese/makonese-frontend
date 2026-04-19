@@ -227,12 +227,11 @@ const LandingPage = () => {
     }}>
       <div style={{
         maxWidth: 1280, margin: '0 auto',
-        padding: mobile ? '22px 18px 40px' : '40px 28px 60px',
+        padding: mobile ? '18px 18px 32px' : '36px 28px 48px',
         display: 'grid',
-        gridTemplateColumns: mobile ? '1fr' : '1.1fr 1fr',
-        gap: mobile ? 40 : 40,
+        gridTemplateColumns: mobile ? '1fr' : '1.15fr 1fr',
+        gap: mobile ? 32 : 36,
         alignItems: 'center',
-        minHeight: mobile ? 'auto' : '88vh',
       }}>
         <div>
           <span style={{
@@ -246,8 +245,8 @@ const LandingPage = () => {
           </span>
           <h1 style={{
             fontFamily: SERIF, fontWeight: 700,
-            fontSize: mobile ? 52 : 'clamp(48px, 7.5vw, 108px)',
-            lineHeight: 0.98, letterSpacing: '-0.035em',
+            fontSize: mobile ? 38 : 'clamp(40px, 5.4vw, 72px)',
+            lineHeight: 1.02, letterSpacing: '-0.028em',
             maxWidth: '12ch', color: C.ink,
           }}>
             Grow more.<br />
@@ -270,9 +269,9 @@ const LandingPage = () => {
             .
           </h1>
           <p style={{
-            marginTop: 30, maxWidth: '48ch',
-            fontSize: mobile ? 17 : 'clamp(17px, 1.6vw, 20px)',
-            color: '#3a3024', lineHeight: 1.6,
+            marginTop: 22, maxWidth: '48ch',
+            fontSize: mobile ? 15.5 : 'clamp(16px, 1.4vw, 18px)',
+            color: '#3a3024', lineHeight: 1.55,
           }}>
             Pewil is the business operating system for African farmers and retailers. Track fields, livestock, stock, staff, and cashflow from one place. Online or off. In USD, ZWL, or ZAR. In the language of your team.
           </p>
@@ -322,7 +321,7 @@ const LandingPage = () => {
         </div>
 
         {/* Hero photo collage */}
-        <div style={{ position: 'relative', height: mobile ? 380 : 620 }}>
+        <div style={{ position: 'relative', height: mobile ? 300 : 460 }}>
           <div style={{
             position: 'absolute', inset: 0, borderRadius: RLG, overflow: 'hidden',
             boxShadow: '0 40px 80px -30px rgba(177,59,23,.3)',
@@ -337,54 +336,47 @@ const LandingPage = () => {
               }}
             />
           </div>
-          {/* card-1: field tagline */}
+          {/* card-1: field tagline (single floating caption — keeps the original feel without dominating) */}
           <div style={{
-            position: 'absolute', bottom: 28, left: mobile ? 8 : -18,
-            background: '#fff', borderRadius: 20, padding: '18px 22px',
-            boxShadow: '0 20px 40px -15px rgba(0,0,0,.18)',
-            display: 'flex', gap: 14, alignItems: 'center',
-            minWidth: mobile ? 240 : 280, maxWidth: 300,
+            position: 'absolute', bottom: mobile ? 16 : 22, left: mobile ? 8 : -14,
+            background: '#fff', borderRadius: 16, padding: '14px 16px',
+            boxShadow: '0 16px 32px -14px rgba(0,0,0,.18)',
+            display: 'flex', gap: 11, alignItems: 'center',
+            minWidth: mobile ? 220 : 260, maxWidth: 280,
           }}>
             <div style={{
-              width: 44, height: 44, borderRadius: 14,
+              width: 38, height: 38, borderRadius: 12,
               background: `linear-gradient(135deg, ${C.amber}, ${C.terra})`,
               display: 'grid', placeItems: 'center',
-              color: '#fff', fontSize: 22, flexShrink: 0,
+              color: '#fff', fontSize: 18, flexShrink: 0,
             }}>🌾</div>
             <div>
-              <b style={{ fontFamily: SERIF, fontSize: 16, fontStyle: 'italic', display: 'block', color: C.ink, lineHeight: 1.25 }}>
+              <b style={{ fontFamily: SERIF, fontSize: 14, fontStyle: 'italic', display: 'block', color: C.ink, lineHeight: 1.25 }}>
                 From the field, not the office.
               </b>
-              <small style={{ color: C.muted, fontSize: 12.5, display: 'block', marginTop: 3 }}>
+              <small style={{ color: C.muted, fontSize: 11.5, display: 'block', marginTop: 2 }}>
                 Logged by the hands that did the work.
               </small>
             </div>
           </div>
-          {/* card-2: ethos */}
+          {/* card-2: small forest "promise" tag in the top-right corner */}
           <div style={{
-            position: 'absolute', top: 26, right: mobile ? 8 : -16,
-            background: C.forest, color: '#fff', borderRadius: 20,
-            padding: '18px 20px', width: 210,
-            boxShadow: '0 20px 40px -15px rgba(0,0,0,.25)',
+            position: 'absolute', top: 18, right: mobile ? 8 : -10,
+            background: C.forest, color: '#fff', borderRadius: 14,
+            padding: '12px 14px', width: 168,
+            boxShadow: '0 16px 32px -14px rgba(0,0,0,.22)',
           }}>
             <div style={{
-              fontSize: 11.5, color: C.amber,
+              fontSize: 10, color: C.amber,
               textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 700,
             }}>— Our promise</div>
             <div style={{
               fontFamily: SERIF, fontWeight: 600, fontStyle: 'italic',
-              fontSize: 22, letterSpacing: '-.01em',
-              marginTop: 10, lineHeight: 1.25,
+              fontSize: 16, letterSpacing: '-.01em',
+              marginTop: 6, lineHeight: 1.25,
             }}>
               Built slow.<br />
               For African <span style={{ color: C.amber }}>soil.</span>
-            </div>
-            <div style={{
-              marginTop: 14, paddingTop: 12,
-              borderTop: '1px solid rgba(255,247,236,.18)',
-              fontSize: 12.5, opacity: 0.75,
-            }}>
-              No fake metrics. Just honest tools.
             </div>
           </div>
         </div>
