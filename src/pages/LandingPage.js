@@ -1112,17 +1112,3 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
-}>
-      {navBar}
-      {hero}
-      {personaSection}
-      {features}
-      {story}
-      {pricing}
-      {ctaStrip}
-      {footer}
-    </div>
-  );
-};
-
-export default LandingPage;

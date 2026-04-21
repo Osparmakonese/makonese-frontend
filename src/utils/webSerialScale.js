@@ -67,8 +67,8 @@ export async function connectScale(opts = {}) {
   const readableClosed = port.readable.pipeTo(decoder.writable);
   const reader = decoder.readable.getReader();
 
-  // eslint-disable-next-line no-unused-vars — we keep the promise alive so the
-  // decoder doesn't GC; the value is consumed during disconnect.
+  // Keep the readable promise alive so the decoder doesn't GC; the value is consumed during disconnect.
+  // eslint-disable-next-line no-unused-vars
   const _keepAlive = readableClosed.catch(() => {});
 
   let buffer = '';

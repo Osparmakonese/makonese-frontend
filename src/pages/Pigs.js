@@ -202,7 +202,7 @@ export default function Pigs() {
               {pigs.length === 0 && <p style={{ fontSize: 11, color: '#9ca3af' }}>No pigs recorded yet.</p>}
               {(statusFilter === 'all' ? pigs : pigs.filter(p => (p.status || 'active') === statusFilter)).map(pig => {
                 const sexColor = pig.sex === 'boar' ? '#2563eb' : pig.sex === 'sow' ? '#ec4899' : '#8b5cf6';
-                const linkedHealth = (Array.isArray(healthRecords) ? healthRecords : []).filter(h => h.pig === pig.id);
+                const linkedHealth = (Array.isArray(health) ? health : []).filter(h => h.pig === pig.id);
                 const healthCost = linkedHealth.reduce((s, h) => s + (parseFloat(h.cost) || 0), 0);
                 const linkedSale = pigSales.find(s => s.pig === pig.id);
                 const salePrice = linkedSale ? parseFloat(linkedSale.sale_price) || 0 : 0;
