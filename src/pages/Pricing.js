@@ -96,13 +96,14 @@ const PLANS = {
       tier: 'growth',
       name: 'Pewil Retail Growth',
       slug: 'retail-growth',
-      price_monthly: 35,
-      price_yearly: 350,
+      price_monthly: 45,
+      price_yearly: 450,
       max_users: 5,
       popular: true,
-      blurb: 'Most popular — multi-cashier shops.',
+      blurb: 'Most popular — multi-cashier shops and small chains.',
       features: [
         'Up to 5 users',
+        'Up to 3 branches',
         '500 products',
         '2,000 customers',
         '3 cashier sessions',
@@ -117,13 +118,18 @@ const PLANS = {
       tier: 'enterprise',
       name: 'Pewil Retail Enterprise',
       slug: 'retail-enterprise',
-      price_monthly: 80,
-      price_yearly: 800,
+      per_branch: true,
+      price_monthly: 30,        // per branch, per month
+      price_yearly: 300,        // per branch, per year
+      min_branches: 4,
       max_users: 'Unlimited',
-      blurb: 'For chains and high-volume retail.',
+      blurb: 'For supermarket chains. Scales with every branch you open.',
       features: [
-        'Unlimited users',
+        '$30 per branch, per month',
+        '4-branch minimum ($120/mo floor)',
+        'Unlimited users across all branches',
         'Unlimited products, customers, sessions',
+        'Chain rollup + per-branch P&L',
         'Everything in Growth',
         'Advanced AI insights',
         'White-label branding',
@@ -137,6 +143,7 @@ const PLANS = {
 const FAQ = [
   { q: 'Can I try Pewil for free?', a: 'Yes. Every new account gets a 14-day free trial with full access. No card required.' },
   { q: 'What payment methods do you accept?', a: 'Visa and Mastercard via Pesepay for card payments, plus EcoCash and OneMoney via Paynow for mobile money. Pesepay also works for international cards.' },
+  { q: 'How does Retail Enterprise pricing work?', a: 'Enterprise is priced per branch: $30 per branch per month, with a 4-branch minimum ($120/mo floor). A 12-branch chain pays $360/mo. A 50-branch chain pays $1,500/mo. Unlimited users across all branches. Yearly billing (10 × monthly) gives you 2 months free.' },
   { q: 'Can I combine Pewil Farm + Pewil Retail?', a: 'Yes. Each module has its own subscription so you only pay for what you use. Combine any farm plan with any retail plan.' },
   { q: 'What is the yearly pricing?', a: 'Yearly is billed as 10 × monthly, giving you 2 months free versus paying monthly.' },
   { q: 'Can I change plans later?', a: 'Yes. Upgrade or downgrade anytime from your Billing page. Proration is handled automatically on your next invoice.' },
@@ -221,6 +228,21 @@ const S = {
   priceBig: { fontSize: 44, fontWeight: 800, color: C.ink, lineHeight: 1 },
   priceUnit: { fontSize: 14, color: C.ink3 },
   priceYearNote: { fontSize: 12, color: C.ink3, marginBottom: 20 },
+  perBranchUnit: { fontSize: 13, color: C.ink3, fontWeight: 500 },
+  scalePreview: {
+    background: C.green3, border: `1px solid ${C.green}33`, borderRadius: 10,
+    padding: '12px 14px', marginBottom: 20,
+  },
+  scalePreviewTitle: {
+    fontSize: 11, fontWeight: 700, color: C.green, letterSpacing: '0.05em',
+    textTransform: 'uppercase', marginBottom: 8,
+  },
+  scaleRow: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '4px 0', fontSize: 13,
+  },
+  scaleRowBranches: { color: C.ink2, fontWeight: 500 },
+  scaleRowPrice: { color: C.green, fontWeight: 700, fontFamily: "'Playfair Display', serif" },
   userLimit: { fontSize: 13, color: C.green, fontWeight: 600, marginBottom: 20 },
   featuresList: { listStyle: 'none', padding: 0, margin: '0 0 24px' },
   featureItem: {
@@ -327,6 +349,7 @@ export default function Pricing() {
         {plans.map((plan) => {
           const price = cycle === 'yearly' ? plan.price_yearly : plan.price_monthly;
           const unit = cycle === 'yearly' ? '/year' : '/month';
+          const isPerBranch = !!plan.per_branch;
           return (
             <div key={plan.slug} style={S.card(plan.popular)}>
               {plan.popular && <div style={S.popularBadge}>MOST POPULAR</div>}
@@ -334,14 +357,43 @@ export default function Pricing() {
               <p style={S.cardBlurb}>{plan.blurb}</p>
               <div style={S.priceRow}>
                 <span style={S.priceBig}>${price}</span>
-                <span style={S.priceUnit}>{unit}</span>
+                {isPerBranch ? (
+                  <span style={S.perBranchUnit}>per branch{unit}</span>
+                ) : (
+                  <span style={S.priceUnit}>{unit}</span>
+                )}
               </div>
-              {cycle === 'yearly' && (
+              {isPerBranch && cycle === 'monthly' && (
+                <div style={S.priceYearNote}>
+                  {plan.min_branches}-branch minimum — floor ${plan.price_monthly * plan.min_branches}/mo
+                </div>
+              )}
+              {isPerBranch && cycle === 'yearly' && (
+                <div style={S.priceYearNote}>
+                  {plan.min_branches}-branch minimum — floor ${plan.price_yearly * plan.min_branches}/yr (2 months free)
+                </div>
+              )}
+              {!isPerBranch && cycle === 'yearly' && (
                 <div style={S.priceYearNote}>
                   That's ${(plan.price_yearly / 12).toFixed(2)}/month — 2 months free
                 </div>
               )}
-              {cycle === 'monthly' && <div style={{ height: 20 }} />}
+              {!isPerBranch && cycle === 'monthly' && <div style={{ height: 20 }} />}
+
+              {isPerBranch && (
+                <div style={S.scalePreview}>
+                  <div style={S.scalePreviewTitle}>At a glance</div>
+                  {[4, 12, 50].map((n) => (
+                    <div key={n} style={S.scaleRow}>
+                      <span style={S.scaleRowBranches}>{n} branches</span>
+                      <span style={S.scaleRowPrice}>
+                        ${(plan.price_monthly * n).toLocaleString()}/mo
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div style={S.userLimit}>
                 {typeof plan.max_users === 'number'
                   ? `Up to ${plan.max_users} users`
@@ -355,8 +407,8 @@ export default function Pricing() {
                   </li>
                 ))}
               </ul>
-              <Link to="/register" style={S.cta(plan.popular)}>
-                Start 14-day free trial
+              <Link to={isPerBranch ? '/contact' : '/register'} style={S.cta(plan.popular)}>
+                {isPerBranch ? 'Talk to sales' : 'Start 14-day free trial'}
               </Link>
             </div>
           );
