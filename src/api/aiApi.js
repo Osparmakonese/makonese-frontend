@@ -46,3 +46,8 @@ export const analyzeSeasonalPlan = () =>
 // System-wide
 export const askAI = (question) =>
   analyzeAI('natural_language_query', { question });
+
+// WhatsApp supplier PO parser
+// Returns {analysis: raw, parsed: {supplier_guess, items: [...], ...}}
+export const parseWhatsAppPO = (message) =>
+  analyzeAI('whatsapp_po_parse', { message });

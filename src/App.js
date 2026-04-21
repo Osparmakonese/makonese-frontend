@@ -86,6 +86,7 @@ const TaxConfigPage = React.lazy(() => import('./pages/TaxConfigPage'));
 const HelpSupport = React.lazy(() => import('./pages/HelpSupport'));
 const DataExport = React.lazy(() => import('./pages/DataExport'));
 const AuditLog = React.lazy(() => import('./pages/AuditLog'));
+const WhatsAppPOParser = React.lazy(() => import('./pages/WhatsAppPOParser'));
 
 /* --- Loading fallback for lazy pages --- */
 const PageLoader = () => (
@@ -157,6 +158,7 @@ const PAGES = {
   'Help': HelpSupport,
   'Data Export': DataExport,
   'Audit Log': AuditLog,
+  'WhatsApp PO': WhatsAppPOParser,
 };
 
 /* --- */
@@ -222,6 +224,7 @@ const PAGE_META = {
   'Help': { title: 'Help & Support', sub: 'FAQ, guides, and contact support' },
   'Data Export': { title: 'Data Export', sub: 'Download all your business data' },
   'Audit Log': { title: 'Audit Log', sub: 'Track all changes made by your team' },
+  'WhatsApp PO': { title: 'WhatsApp PO Parser', sub: 'Turn supplier messages into draft purchase orders — AI powered' },
 };
 
 /* --- */
@@ -281,6 +284,7 @@ const PRIMARY_ACTIONS = {
   'Help': null,
   'Data Export': null,
   'Audit Log': null,
+  'WhatsApp PO': null,
 };
 
 /* --- */

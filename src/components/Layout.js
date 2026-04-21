@@ -58,6 +58,7 @@ const RETAIL_DRAWER_SECTIONS = [
   { label: 'Inventory', items: [
     { key: 'Categories', emoji: '\u{1F5C2}', label: 'Categories', sub: 'Organize' },
     { key: 'Suppliers', emoji: '\u{1F4E6}', label: 'Suppliers', sub: 'Vendors & POs' },
+    { key: 'WhatsApp PO', emoji: '\u{1F4AC}', label: 'WhatsApp PO', sub: 'AI-parse supplier msgs' },
     { key: 'Stock Adjustments', emoji: '\u{1F504}', label: 'Adjustments', sub: 'Stock changes' },
     { key: 'Low Stock Alerts', emoji: '\u{1F6A8}', label: 'Alerts', sub: 'Reorder' },
     { key: 'Barcode Labels', emoji: '\u{1F4CF}', label: 'Barcodes', sub: 'Labels' },
