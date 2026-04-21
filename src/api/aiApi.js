@@ -51,3 +51,18 @@ export const askAI = (question) =>
 // Returns {analysis: raw, parsed: {supplier_guess, items: [...], ...}}
 export const parseWhatsAppPO = (message) =>
   analyzeAI('whatsapp_po_parse', { message });
+
+// Trilingual voice briefing (EN / Shona / Ndebele)
+// Returns {analysis, parsed: {english, shona, ndebele, kpis, priority, tone}}
+export const getVoiceBriefing = (opts = {}) =>
+  analyzeAI('farm_voice_briefing', opts);
+
+// Loss-prevention theft scan
+// Returns {analysis, parsed: {store_risk, risk_band, headline, incidents, positives, next_checks}}
+export const scanForTheft = (date) =>
+  analyzeAI('retail_theft_scan', date ? { date } : {});
+
+// Supplier price drift detector
+// Returns {analysis, parsed: {headline, urgent_count, material_count, flagged, summary}}
+export const scanPriceDrift = (windowDays = 30) =>
+  analyzeAI('retail_price_drift', { window_days: windowDays });

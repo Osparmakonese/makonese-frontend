@@ -37,6 +37,9 @@ const FARM_DRAWER_SECTIONS = [
     { key: 'Workers', emoji: '\u{1F477}', label: 'Workers', sub: 'Roster & wages' },
     { key: 'Hours & Pay', emoji: '\u23F1\uFE0F', label: 'Hours & Pay', sub: 'Attendance' },
   ]},
+  { label: 'AI Tools', items: [
+    { key: 'Voice Briefing', emoji: '\u{1F3A4}', label: 'Voice Briefing', sub: 'Daily update — EN/SN/ND' },
+  ]},
   { label: 'Admin', items: [
     { key: 'Report', emoji: '\u{1F4C8}', label: 'Report', sub: 'P&L overview', ownerOnly: true },
     { key: 'Settings', emoji: '\u2699\uFE0F', label: 'Settings', sub: 'Configuration' },
@@ -69,6 +72,10 @@ const RETAIL_DRAWER_SECTIONS = [
     { key: 'Retail Payroll', emoji: '\u{1F4B0}', label: 'Payroll', sub: 'PAYE + NSSA' },
     { key: 'End of Day', emoji: '\u{1F4C4}', label: 'EOD Report', sub: 'Daily close' },
     { key: 'Profit Margins', emoji: '\u{1F4C8}', label: 'Margins', sub: 'Profitability', ownerOnly: true },
+  ]},
+  { label: 'Loss Prevention', items: [
+    { key: 'Theft Scan', emoji: '\u{1F50D}', label: 'Theft Scan', sub: 'AI anomaly detection', ownerOnly: true },
+    { key: 'Price Drift', emoji: '\u{1F4B0}', label: 'Price Drift', sub: 'Supplier cost creep', ownerOnly: true },
   ]},
   { label: 'Marketing', items: [
     { key: 'Customer Loyalty', emoji: '\u2B50', label: 'Loyalty', sub: 'Points & rewards' },

@@ -87,6 +87,9 @@ const HelpSupport = React.lazy(() => import('./pages/HelpSupport'));
 const DataExport = React.lazy(() => import('./pages/DataExport'));
 const AuditLog = React.lazy(() => import('./pages/AuditLog'));
 const WhatsAppPOParser = React.lazy(() => import('./pages/WhatsAppPOParser'));
+const VoiceBriefing = React.lazy(() => import('./pages/VoiceBriefing'));
+const TheftScan = React.lazy(() => import('./pages/TheftScan'));
+const PriceDrift = React.lazy(() => import('./pages/PriceDrift'));
 
 /* --- Loading fallback for lazy pages --- */
 const PageLoader = () => (
@@ -159,6 +162,9 @@ const PAGES = {
   'Data Export': DataExport,
   'Audit Log': AuditLog,
   'WhatsApp PO': WhatsAppPOParser,
+  'Voice Briefing': VoiceBriefing,
+  'Theft Scan': TheftScan,
+  'Price Drift': PriceDrift,
 };
 
 /* --- */
@@ -225,6 +231,9 @@ const PAGE_META = {
   'Data Export': { title: 'Data Export', sub: 'Download all your business data' },
   'Audit Log': { title: 'Audit Log', sub: 'Track all changes made by your team' },
   'WhatsApp PO': { title: 'WhatsApp PO Parser', sub: 'Turn supplier messages into draft purchase orders — AI powered' },
+  'Voice Briefing': { title: 'Voice Briefing', sub: 'Trilingual daily farm update — English, Shona, Ndebele' },
+  'Theft Scan': { title: 'Theft Scan', sub: 'AI-powered loss prevention — anomaly detection on today’s sales' },
+  'Price Drift': { title: 'Price Drift', sub: 'Supplier cost creep detection — catch silent price increases' },
 };
 
 /* --- */
@@ -285,6 +294,9 @@ const PRIMARY_ACTIONS = {
   'Data Export': null,
   'Audit Log': null,
   'WhatsApp PO': null,
+  'Voice Briefing': null,
+  'Theft Scan': null,
+  'Price Drift': null,
 };
 
 /* --- */
