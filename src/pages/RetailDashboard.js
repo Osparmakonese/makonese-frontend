@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import RetailDashboardMobile from './RetailDashboardMobile';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   getRetailDashboard,
@@ -344,20 +343,7 @@ const S = {
   }),
 };
 
-
-function useIsMobileRetail(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < breakpoint : false
-  );
-  useEffect(() => {
-    const on = () => setIsMobile(window.innerWidth < breakpoint);
-    window.addEventListener('resize', on);
-    return () => window.removeEventListener('resize', on);
-  }, [breakpoint]);
-  return isMobile;
-}
-
-function RetailDashboardDesktop() {
+export default function RetailDashboard() {
   const { user } = useAuth() || {};
 
   const { data: dashboard, isLoading: sumLoading, error: dashboardError } = useQuery({
@@ -698,11 +684,4 @@ function RetailDashboardDesktop() {
       </div>
     </div>
   );
-}
-
-export default function RetailDashboard(props) {
-  const isMobile = useIsMobileRetail();
-  return isMobile
-    ? <RetailDashboardMobile {...props} />
-    : <RetailDashboardDesktop {...props} />;
 }

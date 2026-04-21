@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import DashboardMobile from './DashboardMobile';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboard, getLowStock, getHealthScore, getBriefing, getAchievements, getSeasonalComparison } from '../api/farmApi';
 import { fmt, qty, cropEmoji, cropGradient, initials, avatarColor, IMAGES, cropImage, getHeroImage, HERO_IMAGES } from '../utils/format';
@@ -124,20 +123,7 @@ const S = {
   errorBox: { textAlign: 'center', padding: 40, color: TOKENS.muted, fontFamily: SANS },
 };
 
-
-function useIsMobileDash(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < breakpoint : false
-  );
-  useEffect(() => {
-    const on = () => setIsMobile(window.innerWidth < breakpoint);
-    window.addEventListener('resize', on);
-    return () => window.removeEventListener('resize', on);
-  }, [breakpoint]);
-  return isMobile;
-}
-
-function DashboardDesktop({ activeModule = 'farm' }) {
+export default function Dashboard({ activeModule = 'farm' }) {
   const { user } = useAuth();
   const [selectedField, setSelectedField] = useState(null);
   const { data, isLoading, error, refetch } = useQuery({ queryKey: ['dashboard'], queryFn: getDashboard });
@@ -638,11 +624,4 @@ function DashboardDesktop({ activeModule = 'farm' }) {
       <FieldModal field={selectedField} isOpen={!!selectedField} onClose={() => setSelectedField(null)} />
     </>
   );
-}
-
-export default function Dashboard({ activeModule = 'farm' }) {
-  const isMobile = useIsMobileDash();
-  return isMobile
-    ? <DashboardMobile activeModule={activeModule} />
-    : <DashboardDesktop activeModule={activeModule} />;
 }
