@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 // Exact palette from pewil-design-3-living-africa.html
@@ -174,6 +174,9 @@ const S = {
 
 export default function Register() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const personaParam = searchParams.get('persona');
+  const persona = personaParam === 'retail' ? 'retail' : personaParam === 'farm' ? 'farm' : null;
   const { register, loading, error } = useAuth();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1000);
 
@@ -195,7 +198,7 @@ export default function Register() {
 
   const [form, setForm] = useState({
     business_name: '',
-    modules: ['farm'],
+    modules: [persona === 'retail' ? 'retail' : 'farm'],
     first_name: '',
     last_name: '',
     phone: '',
@@ -287,9 +290,17 @@ export default function Register() {
         <form style={S.form} onSubmit={handleSubmit}>
           <Link to="/" style={S.back}>← Back to home</Link>
           <h2 style={S.title}>
-            Let's <span style={S.titleEm}>grow</span> yours.
+            {persona === 'retail'
+              ? <>Open your <span style={S.titleEm}>shop</span>.</>
+              : persona === 'farm'
+                ? <>Start your <span style={S.titleEm}>farm</span>.</>
+                : <>Let's <span style={S.titleEm}>grow</span> yours.</>}
           </h2>
-          <p style={S.sub}>30 days free. No card. No surprise bill at the end.</p>
+          <p style={S.sub}>
+            {persona
+              ? '14-day free trial. No card. Cancel anytime from your dashboard.'
+              : '14-day free trial on Starter and Growth. No card. Cancel anytime.'}
+          </p>
 
           {error && <div style={S.error}>{error}</div>}
 
@@ -348,6 +359,7 @@ export default function Register() {
             />
           </div>
 
+          {!persona && (
           <div style={S.field}>
             <label style={S.label}>What do you run?</label>
             <div style={S.modGrid}>
@@ -369,6 +381,27 @@ export default function Register() {
               </div>
             </div>
           </div>
+          )}
+          {persona && (
+            <div style={{
+              background: 'rgba(244,167,67,.12)', border: '1px solid rgba(244,167,67,.35)',
+              borderRadius: 14, padding: '14px 16px', marginBottom: 16,
+              display: 'flex', gap: 12, alignItems: 'center',
+            }}>
+              <div style={{ fontSize: 22 }}>{persona === 'retail' ? '🛒' : '🌱'}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: C.ink }}>
+                  {persona === 'retail' ? 'Pewil Retail' : 'Pewil Farm'}
+                </div>
+                <div style={{ fontSize: 12.5, color: C.muted, marginTop: 2 }}>
+                  {persona === 'retail'
+                    ? 'POS · products · cashier · sales'
+                    : 'Fields · stock · livestock · workers'}
+                </div>
+              </div>
+              <Link to="/#persona" style={{ fontSize: 12.5, color: C.clay, fontWeight: 700, textDecoration: 'none' }}>Change</Link>
+            </div>
+          )}
 
           <div style={S.row2}>
             <div style={S.field}>

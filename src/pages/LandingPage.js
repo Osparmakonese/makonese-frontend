@@ -178,10 +178,14 @@ const LandingPage = () => {
           )}
           <button
             style={btnWarm}
-            onClick={() => navigate('/register')}
+            onClick={() => {
+              const el = document.getElementById('persona');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              else navigate('/register');
+            }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 14px 30px -8px rgba(217,86,44,.7)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 10px 24px -8px rgba(217,86,44,.6)'; }}
-          >Start trial</button>
+          >Pick your path</button>
           {mobile && (
             <button
               aria-label="Menu"
@@ -278,10 +282,10 @@ const LandingPage = () => {
           <div style={{ marginTop: 36, display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
             <button
               style={{ ...btnWarm, ...btnLg }}
-              onClick={() => navigate('/register')}
+              onClick={() => { const el = document.getElementById('persona'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}
               onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 14px 30px -8px rgba(217,86,44,.7)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 10px 24px -8px rgba(217,86,44,.6)'; }}
-            >Start your free trial →</button>
+            >Pick your path →</button>
             <button
               type="button"
               onClick={enterDemo}
@@ -434,6 +438,143 @@ const LandingPage = () => {
     color: warm ? '#fff' : dark ? C.amber : C.clay,
   });
   const cardH4 = { fontFamily: SERIF, fontWeight: 700, fontSize: 26, letterSpacing: '-.015em', lineHeight: 1.2, marginBottom: 10 };
+
+  // ==== PERSONA SECTION — "pick your path" ====
+  const personas = [
+    {
+      key: 'farm',
+      label: 'For the farmer',
+      headline: 'I work the land.',
+      copy: 'Fields, livestock, workers, harvest, costs — logged from the field, not the office. One bag of fertiliser, one row of tomatoes, one paycheck at a time.',
+      photo: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=900&q=80&auto=format&fit=crop',
+      href: '/register?persona=farm',
+      cta: 'Start as a farmer →',
+      priceLine: 'From $10/mo · 14-day free trial',
+      accent: C.forest,
+      accentSoft: C.forest2,
+    },
+    {
+      key: 'shop',
+      label: 'For the shopkeeper',
+      headline: 'I run one till.',
+      copy: 'POS, stock, cashier sessions, customers, fiscal receipts. From the corner tuckshop to a three-branch mini-chain — same simple system, fair price.',
+      photo: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=900&q=80&auto=format&fit=crop',
+      href: '/register?persona=retail',
+      cta: 'Start as a shopkeeper →',
+      priceLine: 'From $15/mo · 14-day free trial',
+      accent: C.clay,
+      accentSoft: C.terra,
+    },
+    {
+      key: 'chain',
+      label: 'For the chain',
+      headline: 'We run seventeen.',
+      copy: 'Per-branch P&L, chain rollup, unlimited users, dedicated onboarding. Supermarket groups pay $30 per branch — no tier cliff, no surprise invoice.',
+      photo: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=900&q=80&auto=format&fit=crop',
+      href: '/contact?type=enterprise',
+      cta: 'Talk to our sales team →',
+      priceLine: '$30 per branch · 4-branch minimum · sales-assisted',
+      accent: C.amber,
+      accentSoft: C.terra,
+    },
+  ];
+
+  const personaSection = (
+    <section id="persona" style={{
+      background: `linear-gradient(180deg, ${C.sand2} 0%, #fce3c0 100%)`,
+      padding: mobile ? '60px 0 70px' : '100px 0 110px',
+      borderTop: `1px solid ${C.line}`,
+    }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: mobile ? '0 18px' : '0 28px' }}>
+        <div style={{ textAlign: 'center', marginBottom: mobile ? 36 : 56 }}>
+          <span style={{
+            display: 'inline-block', padding: '6px 14px', borderRadius: 999,
+            background: 'rgba(217,86,44,.12)', color: C.clay,
+            fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase',
+            marginBottom: 18,
+          }}>Pick your path</span>
+          <h2 style={{
+            fontFamily: SERIF, fontWeight: 700,
+            fontSize: mobile ? 36 : 'clamp(40px, 5vw, 60px)',
+            lineHeight: 1.05, letterSpacing: '-.025em', color: C.ink,
+            maxWidth: '18ch', margin: '0 auto',
+          }}>
+            One farm. One tuckshop.{' '}
+            <em style={{ color: C.clay, fontStyle: 'italic', fontWeight: 600 }}>One chain.</em>
+          </h2>
+          <p style={{
+            marginTop: 14, maxWidth: '54ch', margin: '14px auto 0',
+            color: C.muted, fontSize: mobile ? 15 : 17, lineHeight: 1.55,
+          }}>
+            Tell us who you are. We set up the right Pewil for you — no module toggles, no clutter.
+          </p>
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)',
+          gap: mobile ? 18 : 22,
+        }}>
+          {personas.map(p => (
+            <Link key={p.key} to={p.href} style={{
+              background: '#fff', borderRadius: RLG, overflow: 'hidden',
+              border: `1px solid ${C.line}`,
+              boxShadow: '0 14px 30px -18px rgba(177,59,23,.25)',
+              textDecoration: 'none', color: C.ink,
+              display: 'flex', flexDirection: 'column',
+              transition: 'transform .15s, box-shadow .2s',
+            }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 24px 48px -18px rgba(177,59,23,.35)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = '0 14px 30px -18px rgba(177,59,23,.25)';
+              }}
+            >
+              <div style={{ height: 200, position: 'relative', overflow: 'hidden' }}>
+                <img src={p.photo} alt={p.label}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={e => {
+                    e.currentTarget.parentElement.style.background = `linear-gradient(135deg, ${p.accent}, ${p.accentSoft})`;
+                    e.currentTarget.remove();
+                  }}
+                />
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: `linear-gradient(180deg, transparent 55%, rgba(0,0,0,.35))`,
+                }} />
+                <span style={{
+                  position: 'absolute', bottom: 14, left: 16,
+                  padding: '5px 11px', borderRadius: 999,
+                  background: '#fff', color: p.accent,
+                  fontSize: 11.5, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase',
+                }}>{p.label}</span>
+              </div>
+              <div style={{ padding: mobile ? '22px 22px 26px' : '26px 28px 30px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                <h3 style={{
+                  fontFamily: SERIF, fontWeight: 700, fontSize: mobile ? 26 : 30,
+                  lineHeight: 1.1, letterSpacing: '-.02em', margin: 0,
+                }}>{p.headline}</h3>
+                <p style={{ marginTop: 12, color: C.muted, fontSize: 15, lineHeight: 1.55, flex: 1 }}>{p.copy}</p>
+                <div style={{
+                  marginTop: 18, paddingTop: 16, borderTop: `1px dashed ${C.line}`,
+                  fontSize: 12.5, color: C.clay, fontWeight: 600,
+                }}>{p.priceLine}</div>
+                <div style={{
+                  marginTop: 16, padding: '12px 16px', borderRadius: 999,
+                  background: `linear-gradient(135deg, ${p.accent}, ${p.accentSoft})`,
+                  color: '#fff', fontWeight: 700, fontSize: 14,
+                  textAlign: 'center',
+                }}>{p.cta}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 
   const features = (
     <section id="features" style={{
@@ -661,11 +802,11 @@ const LandingPage = () => {
         'Costs, stock, sales & reports',
         'Email support',
       ],
-      btn: 'outline', cta: 'Start 14-day trial',
+      btn: 'outline', cta: 'Start 14-day trial', target: 'register',
     },
     {
       name: 'Growth', price: '$25', unit: '/ mo · Farm',
-      retailNote: 'Retail: $35 / mo',
+      retailNote: 'Retail: $45 / mo · up to 3 branches',
       yearlyHint: 'or $250 / year — save 2 months',
       desc: 'Most popular — growing farms and multi-cashier shops.',
       features: [
@@ -675,21 +816,22 @@ const LandingPage = () => {
         'Multi-currency + ZIMRA fiscal (retail)',
         'Priority email support',
       ],
-      btn: 'warm', cta: 'Start 14-day trial', hl: true, badge: 'Most popular',
+      btn: 'warm', cta: 'Start 14-day trial', hl: true, badge: 'Most popular', target: 'register',
     },
     {
       name: 'Enterprise', price: '$60', unit: '/ mo · Farm',
-      retailNote: 'Retail: $80 / mo',
-      yearlyHint: 'or $600 / year — save 2 months',
-      desc: 'Large estates, chains, and multi-site operators.',
+      retailNote: 'Retail: $30 / branch / mo (min 4 branches)',
+      yearlyHint: 'Farm yearly $600 · Retail scales with branches',
+      desc: 'Large estates and supermarket chains. Sales-assisted onboarding.',
       features: [
         'Unlimited users, fields, products',
+        'Retail scales per branch ($30/branch/mo)',
         'Advanced AI insights',
         'White-label branding',
         'Dedicated account manager',
         'Phone support',
       ],
-      btn: 'outline', cta: 'Start 14-day trial',
+      btn: 'outline', cta: 'Talk to sales', target: 'contact',
     },
   ];
 
@@ -725,7 +867,7 @@ const LandingPage = () => {
             marginTop: 18, maxWidth: '62ch',
             color: 'rgba(255,247,236,.75)', fontSize: 17, lineHeight: 1.6,
           }}>
-            Per-module pricing in USD. 14-day free trial, no card up front. Month-to-month or yearly (10 × monthly — 2 months free). Cancel any time from your Billing page.
+            Per-module pricing in USD. 14-day free trial on Starter and Growth — no card up front. Enterprise is sales-assisted (no free trial). Month-to-month or yearly (10 × monthly — 2 months free). Cancel any time from your Billing page.
           </p>
 
           <div style={{
@@ -788,7 +930,7 @@ const LandingPage = () => {
                     ))}
                   </ul>
                   <button
-                    onClick={() => navigate('/register')}
+                    onClick={() => navigate(plan.target === 'contact' ? '/contact?type=enterprise' : '/register')}
                     style={
                       plan.btn === 'warm'
                         ? { ...btnWarm, marginTop: 24, width: '100%' }
@@ -853,15 +995,15 @@ const LandingPage = () => {
           marginTop: 18, maxWidth: '52ch', marginLeft: 'auto', marginRight: 'auto',
           fontSize: 17, opacity: 0.95, lineHeight: 1.55,
         }}>
-          14-day free trial. No card required. Full access from day one. Your data leaves with you if you ever want to go.
+          Pick your path — farm or shop. 14-day free trial on Starter and Growth, no card up front. Running a chain? Our sales team sets you up personally.
         </p>
         <div style={{ marginTop: 30, display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
             style={{ ...btnBase, ...btnLg, background: '#fff', color: C.clay }}
-            onClick={() => navigate('/register')}
+            onClick={() => { const el = document.getElementById('persona'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
-          >Start 14-day trial →</button>
+          >Pick your path →</button>
           <Link
             to="/login"
             style={{ ...btnBase, ...btnLg, background: 'transparent', color: '#fff', border: '1.5px solid #fff' }}
@@ -953,12 +1095,27 @@ const LandingPage = () => {
 
   return (
     <div style={{
-      background: C.cream, color: C.ink,
+      background: C.sand2, color: C.ink,
       fontFamily: SANS, fontSize: 16, lineHeight: 1.55,
       WebkitFontSmoothing: 'antialiased', overflowX: 'hidden',
     }}>
       {navBar}
       {hero}
+      {personaSection}
+      {features}
+      {story}
+      {pricing}
+      {ctaStrip}
+      {footer}
+    </div>
+  );
+};
+
+export default LandingPage;
+}>
+      {navBar}
+      {hero}
+      {personaSection}
       {features}
       {story}
       {pricing}

@@ -141,7 +141,7 @@ const PLANS = {
 };
 
 const FAQ = [
-  { q: 'Can I try Pewil for free?', a: 'Yes. Every new account gets a 14-day free trial with full access. No card required.' },
+  { q: 'Can I try Pewil for free?', a: 'Yes — Starter and Growth plans include a 14-day free trial with full access, no card required. Retail Enterprise is sales-assisted, so our team sets up a personalised onboarding instead of a self-serve trial.' },
   { q: 'What payment methods do you accept?', a: 'Visa and Mastercard via Pesepay for card payments, plus EcoCash and OneMoney via Paynow for mobile money. Pesepay also works for international cards.' },
   { q: 'How does Retail Enterprise pricing work?', a: 'Enterprise is priced per branch: $30 per branch per month, with a 4-branch minimum ($120/mo floor). A 12-branch chain pays $360/mo. A 50-branch chain pays $1,500/mo. Unlimited users across all branches. Yearly billing (10 × monthly) gives you 2 months free.' },
   { q: 'Can I combine Pewil Farm + Pewil Retail?', a: 'Yes. Each module has its own subscription so you only pay for what you use. Combine any farm plan with any retail plan.' },
@@ -317,11 +317,11 @@ export default function Pricing() {
 
       {/* Hero */}
       <section style={S.hero}>
-        <div style={S.pill}>14-day free trial · No card required</div>
+        <div style={S.pill}>Starter &amp; Growth: 14-day free trial · No card required</div>
         <h1 style={S.heroTitle}>Simple pricing. Pay for what you use.</h1>
         <p style={S.heroSub}>
           Farm and Retail are priced independently so you only pay for the modules you actually use.
-          Every plan includes a 14-day free trial.
+          Starter and Growth plans include a 14-day free trial. Retail Enterprise is sales-assisted — talk to our team.
         </p>
 
         <div style={S.toggleRow}>

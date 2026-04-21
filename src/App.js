@@ -26,6 +26,7 @@ const TermsOfService = React.lazy(() => import('./pages/TermsOfService'));
 const PrivacyPolicy = React.lazy(() => import('./pages/PrivacyPolicy'));
 const RefundPolicy = React.lazy(() => import('./pages/RefundPolicy'));
 const Pricing = React.lazy(() => import('./pages/Pricing'));
+const Contact = React.lazy(() => import('./pages/Contact'));
 const Status = React.lazy(() => import('./pages/Status'));
 const Fields = React.lazy(() => import('./pages/Fields'));
 const Sales = React.lazy(() => import('./pages/Sales'));
@@ -362,6 +363,7 @@ export default function App() {
         <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense>} />
         <Route path="/refunds" element={<Suspense fallback={<PageLoader />}><RefundPolicy /></Suspense>} />
         <Route path="/pricing" element={<Suspense fallback={<PageLoader />}><Pricing /></Suspense>} />
+        <Route path="/contact" element={<Suspense fallback={<PageLoader />}><Contact /></Suspense>} />
         <Route path="/status" element={<Suspense fallback={<PageLoader />}><Status /></Suspense>} />
         <Route
           path="/app"
