@@ -150,9 +150,9 @@ export default function Billing() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
             {/* Farm subscription card */}
-            <ModuleSubCard title="Farm" sub={farmSub} onManage={() => setTab('plans')} />
+            <ModuleSubCard title="Pewil Farm" sub={farmSub} onManage={() => setTab('plans')} />
             <div style={{ height: 10 }} />
-            <ModuleSubCard title="Retail" sub={retailSub} onManage={() => setTab('plans')} />
+            <ModuleSubCard title="Pewil Retail" sub={retailSub} onManage={() => setTab('plans')} />
           </div>
           <div>
             <div style={card}>

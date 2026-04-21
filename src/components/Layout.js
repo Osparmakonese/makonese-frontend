@@ -258,7 +258,7 @@ export default function Layout({
                     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}
                 >
-                  <span style={{ fontSize: 16 }}>{'\u{1F33E}'}</span> Farm
+                  <span style={{ fontSize: 16 }}>{'\u{1F33E}'}</span> Pewil Farm
                 </button>
                 <button
                   onClick={() => switchModule('retail')}
@@ -271,7 +271,7 @@ export default function Layout({
                     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}
                 >
-                  <span style={{ fontSize: 16 }}>{'\u{1F6D2}'}</span> Retail
+                  <span style={{ fontSize: 16 }}>{'\u{1F6D2}'}</span> Pewil Retail
                 </button>
               </div>
             )}

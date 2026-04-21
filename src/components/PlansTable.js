@@ -42,8 +42,8 @@ const tabBtn = (active) => ({
 
 // ─── HELPERS ──────────────────────────────────────────────
 const MODULES = [
-  { key: 'farm', label: 'Farm' },
-  { key: 'retail', label: 'Retail' },
+  { key: 'farm', label: 'Pewil Farm' },
+  { key: 'retail', label: 'Pewil Retail' },
 ];
 
 const TIER_ORDER = { starter: 0, growth: 1, enterprise: 2 };

@@ -48,8 +48,8 @@ export default function HelpSupport() {
           {[
             { label: 'Getting Started', color: '#e8f5ee', text: '#1a6b3a' },
             { label: 'Billing & Plans', color: '#eff6ff', text: '#1d4ed8' },
-            { label: 'Farm Module', color: '#fefce8', text: '#a16207' },
-            { label: 'Retail & POS', color: '#fdf2f8', text: '#be185d' },
+            { label: 'Pewil Farm', color: '#fefce8', text: '#a16207' },
+            { label: 'Pewil Retail', color: '#fdf2f8', text: '#be185d' },
             { label: 'Data & Privacy', color: '#f0fdf4', text: '#15803d' },
             { label: 'Account & Security', color: '#fef2f2', text: '#991b1b' },
           ].map((cat) => (

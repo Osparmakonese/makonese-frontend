@@ -20,7 +20,7 @@ const PLANS = {
   farm: [
     {
       tier: 'starter',
-      name: 'Farm Starter',
+      name: 'Pewil Farm Starter',
       slug: 'farm-starter',
       price_monthly: 10,
       price_yearly: 100,
@@ -37,7 +37,7 @@ const PLANS = {
     },
     {
       tier: 'growth',
-      name: 'Farm Growth',
+      name: 'Pewil Farm Growth',
       slug: 'farm-growth',
       price_monthly: 25,
       price_yearly: 250,
@@ -57,7 +57,7 @@ const PLANS = {
     },
     {
       tier: 'enterprise',
-      name: 'Farm Enterprise',
+      name: 'Pewil Farm Enterprise',
       slug: 'farm-enterprise',
       price_monthly: 60,
       price_yearly: 600,
@@ -77,7 +77,7 @@ const PLANS = {
   retail: [
     {
       tier: 'starter',
-      name: 'Retail Starter',
+      name: 'Pewil Retail Starter',
       slug: 'retail-starter',
       price_monthly: 15,
       price_yearly: 150,
@@ -94,7 +94,7 @@ const PLANS = {
     },
     {
       tier: 'growth',
-      name: 'Retail Growth',
+      name: 'Pewil Retail Growth',
       slug: 'retail-growth',
       price_monthly: 35,
       price_yearly: 350,
@@ -115,7 +115,7 @@ const PLANS = {
     },
     {
       tier: 'enterprise',
-      name: 'Retail Enterprise',
+      name: 'Pewil Retail Enterprise',
       slug: 'retail-enterprise',
       price_monthly: 80,
       price_yearly: 800,
@@ -137,7 +137,7 @@ const PLANS = {
 const FAQ = [
   { q: 'Can I try Pewil for free?', a: 'Yes. Every new account gets a 14-day free trial with full access. No card required.' },
   { q: 'What payment methods do you accept?', a: 'Visa and Mastercard via Pesepay for card payments, plus EcoCash and OneMoney via Paynow for mobile money. Pesepay also works for international cards.' },
-  { q: 'Can I combine Farm + Retail?', a: 'Yes. Each module has its own subscription so you only pay for what you use. Combine any farm plan with any retail plan.' },
+  { q: 'Can I combine Pewil Farm + Pewil Retail?', a: 'Yes. Each module has its own subscription so you only pay for what you use. Combine any farm plan with any retail plan.' },
   { q: 'What is the yearly pricing?', a: 'Yearly is billed as 10 × monthly, giving you 2 months free versus paying monthly.' },
   { q: 'Can I change plans later?', a: 'Yes. Upgrade or downgrade anytime from your Billing page. Proration is handled automatically on your next invoice.' },
   { q: 'Do you offer refunds?', a: 'We offer refunds within 7 days of your first payment, no questions asked. Reach out from your Billing page.' },

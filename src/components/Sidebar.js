@@ -231,7 +231,7 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
 
   // Display name for the switcher
   const switcherName = activeModule === 'retail' ? (tenantName.replace(' Farm', '') + ' Retail') : tenantName;
-  const switcherType = activeModule === 'retail' ? 'Retail POS' : 'Agriculture';
+  const switcherType = activeModule === 'retail' ? 'Pewil Retail' : 'Pewil Farm';
 
   useEffect(() => {
     NAV_ITEMS.forEach(section => {

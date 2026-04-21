@@ -934,7 +934,7 @@ const LandingPage = () => {
             ))}
           </div>
         </div>
-        {footLinks('Product', [['Farm', '/'], ['Retail', '/'], ['Finance', '/'], ['AI Copilot', '/']])}
+        {footLinks('Product', [['Pewil Farm', '/'], ['Pewil Retail', '/'], ['Finance', '/'], ['AI Copilot', '/']])}
         {footLinks('Company', [['About', '/'], ['Stories', '/'], ['Careers', '/'], ['Contact', '/']])}
         {footLinks('Legal', [['Terms', '/terms'], ['Privacy', '/privacy'], ['Refunds', '/refunds'], ['Status', '/status']])}
       </div>

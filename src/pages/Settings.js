@@ -156,7 +156,7 @@ function buildTabs({ farmOn }) {
     { key: 'general', label: 'General' },
     { key: 'branding', label: 'Branding' },
   ];
-  if (farmOn) tabs.push({ key: 'farm', label: 'Farm' });
+  if (farmOn) tabs.push({ key: 'farm', label: 'Pewil Farm' });
   tabs.push(
     { key: 'payments', label: 'Payments' },
     { key: 'notifications', label: 'Notifications' },
