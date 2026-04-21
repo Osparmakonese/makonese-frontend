@@ -249,35 +249,32 @@ const LandingPage = () => {
           </span>
           <h1 style={{
             fontFamily: SERIF, fontWeight: 700,
-            fontSize: mobile ? 38 : 'clamp(40px, 5.4vw, 72px)',
-            lineHeight: 1.02, letterSpacing: '-0.028em',
-            maxWidth: '12ch', color: C.ink,
+            fontSize: mobile ? 34 : 'clamp(38px, 4.8vw, 64px)',
+            lineHeight: 1.05, letterSpacing: '-0.025em',
+            maxWidth: '18ch', color: C.ink,
           }}>
-            Grow more.<br />
-            Count{' '}
+            The operating system for{' '}
             <span style={{
               fontStyle: 'italic', color: C.clay, fontWeight: 600,
-              display: 'inline-block', position: 'relative',
             }}>
-              every row
-              <span style={{
-                position: 'absolute', left: '-4%', right: '-4%',
-                bottom: '-10%', height: '18%',
-                backgroundImage: WAVY_UNDERLINE_SVG,
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: 'contain',
-                backgroundPosition: 'center',
-                opacity: 0.9,
-              }} />
+              how Africa does business
             </span>
             .
           </h1>
           <p style={{
-            marginTop: 22, maxWidth: '48ch',
-            fontSize: mobile ? 15.5 : 'clamp(16px, 1.4vw, 18px)',
-            color: '#3a3024', lineHeight: 1.55,
+            marginTop: 24, maxWidth: '52ch',
+            fontFamily: SERIF, fontStyle: 'italic',
+            fontSize: mobile ? 18 : 'clamp(19px, 1.7vw, 22px)',
+            color: C.forest, lineHeight: 1.4, fontWeight: 500,
           }}>
-            Pewil is the business operating system for African farmers and retailers. Track fields, livestock, stock, staff, and cashflow from one place. Online or off. In USD, ZWL, or ZAR. In the language of your team.
+            Three operators. One farm. One tuckshop. One chain. One system built for all of them.
+          </p>
+          <p style={{
+            marginTop: 18, maxWidth: '54ch',
+            fontSize: mobile ? 15.5 : 'clamp(16px, 1.4vw, 17.5px)',
+            color: '#3a3024', lineHeight: 1.6,
+          }}>
+            Pewil doesn't believe a smallholder farmer, the shopkeeper on the corner, and the ops director of a national supermarket group need three different softwares. They all need the same thing — something that respects the work, fits their scale, and closes the day quietly. That's Pewil.
           </p>
           <div style={{ marginTop: 36, display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
             <button
