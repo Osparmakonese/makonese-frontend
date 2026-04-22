@@ -38,6 +38,7 @@ const Report = React.lazy(() => import('./pages/Report'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const Import = React.lazy(() => import('./pages/Import'));
 const AdminPanel = React.lazy(() => import('./pages/AdminPanel'));
+const PlanSimulator = React.lazy(() => import('./pages/PlanSimulator'));
 const FarmAssets = React.lazy(() => import('./pages/FarmAssets'));
 const Cattle = React.lazy(() => import('./pages/Cattle'));
 const Goats = React.lazy(() => import('./pages/Goats'));
@@ -124,6 +125,7 @@ const PAGES = {
   'Market Prices': MarketPrices,
   'Economics': Economics,
   'Admin Panel': AdminPanel,
+  'Plan Simulator': PlanSimulator,
   // Retail module
   'Retail': RetailDashboard,
   'Products': Products,
@@ -193,6 +195,7 @@ const PAGE_META = {
   'Market Prices': { title: 'Market Prices', sub: 'Commodity price tracking' },
   'Economics': { title: 'Farm Economics', sub: 'Profitability and enterprise analysis' },
   'Admin Panel': { title: 'Super Admin Panel', sub: 'Pewil system administration' },
+  'Plan Simulator': { title: 'Plan Simulator', sub: 'Dev preview of every plan tier' },
   // Retail module
   'Retail': { title: 'Retail Dashboard', sub: 'Store overview and daily metrics' },
   'Products': { title: 'Products', sub: 'Product catalog and inventory' },
@@ -386,4 +389,6 @@ export default function App() {
         <Route path="/customer-display" element={<Suspense fallback={<PageLoader />}><CustomerDisplay /></Suspense>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-  
+    </>
+  );
+}
