@@ -534,4 +534,19 @@ export default function Register() {
               e.currentTarget.style.boxShadow = '0 14px 30px -8px rgba(217,86,44,.7)';
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.transform = 'non
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 10px 24px -8px rgba(217,86,44,.6)';
+            }}
+          >
+            {loading ? 'Creating account…' : 'Create my account →'}
+          </button>
+
+          <div style={S.switch}>
+            Already with us?{' '}
+            <Link to="/login" style={S.switchLink}>Sign in →</Link>
+          </div>
+        </form>
+      </main>
+    </div>
+  );
+}
