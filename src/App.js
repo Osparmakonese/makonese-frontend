@@ -10,6 +10,7 @@ import CookieConsent from './components/CookieConsent';
 import OnboardingWalkthrough from './components/OnboardingWalkthrough';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import DemoBanner from './components/DemoBanner';
+import StagingBanner from './components/StagingBanner';
 
 /* --- Eagerly loaded (critical path) --- */
 import LandingPage from './pages/LandingPage';
@@ -365,6 +366,7 @@ function FarmApp() {
 export default function App() {
   return (
     <>
+      <StagingBanner />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
