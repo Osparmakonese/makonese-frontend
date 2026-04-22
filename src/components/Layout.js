@@ -111,13 +111,8 @@ export default function Layout({
   const moduleAccent = activeModule === 'retail' ? '#c97d1a' : '#1a6b3a';
   const moduleAccentBg = activeModule === 'retail' ? '#fdeedd' : '#e8f5ee';
   const moduleAccentRing = activeModule === 'retail' ? 'rgba(201,125,26,0.15)' : 'rgba(26,107,58,0.15)';
-  const isSuperAdmin = !!user?.is_super_admin;
-  const userModules = user?.modules || ['farm'];
-  const showModuleSwitcher = isSuperAdmin || (userModules.includes('farm') && userModules.includes('retail'));
-  const switchModule = (m) => {
-    if (onModuleChange) onModuleChange(m);
-    setShowMobileMore(false);
-  };
+  // SINGLE-MODULE RULE (April 2026): no in-app switching between farm and
+  // retail. Each tenant is one-or-the-other. Mobile drawer drops the toggle.
   const isMore = !BOTTOM_PRIMARY.includes(activeTab);
   const goTab = (tab) => {
     onTabChange(tab);
@@ -249,41 +244,6 @@ export default function Layout({
               </button>
             </div>
 
-            {/* Module switcher: Farm or Retail, shown when user has access to both modules or is super admin */}
-            {showModuleSwitcher && (
-              <div style={{
-                display: 'flex', gap: 6, padding: 4, background: '#f3f4f6',
-                borderRadius: 10, marginBottom: 18,
-              }}>
-                <button
-                  onClick={() => switchModule('farm')}
-                  style={{
-                    flex: 1, padding: '10px 12px', borderRadius: 8, border: 'none',
-                    background: activeModule === 'farm' ? '#fff' : 'transparent',
-                    color: activeModule === 'farm' ? '#1a6b3a' : '#6b7280',
-                    fontWeight: activeModule === 'farm' ? 700 : 600, fontSize: 13,
-                    boxShadow: activeModule === 'farm' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  }}
-                >
-                  <span style={{ fontSize: 16 }}>{'\u{1F33E}'}</span> Pewil Farm
-                </button>
-                <button
-                  onClick={() => switchModule('retail')}
-                  style={{
-                    flex: 1, padding: '10px 12px', borderRadius: 8, border: 'none',
-                    background: activeModule === 'retail' ? '#fff' : 'transparent',
-                    color: activeModule === 'retail' ? '#c97d1a' : '#6b7280',
-                    fontWeight: activeModule === 'retail' ? 700 : 600, fontSize: 13,
-                    boxShadow: activeModule === 'retail' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  }}
-                >
-                  <span style={{ fontSize: 16 }}>{'\u{1F6D2}'}</span> Pewil Retail
-                </button>
-              </div>
-            )}
-
             {/* Miller's Law + Proximity: Sectioned grid with headers */}
             {DRAWER_SECTIONS.map((section, sIdx) => {
               const visibleItems = section.items.filter(t => !t.ownerOnly || role === 'owner');
@@ -331,3 +291,4 @@ export default function Layout({
     </div>
   );
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            

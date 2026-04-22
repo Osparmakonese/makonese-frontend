@@ -307,9 +307,13 @@ function ProtectedRoute({ children }) {
 
 /* --- */
 function FarmApp() {
-  const [activeTab, setActiveTab] = useState('Dashboard');
-  const [activeModule, setActiveModule] = useState('farm');
   const { user, logout } = useAuth();
+
+  // SINGLE-MODULE RULE (April 2026): activeModule is derived directly from
+  // the tenant's one module — no in-app switching. An account is either
+  // farm or retail for its lifetime.
+  const activeModule = (user?.modules && user.modules[0] === 'retail') ? 'retail' : 'farm';
+  const [activeTab, setActiveTab] = useState(activeModule === 'retail' ? 'Retail' : 'Dashboard');
 
   const { data: dashboardData } = useQuery({
     queryKey: ['dashboard'],
@@ -322,15 +326,6 @@ function FarmApp() {
     queryFn: getLowStock,
     staleTime: 60000,
   });
-
-  const handleModuleChange = (mod) => {
-    setActiveModule(mod);
-    if (mod === 'retail') {
-      setActiveTab('Retail');
-    } else {
-      setActiveTab('Dashboard');
-    }
-  };
 
   const Page = PAGES[activeTab] || Dashboard;
   const meta = PAGE_META[activeTab] || PAGE_META['Dashboard'];
@@ -352,7 +347,6 @@ function FarmApp() {
       dashboardData={dashboardData}
       lowStockCount={lowStockData.length}
       activeModule={activeModule}
-      onModuleChange={handleModuleChange}
     >
       <DemoBanner />
       <Suspense fallback={<PageLoader />}>
@@ -392,7 +386,4 @@ export default function App() {
         <Route path="/customer-display" element={<Suspense fallback={<PageLoader />}><CustomerDisplay /></Suspense>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <CookieConsent />
-    </>
-  );
-}
+  

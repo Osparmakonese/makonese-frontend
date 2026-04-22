@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initials, avatarColor } from '../utils/format';
 import Logo from './Logo';
 
@@ -194,44 +194,37 @@ const NAV_ITEMS = [
   ]},
 ];
 
-export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowStockCount = 0, activeModule = 'farm', onModuleChange }) {
+export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowStockCount = 0 }) {
   const role = user?.role || 'worker';
   const ac = avatarColor(user?.username || '');
   const [expanded, setExpanded] = useState({});
-  const [ddOpen, setDdOpen] = useState(false);
-  const ddRef = useRef(null);
 
   // Get tenant info from JWT stored in localStorage
   const tenantName = user?.tenant_name || 'Pewil';
   const tenantPlan = user?.plan || 'free';
   const planLabel = tenantPlan.charAt(0).toUpperCase() + tenantPlan.slice(1) + ' Plan';
+  // SINGLE-MODULE RULE (April 2026): every tenant runs exactly one module.
+  // The module switcher dropdown has been removed — activeModule is derived
+  // from tenant.modules[0] and never changes for a given account. Operators
+  // who need both farm and retail create two separate accounts.
   const modules = user?.modules || ['farm'];
-  const hasFarm = modules.includes('farm');
-  const hasRetail = modules.includes('retail');
-  // Super admins can preview both modules in the switcher even if the tenant
-  // only has one module enabled — lets Osy verify the retail UI without
-  // upgrading the tenant. Does NOT affect section filtering below.
-  const isSuperAdmin = !!user?.is_super_admin;
-  const showFarmOption = hasFarm || isSuperAdmin;
-  const showRetailOption = hasRetail || isSuperAdmin;
-  const showSwitcher = showFarmOption && showRetailOption;
+  const tenantModule = (modules[0] === 'retail') ? 'retail' : 'farm';
+  const hasFarm = tenantModule === 'farm';
+  const hasRetail = tenantModule === 'retail';
 
-  // Module-based section filtering using the `module` property on each section
-  // Each section declares which module it belongs to (farm or retail)
+  // Module-based section filtering using the `module` property on each section.
+  // Each section declares which module it belongs to (farm or retail).
   const shouldShowSection = (section) => {
-    if (section.module === 'retail') return activeModule === 'retail' && hasRetail;
-    if (section.module === 'farm') return activeModule === 'farm' && hasFarm;
-    // `module: 'any'` — show in whichever module is currently active as long
-    // as the tenant has at least one module. Used for cross-cutting surfaces
-    // like the tenant Admin Panel.
-    if (section.module === 'any') return hasFarm || hasRetail;
+    if (section.module === 'retail') return hasRetail;
+    if (section.module === 'farm') return hasFarm;
+    // `module: 'any'` — show for any tenant (cross-cutting surfaces)
+    if (section.module === 'any') return true;
     // Sections without a module tag default to farm
-    return activeModule === 'farm' && hasFarm;
+    return hasFarm;
   };
 
-  // Display name for the switcher
-  const switcherName = activeModule === 'retail' ? (tenantName.replace(' Farm', '') + ' Retail') : tenantName;
-  const switcherType = activeModule === 'retail' ? 'Pewil Retail' : 'Pewil Farm';
+  // Brand display: show the tenant's one module, no switching
+  const brandModuleLabel = hasRetail ? 'Pewil Retail' : 'Pewil Farm';
 
   useEffect(() => {
     NAV_ITEMS.forEach(section => {
@@ -240,15 +233,6 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
       }
     });
   }, [activeTab]);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = (e) => {
-      if (ddRef.current && !ddRef.current.contains(e.target)) setDdOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
 
   const toggleSection = (sectionName) => {
     setExpanded(prev => ({ ...prev, [sectionName]: !prev[sectionName] }));
@@ -262,44 +246,10 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
         <Logo size={36} showText={false} />
       </div>
 
-      {/* Module Switcher */}
-      <div ref={ddRef} style={{ position: 'relative' }}>
-        <div
-          style={S.tsw}
-          onClick={() => setDdOpen(!ddOpen)}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = TOKENS.terra; e.currentTarget.style.background = TOKENS.sand; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = TOKENS.line; e.currentTarget.style.background = '#fff'; }}
-        >
-          <div style={S.tswName}>{switcherName}</div>
-          <div style={S.tswPlan}>{switcherType} {'\u2022'} {planLabel}</div>
-          {showSwitcher && (
-            <div style={S.tswLabel}>{'\u25BE'} Switch module</div>
-          )}
-        </div>
-        <div style={S.tdd(ddOpen)}>
-          {showFarmOption && (
-            <div
-              style={S.tdo(activeModule === 'farm')}
-              onClick={() => { if (onModuleChange) onModuleChange('farm'); setDdOpen(false); }}
-              onMouseEnter={e => { if (activeModule !== 'farm') e.currentTarget.style.background = TOKENS.line2; }}
-              onMouseLeave={e => { if (activeModule !== 'farm') e.currentTarget.style.background = 'transparent'; }}
-            >
-              <div style={S.tdoName}>{'\u{1F33E}'} {tenantName}</div>
-              <div style={S.tdoType}>Agriculture {'\u2022'} {planLabel}</div>
-            </div>
-          )}
-          {showRetailOption && (
-            <div
-              style={S.tdo(activeModule === 'retail')}
-              onClick={() => { if (onModuleChange) onModuleChange('retail'); setDdOpen(false); }}
-              onMouseEnter={e => { if (activeModule !== 'retail') e.currentTarget.style.background = TOKENS.line2; }}
-              onMouseLeave={e => { if (activeModule !== 'retail') e.currentTarget.style.background = 'transparent'; }}
-            >
-              <div style={S.tdoName}>{'\u{1F6D2}'} {tenantName.replace(' Farm', '')} Retail</div>
-              <div style={S.tdoType}>Retail POS {'\u2022'} {planLabel}</div>
-            </div>
-          )}
-        </div>
+      {/* Tenant brand — single-module, no switcher */}
+      <div style={{ ...S.tsw, cursor: 'default' }}>
+        <div style={S.tswName}>{tenantName}</div>
+        <div style={S.tswPlan}>{brandModuleLabel} {'\u2022'} {planLabel}</div>
       </div>
 
       {/* Navigation */}
@@ -378,3 +328,4 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout, lowSto
     </div>
   );
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       

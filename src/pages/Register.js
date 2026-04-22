@@ -196,9 +196,11 @@ export default function Register() {
     document.head.appendChild(link);
   }, []);
 
+  // SINGLE-MODULE RULE (April 2026): a tenant is either farm OR retail, never
+  // both. If the operator wants both, they create two separate accounts.
   const [form, setForm] = useState({
     business_name: '',
-    modules: [persona === 'retail' ? 'retail' : 'farm'],
+    module: persona === 'retail' ? 'retail' : 'farm',
     first_name: '',
     last_name: '',
     phone: '',
@@ -228,15 +230,8 @@ export default function Register() {
   }, []);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
-
-  const toggleModule = (mod) => {
-    setForm(p => {
-      const mods = p.modules.includes(mod)
-        ? p.modules.filter(m => m !== mod)
-        : [...p.modules, mod];
-      return { ...p, modules: mods.length ? mods : [mod] };
-    });
-  };
+  // Picking a module is a hard switch, not a toggle — single-module rule
+  const pickModule = (mod) => setForm(p => ({ ...p, module: mod }));
 
   const calcStrength = (pwd) => {
     if (pwd.length < 6) return 'weak';
@@ -361,24 +356,31 @@ export default function Register() {
 
           {!persona && (
           <div style={S.field}>
-            <label style={S.label}>What do you run?</label>
+            <label style={S.label}>Pick one — you can run the other on a separate account</label>
             <div style={S.modGrid}>
               <div
-                style={S.modCard(form.modules.includes('farm'))}
-                onClick={() => toggleModule('farm')}
+                style={S.modCard(form.module === 'farm')}
+                onClick={() => pickModule('farm')}
+                role="radio"
+                aria-checked={form.module === 'farm'}
               >
                 <div style={S.modIcon}>🌱</div>
-                <div style={S.modName(form.modules.includes('farm'))}>Farm</div>
+                <div style={S.modName(form.module === 'farm')}>Farm</div>
                 <div style={S.modDesc}>Fields · stock · livestock · workers</div>
               </div>
               <div
-                style={S.modCard(form.modules.includes('retail'))}
-                onClick={() => toggleModule('retail')}
+                style={S.modCard(form.module === 'retail')}
+                onClick={() => pickModule('retail')}
+                role="radio"
+                aria-checked={form.module === 'retail'}
               >
                 <div style={S.modIcon}>🛒</div>
-                <div style={S.modName(form.modules.includes('retail'))}>Retail</div>
+                <div style={S.modName(form.module === 'retail')}>Retail</div>
                 <div style={S.modDesc}>POS · products · cashier · sales</div>
               </div>
+            </div>
+            <div style={{ fontSize: 11.5, color: C.muted, marginTop: 6 }}>
+              One account = one module. Need both? Sign up a second account after this one.
             </div>
           </div>
           )}
@@ -532,19 +534,4 @@ export default function Register() {
               e.currentTarget.style.boxShadow = '0 14px 30px -8px rgba(217,86,44,.7)';
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 10px 24px -8px rgba(217,86,44,.6)';
-            }}
-          >
-            {loading ? 'Creating account…' : 'Create my account →'}
-          </button>
-
-          <div style={S.switch}>
-            Already with us?{' '}
-            <Link to="/login" style={S.switchLink}>Sign in →</Link>
-          </div>
-        </form>
-      </main>
-    </div>
-  );
-}
+              e.currentTarget.style.transform = 'non
