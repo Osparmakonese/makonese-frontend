@@ -22,6 +22,7 @@ export function AuthProvider({ children }) {
     let retail_perms = {};
     let farm_perms = {};
     let is_demo = false;
+    let is_super_admin = false;
     try {
       const payload = JSON.parse(atob(res.data.access.split('.')[1]));
       role = payload.role || 'owner';
@@ -33,6 +34,7 @@ export function AuthProvider({ children }) {
       retail_perms = payload.retail_perms || {};
       farm_perms = payload.farm_perms || {};
       is_demo = !!payload.is_demo;
+      is_super_admin = !!payload.is_super_admin;
     } catch { /* fallback */ }
 
     return {
@@ -47,6 +49,7 @@ export function AuthProvider({ children }) {
       retail_perms: res.data.retail_perms || retail_perms,
       farm_perms: res.data.farm_perms || farm_perms,
       is_demo: res.data.is_demo === true ? true : is_demo,
+      is_super_admin: res.data.is_super_admin === true ? true : is_super_admin,
     };
   }
 
