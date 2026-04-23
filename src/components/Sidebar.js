@@ -151,6 +151,7 @@ const NAV_ITEMS = [
   { section: 'INVENTORY', module: 'retail', collapsible: true, items: [
     { key: 'Categories', emoji: '\u{1F5C2}', label: 'Categories' },
     { key: 'Suppliers', emoji: '\u{1F4E6}', label: 'Suppliers & POs' },
+    { key: 'WhatsApp PO', emoji: '\u{1F4AC}', label: 'WhatsApp PO' },
     { key: 'Stock Adjustments', emoji: '\u{1F504}', label: 'Stock Adjustments' },
     { key: 'Low Stock Alerts', emoji: '\u{1F6A8}', label: 'Low Stock Alerts' },
     { key: 'Barcode Labels', emoji: '\u{1F4CF}', label: 'Barcode & Labels' },
@@ -161,6 +162,11 @@ const NAV_ITEMS = [
     { key: 'Retail Payroll', emoji: '\u{1F4B0}', label: 'Payroll' },
     { key: 'End of Day', emoji: '\u{1F4C4}', label: 'End of Day Report' },
     { key: 'Profit Margins', emoji: '\u{1F4C8}', label: 'Profit Margins', ownerOnly: true },
+  ]},
+  { section: 'LOSS PREVENTION', module: 'retail', collapsible: true, items: [
+    { key: 'Loss Prevention', emoji: '\u{1F6E1}\uFE0F', label: 'LP Dashboard' },
+    { key: 'Theft Scan', emoji: '\u{1F50D}', label: 'Theft Scan', ownerOnly: true },
+    { key: 'Price Drift', emoji: '\u{1F4B0}', label: 'Price Drift', ownerOnly: true },
   ]},
   { section: 'MARKETING', module: 'retail', collapsible: true, items: [
     { key: 'Customer Loyalty', emoji: '\u2B50', label: 'Loyalty Program' },
