@@ -35,10 +35,19 @@ const fetchActiveSubs = async () => {
   }
 };
 
-export default function Billing() {
+export default function Billing({ activeModule }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('overview');
+
+  // SINGLE-MODULE RULE (April 2026) — a tenant runs exactly one module, so
+  // Billing should only show THAT module's subscription + plans picker, never
+  // both. Falls back to user.modules[0] if the parent didn't pass a prop.
+  const currentModule =
+    activeModule ||
+    (Array.isArray(user?.modules) && user.modules[0]) ||
+    'farm';
+  const moduleLabel = currentModule === 'retail' ? 'Pewil Retail' : 'Pewil Farm';
 
   // Payment modal state — selectedPlan is the full Plan object from API
   const [showPayModal, setShowPayModal] = useState(false);
@@ -55,10 +64,10 @@ export default function Billing() {
   const { data: invoices } = useQuery({ queryKey: ['invoices'], queryFn: getInvoices, staleTime: 60000 });
   const { data: usage } = useQuery({ queryKey: ['usage'], queryFn: getUsage, staleTime: 60000 });
 
-  // Summary across modules for overview card
-  const farmSub = activeSubs.farm;
-  const retailSub = activeSubs.retail;
-  const anySub = farmSub || retailSub;
+  // Only show the subscription for the current module — the other module's
+  // data shouldn't be visible to this tenant even if the API happens to
+  // return it (shouldn't, but belt-and-braces).
+  const currentSub = activeSubs[currentModule];
 
   // ─── PAYMENT FLOW ──────────────────────────────────────
   const handleSelectPlan = ({ plan, billingCycle: cycle }) => {
@@ -149,10 +158,8 @@ export default function Billing() {
       {tab === 'overview' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
-            {/* Farm subscription card */}
-            <ModuleSubCard title="Pewil Farm" sub={farmSub} onManage={() => setTab('plans')} />
-            <div style={{ height: 10 }} />
-            <ModuleSubCard title="Pewil Retail" sub={retailSub} onManage={() => setTab('plans')} />
+            {/* Only the tenant's own module — single-module rule */}
+            <ModuleSubCard title={moduleLabel} sub={currentSub} onManage={() => setTab('plans')} />
           </div>
           <div>
             <div style={card}>
@@ -183,10 +190,10 @@ export default function Billing() {
             <div style={{ ...card, marginTop: 10 }}>
               <div style={sLabel}>Account</div>
               <div style={{ fontSize: 11, color: '#374151' }}>Signed in as <strong>{user?.email || user?.username}</strong></div>
-              {anySub && (
+              {currentSub && (
                 <div style={{ fontSize: 10, color: '#6b7280', marginTop: 4 }}>
-                  {farmSub && <>Farm: <strong>{farmSub.plan?.name}</strong> ({farmSub.billing_cycle})<br /></>}
-                  {retailSub && <>Retail: <strong>{retailSub.plan?.name}</strong> ({retailSub.billing_cycle})</>}
+                  {moduleLabel}: <strong>{currentSub.plan?.name}</strong>
+                  {currentSub.billing_cycle ? ` (${currentSub.billing_cycle})` : ''}
                 </div>
               )}
             </div>
@@ -198,12 +205,12 @@ export default function Billing() {
       {tab === 'plans' && (
         <div>
           <p style={{ color: '#6b7280', marginBottom: 16, fontSize: 12 }}>
-            Choose a plan for each module. Farm and Retail are billed separately. Annual plans save 17%.
+            Choose your {moduleLabel} plan. Annual plans save 17%.
           </p>
           <PlansTable
             activeSubscriptions={activeSubs}
             onSelectPlan={handleSelectPlan}
-            defaultModule={farmSub ? 'farm' : retailSub ? 'retail' : 'farm'}
+            lockedModule={currentModule}
           />
         </div>
       )}

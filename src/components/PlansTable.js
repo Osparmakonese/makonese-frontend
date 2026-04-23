@@ -74,11 +74,20 @@ function aiLabel(tier) {
  * Props:
  *  - activeSubscriptions: { farm?: { plan: { slug } }, retail?: { plan: { slug } } }
  *  - onSelectPlan: ({ plan, billingCycle }) => void
- *  - defaultModule?: 'farm' | 'retail'
+ *  - defaultModule?: 'farm' | 'retail'  — initial tab when both modules are visible
+ *  - lockedModule?: 'farm' | 'retail'   — single-module rule: hide the module
+ *      switcher entirely and show ONLY this module's plans. When set, the
+ *      tenant can't browse the other module's plans — they don't have that
+ *      module and shouldn't see it. Preferred over defaultModule.
  */
-export default function PlansTable({ activeSubscriptions = {}, onSelectPlan, defaultModule = 'farm' }) {
-  const [module, setModule] = useState(defaultModule);
+export default function PlansTable({ activeSubscriptions = {}, onSelectPlan, defaultModule = 'farm', lockedModule = null }) {
+  const [module, setModule] = useState(lockedModule || defaultModule);
   const [billingCycle, setBillingCycle] = useState('monthly');
+
+  // If a lockedModule is passed in later (or changes), keep state in sync.
+  React.useEffect(() => {
+    if (lockedModule && lockedModule !== module) setModule(lockedModule);
+  }, [lockedModule]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data: plansResp, isLoading, error } = useQuery({
     queryKey: ['plans'],
@@ -120,11 +129,18 @@ export default function PlansTable({ activeSubscriptions = {}, onSelectPlan, def
         gap: 12,
       }}>
         <div style={{ display: 'flex', gap: 8 }}>
-          {MODULES.map(m => (
+          {/* Module switcher is hidden when locked — single-module tenants
+              should never see the other module's tab. */}
+          {!lockedModule && MODULES.map(m => (
             <button key={m.key} onClick={() => setModule(m.key)} style={tabBtn(module === m.key)}>
               {m.label}
             </button>
           ))}
+          {lockedModule && (
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', padding: '8px 0' }}>
+              {MODULES.find(m => m.key === lockedModule)?.label || lockedModule} plans
+            </div>
+          )}
         </div>
         <div style={{
           display: 'inline-flex',
