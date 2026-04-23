@@ -89,4 +89,8 @@ root.render(
   </Sentry.ErrorBoundary>
 );
 
-serviceWorkerRegistration.register();
+// Kill any stale CRA/Workbox service worker from prior builds and DO NOT register a new one.
+// Previous registrations precached index.html + hashed chunks; when Vercel rotated filenames,
+// returning users got stuck on the old bundle. Kept as unregister() to scrub SWs from old
+// clients on next visit. Do NOT flip back to register() without a new caching strategy.
+serviceWorkerRegistration.unregister();

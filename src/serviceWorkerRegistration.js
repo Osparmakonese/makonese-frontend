@@ -48,8 +48,23 @@ function checkValidServiceWorker(swUrl, config) {
   }).catch(() => console.log('Offline mode.'));
 }
 
-export function unregister() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then(r => r.unregister());
+export async function unregister() {
+  // Hardened kill: iterate ALL registrations (not just the default one) and clear every
+  // Cache Storage entry. Necessary because a prior CRA Workbox SW could have registered
+  // on a non-root scope; ready.then only resolves for the active one.
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map((r) => r.unregister()));
+  } catch (e) {
+    // swallow
+  }
+  try {
+    if (typeof caches !== 'undefined') {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+  } catch (e) {
+    // swallow
   }
 }
