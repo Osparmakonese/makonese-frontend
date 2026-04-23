@@ -229,4 +229,4 @@ export const updateTillTamperEvent = (id, data) =>
 export const getLossPreventionSummary = () =>
   api.get('/retail/loss-prevention/').then(r => r.data);
 export const runLossPreventionDetectors = () =>
-  api.post('/retail/loss-prevention/run_detectors/').then(r => r.data);
+  api.post('/retail/loss-prevention/run-detectors/').then(r => r.data);
