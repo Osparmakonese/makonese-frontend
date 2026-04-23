@@ -31,9 +31,22 @@ export default function HelpSupport() {
   const [category, setCategory] = useState('general');
   const [sent, setSent] = useState(false);
 
+  // No /api/core/support/ endpoint exists yet — don't fake a success for the
+  // user. Open their mail client pre-filled so the message actually reaches us.
   const handleSubmit = (e) => {
     e.preventDefault();
-    // In production this would POST to /api/core/support/ — for now just show confirmation
+    const labelMap = {
+      general: 'General Question',
+      billing: 'Billing & Payments',
+      bug: 'Bug Report',
+      feature: 'Feature Request',
+      account: 'Account & Security',
+    };
+    const tag = labelMap[category] || 'General Question';
+    const mailSubject = `[${tag}] ${subject}`.trim();
+    const mailBody = message;
+    const url = `mailto:support@pewil.org?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
+    window.location.href = url;
     setSent(true);
     setTimeout(() => setSent(false), 5000);
     setSubject(''); setMessage('');
@@ -84,7 +97,7 @@ export default function HelpSupport() {
 
         {sent && (
           <div style={{ background: '#e8f5ee', color: '#1a6b3a', padding: '10px 14px', borderRadius: 7, fontSize: 12, marginBottom: 12, fontWeight: 600 }}>
-            Message sent! We'll respond within 24 hours.
+            Opening your email app — send the draft to support@pewil.org and we'll respond within 24 hours.
           </div>
         )}
 
@@ -104,7 +117,7 @@ export default function HelpSupport() {
           <label style={S.label}>Message</label>
           <textarea style={S.textarea} value={message} onChange={e => setMessage(e.target.value)} placeholder="Describe your issue or question in detail..." required />
 
-          <button type="submit" style={S.btn}>Send Message</button>
+          <button type="submit" style={S.btn}>Email Support</button>
         </form>
       </div>
 

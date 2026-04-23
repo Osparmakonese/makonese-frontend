@@ -168,7 +168,7 @@ function buildTabs({ farmOn }) {
 }
 
 /* ─── Main component ─── */
-export default function Settings() {
+export default function Settings({ onTabChange }) {
   const { user } = useAuth();
   const role = user?.role || 'owner';
   const [activeTab, setActiveTab] = useState('general');
@@ -840,29 +840,38 @@ export default function Settings() {
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* Wireframe stubs used to live here — "Rotate" / "Save webhook" /
+                    "Send test event" buttons with no onClick, and a fake
+                    `sk_live_****` key that wasn't loaded from anywhere. No
+                    backend endpoints exist for API keys or webhooks yet, so
+                    the UI now honestly reflects that. */}
                 <StaticRow
                   label="API base URL"
                   value="https://api.pewil.org/api/"
                   mono
                 />
-                <div style={fieldBlock}>
-                  <label style={fieldLabel}>API key</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                      style={{ ...input, fontFamily: 'ui-monospace, monospace' }}
-                      readOnly
-                      value="sk_live_****************"
-                    />
-                    <button style={btnOutline}>Rotate</button>
+                <div
+                  style={{
+                    padding: '14px 16px',
+                    background: C.sand,
+                    border: `1px solid ${C.line}`,
+                    borderRadius: 10,
+                    fontSize: 13,
+                    color: C.ink,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  <div style={{ fontWeight: 700, marginBottom: 4 }}>
+                    API keys &amp; webhooks — coming soon
                   </div>
-                </div>
-                <div style={fieldBlock}>
-                  <label style={fieldLabel}>Webhook endpoint</label>
-                  <input style={input} placeholder="https://your-app.example.com/webhooks/pewil" />
-                </div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button style={btnPrimary}>Save webhook</button>
-                  <button style={btnOutline}>Send test event</button>
+                  <div style={{ color: C.muted }}>
+                    Programmatic access for bookkeeping, WhatsApp bots, and third-party integrations is on the roadmap.
+                    If you need early access, email{' '}
+                    <a href="mailto:support@pewil.org" style={{ color: C.forest, textDecoration: 'underline' }}>
+                      support@pewil.org
+                    </a>
+                    {' '}and tell us what you want to integrate.
+                  </div>
                 </div>
               </div>
             </section>
@@ -894,7 +903,12 @@ export default function Settings() {
                       Next charge on the 1st.
                     </div>
                   </div>
-                  <button style={btnForest}>Change plan</button>
+                  <button
+                    style={btnForest}
+                    onClick={() => { if (typeof onTabChange === 'function') onTabChange('Billing'); }}
+                  >
+                    Change plan
+                  </button>
                 </div>
               </section>
 

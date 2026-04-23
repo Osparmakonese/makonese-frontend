@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { updateMyTenant } from '../api/coreApi';
 import { getVapidKey, subscribePush, unsubscribePush, sendTestPush } from '../api/farmApi';
+import SecuritySettings from '../components/SecuritySettings';
 
 /* ─── Design 3 — Living Africa tokens (shared with Landing/Login/Register/Settings) ─── */
 const C = {
@@ -767,9 +768,13 @@ export default function RetailSettings({ onTabChange }) {
                 <h2 style={sectionTitle}>Security</h2>
                 <p style={sectionSub}>Account login, password policy, and two-factor authentication.</p>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <QuickLink title="Change password" desc="Rotate your own account password." cta="Change" onClick={() => {}} />
-                <QuickLink title="Two-factor authentication" desc="Require a second factor at login for all owners and managers." cta="Configure" onClick={() => {}} />
+              {/* Real password change + TOTP 2FA + email verification flows.
+                  The QuickLinks that used to sit here had onClick={() => {}} —
+                  dead wireframe buttons. Replaced with the SecuritySettings
+                  component (which was fully built against authApi but wasn't
+                  imported anywhere — dark code). */}
+              <SecuritySettings />
+              <div style={{ marginTop: 12 }}>
                 <QuickLink title="Audit log" desc="See every change made to products, prices, settings, and team members." cta="Open Audit Log" onClick={() => go('Audit Log')} />
               </div>
             </section>
