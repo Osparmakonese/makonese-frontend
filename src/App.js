@@ -65,7 +65,6 @@ const Categories = React.lazy(() => import('./pages/Categories'));
 const RetailReport = React.lazy(() => import('./pages/RetailReport'));
 const JournalEntries = React.lazy(() => import('./pages/JournalEntries'));
 const RetailPayroll = React.lazy(() => import('./pages/RetailPayroll'));
-const RetailBilling = React.lazy(() => import('./pages/RetailBilling'));
 const RetailSettings = React.lazy(() => import('./pages/RetailSettings'));
 const Customers = React.lazy(() => import('./pages/Customers'));
 const Returns = React.lazy(() => import('./pages/Returns'));
@@ -139,7 +138,10 @@ const PAGES = {
   'Retail Report': RetailReport,
   'Journal Entries': JournalEntries,
   'Retail Payroll': RetailPayroll,
-  'Retail Billing': RetailBilling,
+  // 'Retail Billing' key now routes to the real Billing component (used to be
+  // a designer mockup at pages/RetailBilling.js with hardcoded invoices and dead
+  // "Upgrade Plan" / "Update Payment" buttons — removed 2026-04-23).
+  'Retail Billing': Billing,
   'Retail Settings': RetailSettings,
   'Customers': Customers,
   'Returns': Returns,
