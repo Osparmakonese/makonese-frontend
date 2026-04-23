@@ -142,11 +142,16 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function demoLogin() {
+  async function demoLogin(module = 'farm') {
+    // ``module`` picks which seeded demo tenant to log into:
+    //   'farm'   -> Pewil Farm Live Demo (slug=demo)
+    //   'retail' -> Pewil Retail Live Demo (slug=demo-retail)
+    // Each demo tenant has its own dedicated user so the single-module rule
+    // (one product lane per account) keeps working for demo sessions too.
     setLoading(true);
     setError('');
     try {
-      const res = await api.post('/core/auth/demo_login/', {});
+      const res = await api.post('/core/auth/demo_login/', { module });
       localStorage.setItem('access_token', res.data.access);
       localStorage.setItem('refresh_token', res.data.refresh || '');
 

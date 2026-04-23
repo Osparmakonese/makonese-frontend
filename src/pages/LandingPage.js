@@ -11,24 +11,27 @@ import { useAuth } from '../context/AuthContext';
 function useDemoEntry() {
   const navigate = useNavigate();
   const { demoLogin } = useAuth();
-  const [demoLoading, setDemoLoading] = useState(false);
+  // ``loadingModule`` doubles as both "is something loading" and "which demo is
+  // being opened" so we can show a per-button spinner without flicker between
+  // Farm and Retail demos.
+  const [loadingModule, setLoadingModule] = useState(null);
   const [demoError, setDemoError] = useState('');
-  async function enterDemo() {
-    if (demoLoading) return;
-    setDemoLoading(true);
+  async function enterDemo(module = 'farm') {
+    if (loadingModule) return;
+    setLoadingModule(module);
     setDemoError('');
     try {
-      const ok = await demoLogin();
+      const ok = await demoLogin(module);
       if (ok) {
         navigate('/app');
       } else {
         setDemoError("Demo isn't available right now. Please try again shortly.");
       }
     } finally {
-      setDemoLoading(false);
+      setLoadingModule(null);
     }
   }
-  return { enterDemo, demoLoading, demoError };
+  return { enterDemo, loadingModule, demoError };
 }
 
 const PL_CSS = `
@@ -264,7 +267,8 @@ function handleImgErr(fallback) {
 
 const LandingPage = () => {
   const { user } = useAuth();
-  const { enterDemo, demoLoading, demoError } = useDemoEntry();
+  const { enterDemo, loadingModule, demoError } = useDemoEntry();
+  const demoLoading = Boolean(loadingModule);
 
   if (user) return <Navigate to="/app" replace />;
 
@@ -314,9 +318,21 @@ const LandingPage = () => {
             <a href="#operators" className="pl-btn pl-btn-ghost">See who it's for</a>
           </div>
           <div className="pl-hero-demo">
-            Or{' '}
-            <button type="button" onClick={enterDemo} disabled={demoLoading}>
-              {demoLoading ? 'opening demo…' : 'see a live demo'}
+            Or try a live demo &mdash;{' '}
+            <button
+              type="button"
+              onClick={() => enterDemo('farm')}
+              disabled={demoLoading}
+            >
+              {loadingModule === 'farm' ? 'opening farm demo…' : 'Pewil Farm'}
+            </button>
+            {' '}or{' '}
+            <button
+              type="button"
+              onClick={() => enterDemo('retail')}
+              disabled={demoLoading}
+            >
+              {loadingModule === 'retail' ? 'opening retail demo…' : 'Pewil Retail'}
             </button>
             {' '}&mdash; real data, no signup.
             {demoError && <div style={{ color: '#c0392b', marginTop: 8, fontSize: 12 }}>{demoError}</div>}
