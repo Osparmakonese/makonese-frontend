@@ -92,6 +92,7 @@ const WhatsAppPOParser = React.lazy(() => import('./pages/WhatsAppPOParser'));
 const VoiceBriefing = React.lazy(() => import('./pages/VoiceBriefing'));
 const TheftScan = React.lazy(() => import('./pages/TheftScan'));
 const PriceDrift = React.lazy(() => import('./pages/PriceDrift'));
+const LossPrevention = React.lazy(() => import('./pages/LossPrevention'));
 
 /* --- Loading fallback for lazy pages --- */
 const PageLoader = () => (
@@ -168,6 +169,7 @@ const PAGES = {
   'Voice Briefing': VoiceBriefing,
   'Theft Scan': TheftScan,
   'Price Drift': PriceDrift,
+  'Loss Prevention': LossPrevention,
 };
 
 /* --- */
@@ -238,6 +240,7 @@ const PAGE_META = {
   'Voice Briefing': { title: 'Voice Briefing', sub: 'Trilingual daily farm update — English, Shona, Ndebele' },
   'Theft Scan': { title: 'Theft Scan', sub: 'AI-powered loss prevention — anomaly detection on today’s sales' },
   'Price Drift': { title: 'Price Drift', sub: 'Supplier cost creep detection — catch silent price increases' },
+  'Loss Prevention': { title: 'Loss Prevention', sub: 'Signal-based anti-theft — events, flags, trust scores, shrinkage, alerts' },
 };
 
 /* --- */
@@ -301,6 +304,7 @@ const PRIMARY_ACTIONS = {
   'Voice Briefing': null,
   'Theft Scan': null,
   'Price Drift': null,
+  'Loss Prevention': null,
 };
 
 /* --- */

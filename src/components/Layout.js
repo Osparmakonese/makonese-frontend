@@ -74,6 +74,7 @@ const RETAIL_DRAWER_SECTIONS = [
     { key: 'Profit Margins', emoji: '\u{1F4C8}', label: 'Margins', sub: 'Profitability', ownerOnly: true },
   ]},
   { label: 'Loss Prevention', items: [
+    { key: 'Loss Prevention', emoji: '\u{1F6E1}\uFE0F', label: 'LP Dashboard', sub: 'Events, flags, trust, shrinkage' },
     { key: 'Theft Scan', emoji: '\u{1F50D}', label: 'Theft Scan', sub: 'AI anomaly detection', ownerOnly: true },
     { key: 'Price Drift', emoji: '\u{1F4B0}', label: 'Price Drift', sub: 'Supplier cost creep', ownerOnly: true },
   ]},

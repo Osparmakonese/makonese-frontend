@@ -176,3 +176,57 @@ export const setManagerPin = (pin) =>
 
 export const getManagerApprovalCapabilities = () =>
   api.get('/retail/manager-approval/capabilities/').then(r => r.data);
+
+// ── Sprint 1: Loss Prevention ──
+
+// CCTV events (auto-logged + manually reviewable)
+export const getCCTVEvents = (params) =>
+  api.get('/retail/cctv-events/', { params }).then(r => r.data);
+export const updateCCTVEvent = (id, data) =>
+  api.patch(`/retail/cctv-events/${id}/`, data).then(r => r.data);
+
+// Sweethearting flags (cashier+customer collusion patterns)
+export const getSweetheartingFlags = (params) =>
+  api.get('/retail/sweethearting-flags/', { params }).then(r => r.data);
+export const updateSweetheartingFlag = (id, data) =>
+  api.patch(`/retail/sweethearting-flags/${id}/`, data).then(r => r.data);
+
+// Cashier trust scores (owner/manager only)
+export const getCashierTrustScores = () =>
+  api.get('/retail/cashier-trust/').then(r => r.data);
+export const getCashierTrustLeaderboard = () =>
+  api.get('/retail/cashier-trust/leaderboard/').then(r => r.data);
+export const recomputeCashierTrustScores = () =>
+  api.post('/retail/cashier-trust/recompute/').then(r => r.data);
+
+// Shrinkage counts (stock-take vs system)
+export const getShrinkageCounts = () =>
+  api.get('/retail/shrinkage-counts/').then(r => r.data);
+export const getShrinkageCount = (id) =>
+  api.get(`/retail/shrinkage-counts/${id}/`).then(r => r.data);
+export const createShrinkageCount = (data) =>
+  api.post('/retail/shrinkage-counts/', data).then(r => r.data);
+export const updateShrinkageCount = (id, data) =>
+  api.patch(`/retail/shrinkage-counts/${id}/`, data).then(r => r.data);
+export const recordShrinkageLine = (id, data) =>
+  api.post(`/retail/shrinkage-counts/${id}/record_line/`, data).then(r => r.data);
+export const finalizeShrinkageCount = (id) =>
+  api.post(`/retail/shrinkage-counts/${id}/finalize/`).then(r => r.data);
+
+// After-hours alerts
+export const getAfterHoursAlerts = (params) =>
+  api.get('/retail/after-hours-alerts/', { params }).then(r => r.data);
+export const updateAfterHoursAlert = (id, data) =>
+  api.patch(`/retail/after-hours-alerts/${id}/`, data).then(r => r.data);
+
+// Till tamper events
+export const getTillTamperEvents = (params) =>
+  api.get('/retail/till-tamper/', { params }).then(r => r.data);
+export const updateTillTamperEvent = (id, data) =>
+  api.patch(`/retail/till-tamper/${id}/`, data).then(r => r.data);
+
+// Loss Prevention dashboard summary + run-detectors
+export const getLossPreventionSummary = () =>
+  api.get('/retail/loss-prevention/').then(r => r.data);
+export const runLossPreventionDetectors = () =>
+  api.post('/retail/loss-prevention/run_detectors/').then(r => r.data);
