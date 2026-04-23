@@ -13,17 +13,25 @@ export default function ProfitMargins({ onTabChange }) {
     staleTime: 30000
   });
 
-  const marginData = profitData?.products?.map(product => ({
-    sku: product.sku,
-    product: product.name,
-    cost: `$${product.cost_price.toFixed(2)}`,
-    sell: `$${product.selling_price.toFixed(2)}`,
-    margin: `$${product.margin_amount.toFixed(2)}`,
-    marginPercent: product.margin_percent,
-    unitsSold: product.stock,
-    totalProfit: `$${(product.margin_amount * product.stock).toFixed(2)}`,
-    status: product.margin_percent > 50 ? 'Excellent' : 'Good'
-  })) || [];
+  // DRF DecimalField serializes as string by default — coerce before .toFixed
+  // to avoid "TypeError: x.toFixed is not a function" (Sentry MAKONESE-FARM-FRONTEND-4).
+  const marginData = profitData?.products?.map(product => {
+    const cost = Number(product.cost_price) || 0;
+    const sell = Number(product.selling_price) || 0;
+    const marginAmt = Number(product.margin_amount) || 0;
+    const stock = Number(product.stock) || 0;
+    return {
+      sku: product.sku,
+      product: product.name,
+      cost: `$${cost.toFixed(2)}`,
+      sell: `$${sell.toFixed(2)}`,
+      margin: `$${marginAmt.toFixed(2)}`,
+      marginPercent: product.margin_percent,
+      unitsSold: stock,
+      totalProfit: `$${(marginAmt * stock).toFixed(2)}`,
+      status: product.margin_percent > 50 ? 'Excellent' : 'Good'
+    };
+  }) || [];
 
   const getMarginColor = (percent) => {
     if (percent > 50) return '#1a6b3a';
@@ -117,7 +125,7 @@ export default function ProfitMargins({ onTabChange }) {
                 AVG. MARGIN
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Playfair Display', serif", color: '#1a6b3a', marginBottom: 2 }}>
-                {isLoading ? '—' : `${(profitData?.summary?.avg_margin || 0).toFixed(1)}%`}
+                {isLoading ? '—' : `${(Number(profitData?.summary?.avg_margin) || 0).toFixed(1)}%`}
               </div>
               <div style={{ fontSize: 9, color: '#9ca3af' }}>All products</div>
             </div>
@@ -146,7 +154,7 @@ export default function ProfitMargins({ onTabChange }) {
                 HIGHEST MARGIN
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#1a6b3a', marginBottom: 2, lineHeight: 1.3 }}>
-                {isLoading ? '—' : `${(profitData?.summary?.highest_margin || 0).toFixed(1)}%`}
+                {isLoading ? '—' : `${(Number(profitData?.summary?.highest_margin) || 0).toFixed(1)}%`}
               </div>
               <div style={{ fontSize: 8, color: '#9ca3af' }}>{highestMarginProduct?.product || 'N/A'}</div>
             </div>
@@ -175,7 +183,7 @@ export default function ProfitMargins({ onTabChange }) {
                 LOWEST MARGIN
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#c0392b', marginBottom: 2, lineHeight: 1.3 }}>
-                {isLoading ? '—' : `${(profitData?.summary?.lowest_margin || 0).toFixed(1)}%`}
+                {isLoading ? '—' : `${(Number(profitData?.summary?.lowest_margin) || 0).toFixed(1)}%`}
               </div>
               <div style={{ fontSize: 8, color: '#9ca3af' }}>{lowestMarginProduct?.product || 'N/A'}</div>
             </div>
@@ -254,7 +262,7 @@ export default function ProfitMargins({ onTabChange }) {
                       {item.margin}
                     </td>
                     <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: getMarginColor(item.marginPercent), fontWeight: 600, textAlign: 'right' }}>
-                      {item.marginPercent.toFixed(1)}%
+                      {(Number(item.marginPercent) || 0).toFixed(1)}%
                     </td>
                     <td style={{ padding: '7px 8px', borderBottom: '1px solid #f3f4f6', color: '#374151', textAlign: 'right' }}>
                       {item.unitsSold}

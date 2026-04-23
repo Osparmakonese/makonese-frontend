@@ -217,7 +217,7 @@ function OverviewTab({ isOwner }) {
                   <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: gradeColor(c.grade) }}>
                     {c.grade || '—'}
                   </span>
-                  <span style={{ color: INK_3, fontSize: 12 }}>{(c.score ?? 0).toFixed(1)} / 100</span>
+                  <span style={{ color: INK_3, fontSize: 12 }}>{Number(c.score ?? 0).toFixed(1)} / 100</span>
                 </div>
               </div>
             ))}
@@ -331,7 +331,7 @@ function EventsTab() {
                     <td style={tdSty}>{r.cashier_name || '—'}</td>
                     <td style={tdSty}>{r.amount != null ? fmt(r.amount) : '—'}</td>
                     <td style={tdSty}>
-                      <span style={SEVERITY_PILL[sev]}>{(r.risk_score ?? 0).toFixed(0)}</span>
+                      <span style={SEVERITY_PILL[sev]}>{Number(r.risk_score ?? 0).toFixed(0)}</span>
                     </td>
                     <td style={tdSty}>
                       {r.reviewed ? (
@@ -516,7 +516,7 @@ function TrustTab({ isOwner }) {
               <div key={c.id || c.cashier_name} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px dashed ${BORDER}` }}>
                 <span style={{ fontSize: 13, color: INK }}>{c.cashier_name || 'Unknown'}</span>
                 <span style={{ fontWeight: 700, color: gradeColor(c.grade) }}>
-                  {c.grade} · {(c.score ?? 0).toFixed(1)}
+                  {c.grade} · {Number(c.score ?? 0).toFixed(1)}
                 </span>
               </div>
             ))}
@@ -528,7 +528,7 @@ function TrustTab({ isOwner }) {
               <div key={c.id || c.cashier_name} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px dashed ${BORDER}` }}>
                 <span style={{ fontSize: 13, color: INK }}>{c.cashier_name || 'Unknown'}</span>
                 <span style={{ fontWeight: 700, color: gradeColor(c.grade) }}>
-                  {c.grade} · {(c.score ?? 0).toFixed(1)}
+                  {c.grade} · {Number(c.score ?? 0).toFixed(1)}
                 </span>
               </div>
             ))}
@@ -558,7 +558,7 @@ function TrustTab({ isOwner }) {
               rows.map(s => (
                 <tr key={s.id}>
                   <td style={tdSty}>{s.cashier_name || '—'}</td>
-                  <td style={tdSty}>{(s.score ?? 0).toFixed(1)}</td>
+                  <td style={tdSty}>{Number(s.score ?? 0).toFixed(1)}</td>
                   <td style={tdSty}>
                     <span style={{ ...pill(GREEN_TINT, gradeColor(s.grade)), background: '#f1f5f9' }}>
                       {s.grade || '—'}

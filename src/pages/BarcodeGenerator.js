@@ -18,17 +18,21 @@ export default function BarcodeGenerator({ onTabChange }) {
     staleTime: 30000
   });
 
+  // DRF DecimalField serializes as string by default — coerce before .toFixed
+  // to avoid "TypeError: x.toFixed is not a function" (Sentry MAKONESE-FARM-FRONTEND-4).
+  const fmtPrice = (v) => `$${(Number(v) || 0).toFixed(2)}`;
+
   const products = allProducts?.map(p => ({
     sku: p.sku,
     name: p.name,
-    price: `$${p.selling_price.toFixed(2)}`
+    price: fmtPrice(p.selling_price)
   })) || [];
 
   const productsWithoutBarcodes = allProducts?.filter(p => !p.barcode)?.map(p => ({
     sku: p.sku,
     name: p.name,
     category: p.category || 'Uncategorized',
-    price: `$${p.selling_price.toFixed(2)}`,
+    price: fmtPrice(p.selling_price),
     status: p.barcode ? 'Generated' : 'None'
   })) || [];
 
