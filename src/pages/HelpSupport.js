@@ -21,7 +21,7 @@ const FAQ = [
   { q: 'What payment methods do you accept?', a: 'We accept Visa, Mastercard, EcoCash, and OneMoney through our Pesepay integration. All payments are securely processed.' },
   { q: 'How do I invite team members?', a: 'Navigate to the Team page (owner only). Click "+ Invite User" and enter their email. They will receive an invitation to join your tenant as a manager or worker.' },
   { q: 'Is my data secure?', a: 'Yes. We use HTTPS encryption, JWT authentication, role-based access control, optional 2FA, and regular backups. Your data is stored securely and is never shared with third parties.' },
-  { q: 'Can I switch between Farm and Retail modules?', a: 'If your plan includes both modules, use the module switcher at the top of the sidebar to switch between Farm and Retail views.' },
+  { q: 'Can I switch between Farm and Retail modules?', a: 'No — each Pewil account runs exactly one module. Your account is either Farm or Retail for its lifetime; there is no in-app switcher. If you need both, create a separate account for the other module and sign in to whichever one you need.' },
 ];
 
 export default function HelpSupport() {

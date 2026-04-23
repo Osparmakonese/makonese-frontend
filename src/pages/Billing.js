@@ -136,7 +136,7 @@ export default function Billing({ activeModule }) {
       <div style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', borderRadius: 14, padding: '0 24px', height: 90, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, overflow: 'hidden' }}>
         <div>
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>Billing & Subscription</h2>
-          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', marginTop: 3 }}>Separate subscriptions for Farm & Retail {'\u2014'} monthly or yearly</p>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', marginTop: 3 }}>Manage your {moduleLabel} subscription {'\u2014'} monthly or yearly</p>
         </div>
         <div style={{ fontSize: 48, opacity: 0.2 }}>{'\u{1F4B3}'}</div>
       </div>
