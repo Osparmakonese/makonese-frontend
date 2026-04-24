@@ -373,7 +373,7 @@ const LandingPage = () => {
               <div className="pl-ribbon-label">
                 <span className="pl-ribbon-chip">Pewil Retail Enterprise</span>
                 <div className="pl-ribbon-name">The ops director signing off the 17th branch</div>
-                <div className="pl-ribbon-meta">Multi-branch. Unlimited users. Chain-grade.</div>
+                <div className="pl-ribbon-meta">Unlimited users. Chain-grade. Multi-branch coming Q3 2026.</div>
               </div>
             </a>
           </div>
@@ -485,11 +485,11 @@ const LandingPage = () => {
                   "Ninety percent of what the bigger chains do with enterprise POS, at a tenth of the cost. And the branch-level dashboard was actually better."
                 </div>
                 <ul className="pl-op-feats">
-                  <li>Multi-branch rollup &mdash; chain to branch to till</li>
                   <li>Unlimited users, role-based access control</li>
-                  <li>Cross-branch inventory and transfer orders</li>
                   <li>API access + data export for your BI stack</li>
                   <li>Dedicated support + uptime SLA</li>
+                  <li>Multi-branch rollup &mdash; <em>coming Q3 2026</em></li>
+                  <li>Cross-branch inventory and transfer orders &mdash; <em>coming Q3 2026</em></li>
                 </ul>
                 <div className="pl-op-price-ent">
                   <div className="pl-op-price-ent-head">

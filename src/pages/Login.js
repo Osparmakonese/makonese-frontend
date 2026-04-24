@@ -289,29 +289,11 @@ export default function Login() {
 
             {error && <div style={S.error}>{error}</div>}
 
-            <div style={S.oauth}>
-              <button
-                type="button"
-                style={S.oauthBtn}
-                disabled
-                title="Google sign-in coming soon"
-              >
-                <svg width="16" height="16" viewBox="0 0 48 48">
-                  <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.2 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.9z" />
-                  <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16.2 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.2 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
-                  <path fill="#4CAF50" d="M24 44c5.4 0 10.3-2.1 14-5.5l-6.5-5.5c-2 1.4-4.6 2.3-7.5 2.3-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.4 16.2 44 24 44z" />
-                  <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.5 5.5C41.9 35.9 44 30.3 44 24c0-1.3-.1-2.7-.4-3.9z" />
-                </svg>
-                Continue with Google
-              </button>
-              <div style={S.oauthNote}>Google sign-in arrives in the next update.</div>
-            </div>
+            {/* Google SSO is on the roadmap but not wired — the prior
+                disabled button plus "arrives in the next update" copy was
+                setting expectations we weren't meeting in v1. Hide until
+                we have a working OAuth handshake. */}
 
-            <div style={S.dividerLine}>
-              <span style={S.dividerRule} />
-              <span>OR</span>
-              <span style={S.dividerRule} />
-            </div>
 
             <div style={S.field}>
               <label style={S.label} htmlFor="username">Username or email</label>

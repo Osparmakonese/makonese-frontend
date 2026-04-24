@@ -253,7 +253,14 @@ export default function Register() {
       alert('Please agree to the terms');
       return;
     }
-    const ok = await register(form);
+    // Trim user-entered strings before submit — stops leading/trailing
+    // whitespace ("      Ops") from leaking into tenant name, username,
+    // email, and every downstream artefact (invoices, receipts, audit log).
+    const trimmed = { ...form };
+    for (const k of Object.keys(trimmed)) {
+      if (typeof trimmed[k] === 'string') trimmed[k] = trimmed[k].trim();
+    }
+    const ok = await register(trimmed);
     if (ok) navigate('/app');
   };
 
