@@ -14,6 +14,12 @@ export default function DemoBanner() {
   const { user, logout } = useAuth();
   if (!user || !user.is_demo) return null;
 
+  // "← Home" exits the demo cleanly: clears the demo session token and lands
+  // the visitor on the public landing page. Without this, demo visitors hit
+  // a dead end with no obvious way out (only the "Start free trial" CTA
+  // pointed forward, never backward). Reported 2026-04-24.
+  const exitDemo = () => { try { logout(); } catch (_) {} };
+
   return (
     <div
       role="status"
@@ -27,7 +33,7 @@ export default function DemoBanner() {
         padding: '10px 16px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         gap: 14,
         flexWrap: 'wrap',
         fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
@@ -36,19 +42,39 @@ export default function DemoBanner() {
         boxShadow: '0 2px 8px rgba(0,0,0,.12)',
       }}
     >
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <Link
+        to="/"
+        onClick={exitDemo}
+        aria-label="Exit demo and return to home"
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          padding: '6px 12px', borderRadius: 999,
+          background: 'rgba(255,255,255,0.18)', color: '#fff',
+          fontWeight: 600, textDecoration: 'none',
+          border: '1px solid rgba(255,255,255,0.4)',
+        }}
+      >
+        ← Home
+      </Link>
+      <span
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          flex: '1 1 auto', justifyContent: 'center', minWidth: 0,
+        }}
+      >
         <span
           aria-hidden
           style={{
             display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
             background: '#fff', boxShadow: '0 0 0 4px rgba(255,255,255,.2)',
+            flex: '0 0 auto',
           }}
         />
         You're viewing the live demo — changes aren't saved.
       </span>
       <Link
         to="/register"
-        onClick={() => { try { logout(); } catch {} }}
+        onClick={exitDemo}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 6,
           padding: '6px 14px', borderRadius: 999,
